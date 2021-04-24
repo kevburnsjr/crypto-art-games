@@ -1,0 +1,85 @@
+<html><head>
+
+</head><body>
+<nav id="radial-palette">
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+<button></button>
+</nav>
+<style>
+html, body { margin: 0; padding: 0; overflow: hidden; }
+button { font-weight: bold; background: #000; border-radius: 0; border: none; text-align: center; line-height: 2em; }
+nav { position: absolute; display: none; width: 16em; height: 4em; margin-left: -8em; margin-top: -2em; }
+nav button {
+    font-size: 1em;
+    width: 2em; height: 2em;
+    float: left;
+}
+nav button:nth-child(16n + 1)  { background: #ec6f1c; }
+nav button:nth-child(16n + 2)  { background: #b4522e; }
+nav button:nth-child(16n + 3)  { background: #7a3030; }
+nav button:nth-child(16n + 4)  { background: #f6ae3c; }
+nav button:nth-child(16n + 5)  { background: #fbdb7a; }
+nav button:nth-child(16n + 6)  { background: #eafba3; }
+nav button:nth-child(16n + 7)  { background: #e3f6d5; }
+nav button:nth-child(16n + 8)  { background: #9ce77f; }
+nav button:nth-child(16n + 9)  { background: #49d866; }
+nav button:nth-child(16n + 10) { background: #408761; }
+nav button:nth-child(16n + 11) { background: #2d4647; }
+nav button:nth-child(16n + 12) { background: #345452; }
+nav button:nth-child(16n + 13) { background: #3a878b; }
+nav button:nth-child(16n + 14) { background: #3da4db; }
+nav button:nth-child(16n + 15) { background: #95c5f2; }
+nav button:nth-child(16n + 16) { background: #cacff9; }
+
+</style>
+<script>
+var x, y = 0;
+var menu = document.getElementById("radial-palette");
+document.onmousemove = function handleMouseMove(e) {
+    e.preventDefault();
+    x = e.pageX;
+    y = e.pageY;
+};
+document.addEventListener("keydown", function(e) {
+    var key = e.key === " " ? "spacebar" : e.key.toLowerCase();
+    if (key == "tab") {
+        e.preventDefault();
+        if (menu.style.display != "block") {
+            menu.style.display = "block";
+            menu.style.left = x;
+            menu.style.top = y;
+        }
+    }
+});
+document.addEventListener("keyup", function(e) {
+    var key = e.key === " " ? "spacebar" : e.key.toLowerCase();
+    if (key == "tab") {
+        e.preventDefault();
+        if (menu.style.display != "none") {
+            menu.style.display = "none";
+        }
+    }
+});
+document.addEventListener("mousedown", function(e) {
+    var t = e.target;
+    if (t.nodeName == "BUTTON" && t.parentElement.id == "radial-palette") {
+        e.preventDefault();
+        document.body.style.background = window.getComputedStyle(t).backgroundColor;
+    }
+});
+</script>
+</body></html>
