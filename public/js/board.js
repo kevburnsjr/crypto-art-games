@@ -166,7 +166,7 @@ Game.Board = (function(g){
   }
 
   Tile.prototype.stroke = function(ctx) {
-    ctx.lineWidth = .2;
+    ctx.lineWidth = .4;
     if (this.active) {
       ctx.strokeStyle = "rgba(255,0,0,0.5)";
     } else {

@@ -29,7 +29,7 @@ var Game = (function(g){
       setColor(parts[0]);
       zoom = parseInt(parts[1]);
     }
-    board = new Game.Board(Game, 16, 9);
+    board = new Game.Board(Game, 16, 16);
     reset();
     // Load board(s)
   };
@@ -112,19 +112,20 @@ var Game = (function(g){
       e.preventDefault();
       document.body.classList.add("color-picking");
     }
-    if (k == "w") {
+    console.log(e);
+    if (k == "w" || k == "arrowup") {
       e.preventDefault();
       board.move(0, -1);
     }
-    if (k == "s") {
+    if (k == "s" || k == "arrowdown") {
       e.preventDefault();
       board.move(0, 1);
     }
-    if (k == "a") {
+    if (k == "a" || k == "arrowleft") {
       e.preventDefault();
       board.move(-1, 0);
     }
-    if (k == "d") {
+    if (k == "d" || k == "arrowright") {
       e.preventDefault();
       board.move(1, 0);
     }
