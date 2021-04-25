@@ -2,16 +2,13 @@ Game.Board = (function(g){
   "use strict";
 
   var tilesize = 16;
-  var pz;
-  var px;
-  var py;
 
   var board = function(g, xt, yt) {
     this.game = g;
     this.xTiles = xt;
     this.yTiles = yt;
-    this.i = Math.floor(xt/2);
-    this.j = Math.floor(yt/2);
+    this.i = 0;
+    this.j = 0;
     this.dirty = true;
     this.tiles = [];
     // This will be replaced with tile loader.
@@ -26,22 +23,18 @@ Game.Board = (function(g){
 
   board.prototype.render = function(ctx, cx, cy, curx, cury, zoom, dirty, mousedown, c, e) {
     var scale = tilesize*zoom;
-    var x1 = parseInt(cx - this.xTiles*scale/2);
-    var y1 = parseInt(cy - this.yTiles*scale/2);
-    var x2 = x1 + this.xTiles*scale;
-    var y2 = y1 + this.yTiles*scale;
+    var x1 = parseInt(cx - (this.i+1)*scale + scale/2);
+    var y1 = parseInt(cy - (this.j+1)*scale + scale/2);
     for (var i = 0; i < this.xTiles; i++) {
       for (var j = 0; j < this.yTiles; j++) {
-        this.tiles[i][j].render(ctx, x1 + i * scale, y1 + j * scale, scale/tilesize, dirty);
+        this.tiles[i][j].render(ctx, x1 + i * scale, y1 + j * scale, scale/tilesize, dirty || this.dirty);
       }
     }
     if (this.tile.inBounds(curx, cury) && !this.game.keyDown("alt") && !this.game.keyDown("tab")) {
-      if (mousedown) {
-        this.tile.setXY(curx, cury, c);
-      } else {
-        this.tile.cursor(ctx, curx, cury, c);
-      }
+      this.tile.cursor(ctx, curx, cury, c);
     }
+    this.tile.stroke(ctx);
+    this.dirty = false;
   };
 
   board.prototype.handleClick = function(e, cx, cy, curx, cury, zoom) {
@@ -53,6 +46,36 @@ Game.Board = (function(g){
       }
     }
   };
+
+  board.prototype.handleMouseMove = function(curx, cury, mousedown, c) {
+    if (mousedown && this.tile.inBounds(curx, cury) && !this.game.keyDown("alt") && !this.game.keyDown("tab")) {
+      this.tile.setXY(curx, cury, c);
+    }
+  }
+
+  board.prototype.move = function(dx, dy) {
+    this.dirty = true;
+    if (this.tile.active) {
+      this.tile.deactivate();
+      // Commit edits
+    }
+    if ((dx < 0 && this.i < 1) || (dx > 0 && this.i >= this.xTiles - 1) ||
+       ( dy < 0 && this.j < 1) || (dy > 0 && this.j >= this.yTiles - 1)) {
+       return;
+    }
+    this.i += dx;
+    this.j += dy;
+    this.tile = this.tiles[this.i][this.j];
+  }
+
+  board.prototype.toggleActive = function() {
+    this.dirty = true;
+    this.tile.toggleActive();
+  }
+
+  board.prototype.isDirty = function() {
+    return this.dirty;
+  }
 
   var Tile = function(w, h){
     this.x1 = 0;
@@ -73,7 +96,10 @@ Game.Board = (function(g){
       this.x1 = x1;
       this.y1 = y1;
       this.scale = scale;
+      this.active = false;
       this.dirty = false;
+      this.cursorX = 0;
+      this.cursorY = 0;
       var prev = "";
       for (var i = 0; i < this.px.length; i++) {
         for (var j = 0; j < this.px[i].length; j++) {
@@ -84,6 +110,16 @@ Game.Board = (function(g){
         }
       }
     }
+  };
+
+  Tile.prototype.deactivate = function() {
+    this.active = false;
+    this.dirty = true;
+  };
+
+  Tile.prototype.toggleActive = function() {
+    this.active = !this.active;
+    this.dirty = true;
   };
 
   Tile.prototype.get = function(i, j) {
@@ -97,7 +133,6 @@ Game.Board = (function(g){
   };
 
   Tile.prototype.set = function(i, j, c) {
-    log(i, j, c);
     this.px[i][j] = c;
     this.dirty = true;
   };
@@ -130,6 +165,15 @@ Game.Board = (function(g){
     );
   }
 
+  Tile.prototype.stroke = function(ctx) {
+    ctx.lineWidth = .2;
+    if (this.active) {
+      ctx.strokeStyle = "rgba(255,0,0,0.5)";
+    } else {
+      ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    }
+    ctx.strokeRect(this.x1, this.y1, this.scale * this.px.length, this.scale * this.px.length);
+  }
 
   return board
 

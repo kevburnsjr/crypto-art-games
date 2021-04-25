@@ -3,7 +3,7 @@ var Game = (function(g){
 
   var animationFrame;
   var deg_to_rad = Math.PI / 180.0;
-  var color = "#fff"
+  var color = "#000"
   var zoom = 16;
   var pzoom = 16;
   var ctx, elem;
@@ -48,13 +48,14 @@ var Game = (function(g){
         elem.width = w;
         elem.height = h;
         pzoom = zoom;
-        ctx.clearRect(0, 0, w, h);
         dirty = true;
+    }
+    if (dirty || board.isDirty()) {
+      ctx.clearRect(0, 0, w, h);
     }
     try {
       board.render(ctx, w/2, h/2, hoverX, hoverY, zoom, dirty, mousedown, color);
     } catch(e) {
-      console.log(e);
       window.cancelAnimationFrame(animationFrame);
       bgtimeout = setTimeout(function(){
         window.cancelAnimationFrame(animationFrame);
@@ -81,9 +82,8 @@ var Game = (function(g){
     if (t.nodeName == "BUTTON" && t.parentElement.id == "palette") {
       e.preventDefault();
       e.stopPropagation();
-      log(e)
       var color = window.getComputedStyle(t).backgroundColor.replaceAll(/%20/g,"");
-      Game.setColor(color);
+      setColor(color);
     } else {
       board.handleClick(e, w/2, h/2, hoverX, hoverY, zoom)
     }
@@ -94,6 +94,7 @@ var Game = (function(g){
   document.addEventListener('mousemove', function(e){
     hoverX = Math.round(e.pageX);
     hoverY = Math.round(e.pageY);
+    board.handleMouseMove(hoverX, hoverY, mousedown, color);
   });
   document.addEventListener('mouseup', function(e){
     mousedown = false;
@@ -110,6 +111,22 @@ var Game = (function(g){
     if (k == "alt") {
       e.preventDefault();
       document.body.classList.add("color-picking");
+    }
+    if (k == "w") {
+      e.preventDefault();
+      board.move(0, -1);
+    }
+    if (k == "s") {
+      e.preventDefault();
+      board.move(0, 1);
+    }
+    if (k == "a") {
+      e.preventDefault();
+      board.move(-1, 0);
+    }
+    if (k == "d") {
+      e.preventDefault();
+      board.move(1, 0);
     }
     if (k == "tab") {
       e.preventDefault();
@@ -135,12 +152,18 @@ var Game = (function(g){
       }
     }
   });
+  document.addEventListener('keypress', function(e){
+    if (e.key == " ") {
+      e.preventDefault();
+      board.toggleActive();
+    }
+  });
   document.addEventListener('wheel', function(e) {
     if (e.deltaY < 0) {
-      zoom += 2;
+      zoom += Math.max(parseInt(zoom/2), 1);
     }
     if (e.deltaY > 0) {
-      zoom -= 2;
+      zoom -= Math.max(parseInt(zoom/2), 1);
     }
     setZoom();
     sethash();
@@ -167,7 +190,7 @@ var Game = (function(g){
   };
 
   var setZoom = function() {
-    zoom = Math.max(1, Math.min(64, zoom));
+    zoom = Math.max(1, Math.min(32, zoom));
   };
 
   var setColor = function(c) {
@@ -180,6 +203,7 @@ var Game = (function(g){
       document.body.classList.remove('bg-light');
     }
     elem.style.backgroundColor = color;
+    sethash();
   };
 
   return {
