@@ -1,0 +1,41 @@
+<html><head>
+
+<link href="/css/font.css" rel="stylesheet"></link>
+<link href="/css/global.css" rel="stylesheet"></link>
+</head><body>
+<nav class="user">
+{{if .ID}}
+    <a href="#{{.ID}}-{{.Login}}">
+        <img src="{{.ProfileImageURL}}"/>
+        <span>{{.DisplayName}}</span>
+    </a>
+{{else}}
+    <a href="/login" class="login">
+        <span>Login using Twitch</span>
+    </a>
+{{end}}
+</nav>
+<canvas id="bgcanvas">
+</canvas>
+<div id="palette" class="palette">
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+    <button></button>
+</div>
+<script src="/js/global.js"></script>
+<script src="/js/game.js"></script>
+<script src="/js/board.js"></script>
+</body></html>

@@ -1,0 +1,49 @@
+html { font-size: 100%; }
+body { margin: 0; font-size: 13px; line-height: 1.231; font-family: open sans, arial, sans-serif; color: rgba(0,0,0,0.75); position: relative; }
+html, body { min-height: 100vh; overflow: hidden; }
+button { font-weight: bold; background: #000; border-radius: 0; border: none; text-align: center; line-height: 2em; }
+a { text-decoration: none; color: rgba(255,255,255,0.7); }
+a:hover { text-decoration: underline; color: rgba(255,255,255,0.9); }
+
+div.palette { position: absolute; display: none; width: 16em; height: 4em; margin-left: -8em; margin-top: -2em; z-index: 200; box-shadow: 0px 0px 10px rgba(0,0,0,0.5); }
+div.palette button { font-size: 1em; width: 2em; height: 2em; float: left; cursor: pointer; }
+div.palette button:nth-child(16n + 1)  { background: #ec6f1c; }
+div.palette button:nth-child(16n + 2)  { background: #b4522e; }
+div.palette button:nth-child(16n + 3)  { background: #7a3030; }
+div.palette button:nth-child(16n + 4)  { background: #f6ae3c; }
+div.palette button:nth-child(16n + 5)  { background: #fbdb7a; }
+div.palette button:nth-child(16n + 6)  { background: #eafba3; }
+div.palette button:nth-child(16n + 7)  { background: #e3f6d5; }
+div.palette button:nth-child(16n + 8)  { background: #9ce77f; }
+div.palette button:nth-child(16n + 9)  { background: #49d866; }
+div.palette button:nth-child(16n + 10) { background: #408761; }
+div.palette button:nth-child(16n + 11) { background: #2d4647; }
+div.palette button:nth-child(16n + 12) { background: #345452; }
+div.palette button:nth-child(16n + 13) { background: #3a878b; }
+div.palette button:nth-child(16n + 14) { background: #3da4db; }
+div.palette button:nth-child(16n + 15) { background: #95c5f2; }
+div.palette button:nth-child(16n + 16) { background: #cacff9; }
+
+nav.user {
+    background: #000;
+    position: absolute; top: 0; right: 0;
+    z-index: 100;
+}
+nav.user a { float: left; }
+nav.user a span { float: left; line-height: 3em; padding: 0em 1.5em 0em 1em; }
+nav.user a img { height: 3em; margin: 0 0.5em 0 -1.5em; float: left; border-radius: 50%; padding: 0; }
+
+canvas#bgcanvas {
+    background: #000;
+    position: absolute; top: 0; left: 0;
+    z-index: 1;
+    cursor: url(/i/cursor-dark.png) 5 5, cell;
+    cursor: pointer;
+}
+body.bg-light canvas#bgcanvas {
+    cursor: url(/i/cursor-light.png) 5 5, cell;
+}
+
+body.color-picking canvas#bgcanvas {
+    cursor: url(/i/cursor-eyedropper-light.png) 5 5, cell;
+}

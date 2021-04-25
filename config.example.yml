@@ -1,0 +1,17 @@
+api:
+  port: 4000
+  ssl:
+    enabled: false
+    cert:
+    key:
+
+log:
+  level: debug
+
+twitch:
+  oidc_issuer: https://id.twitch.tv/oauth2
+  oauth_redirect: http://crypto-art-games/oauth
+  client_id: REDACTED
+  client_secret: REDACTED
+
+secret: REDACTED
