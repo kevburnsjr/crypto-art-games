@@ -1,11 +1,12 @@
 var Game = (function(g){
   "use strict";
 
+  var defaultZoom = 16
   var animationFrame;
   var deg_to_rad = Math.PI / 180.0;
   var color = "#000"
-  var zoom = 16;
-  var pzoom = 16;
+  var zoom = defaultZoom;
+  var pzoom = defaultZoom;
   var ctx, elem;
   var last = Date.now();
   var fps_tick = Date.now();
@@ -28,6 +29,9 @@ var Game = (function(g){
       var parts = window.location.hash.substr(1).split(':');
       setColor(parts[0]);
       zoom = parseInt(parts[1]);
+    } else {
+      var el = paletteMenu.children[Math.floor(Math.random() * paletteMenu.children.length)];
+      setColor(window.getComputedStyle(el).backgroundColor);
     }
     board = new Game.Board(Game, 16, 16);
     reset();
@@ -75,15 +79,37 @@ var Game = (function(g){
 
   var clickpoint = [];
   var mousedown = false;
+  var worldnav = false;
+  var brushState = false;
   document.addEventListener('mousedown', function(e){
+    var t = e.target;
+    if (t.parentElement.id == "logo") {
+      e.preventDefault();
+      document.getElementById("world-nav").classList.add("open");
+      worldnav = true;
+      return
+    }
+    if (t.id == "brush-state") {
+      if (paletteMenu.style.display != "block") {
+        paletteMenu.style.left = parseInt(t.offsetWidth*1.333);
+        paletteMenu.style.removeProperty("top");
+        paletteMenu.style.bottom = 0;
+        paletteMenu.style.display = "block";
+        brushState = true;
+      }
+      return
+    }
     mousedown = true;
     clickpoint = [e.offsetX, e.offsetY];
-    var t = e.target;
     if (t.nodeName == "BUTTON" && t.parentElement.id == "palette") {
       e.preventDefault();
       e.stopPropagation();
       var color = window.getComputedStyle(t).backgroundColor.replaceAll(/%20/g,"");
       setColor(color);
+      if (brushState) {
+        paletteMenu.style.display = "none";
+        brushState = false;
+      }
     } else {
       board.handleClick(e, w/2, h/2, hoverX, hoverY, zoom)
     }
@@ -97,6 +123,11 @@ var Game = (function(g){
     board.handleMouseMove(hoverX, hoverY, mousedown, color);
   });
   document.addEventListener('mouseup', function(e){
+    if (worldnav) {
+      document.getElementById("world-nav").classList.remove("open");
+      worldnav = false;
+      return
+    }
     mousedown = false;
     clickpoint = [];
     animate = true;
@@ -112,22 +143,38 @@ var Game = (function(g){
       e.preventDefault();
       document.body.classList.add("color-picking");
     }
-    console.log(e);
     if (k == "w" || k == "arrowup") {
       e.preventDefault();
-      board.move(0, -1);
-    }
-    if (k == "s" || k == "arrowdown") {
-      e.preventDefault();
-      board.move(0, 1);
+      // if ctrl move boards else move tiles
+      board.moveTile(0, -1);
     }
     if (k == "a" || k == "arrowleft") {
       e.preventDefault();
-      board.move(-1, 0);
+      // if ctrl move boards else move tiles
+      board.moveTile(-1, 0);
+    }
+    if (k == "s" || k == "arrowdown") {
+      e.preventDefault();
+      // if ctrl move boards else move tiles
+      board.moveTile(0, 1);
     }
     if (k == "d" || k == "arrowright") {
       e.preventDefault();
-      board.move(1, 0);
+      // if ctrl move boards else move tiles
+      board.moveTile(1, 0);
+    }
+    if (k == "0" || k == "numpad0") {
+      e.preventDefault();
+      zoom = 2;
+      setZoom();
+    }
+    if (k == "pageup") {
+      e.preventDefault();
+      // Navigate to next page
+    }
+    if (k == "pagedown") {
+      e.preventDefault();
+      // Navigate to previous page
     }
     if (k == "tab") {
       e.preventDefault();
@@ -156,6 +203,7 @@ var Game = (function(g){
   document.addEventListener('keypress', function(e){
     if (e.key == " ") {
       e.preventDefault();
+      console.log(e);
       board.toggleActive();
     }
   });
@@ -203,7 +251,8 @@ var Game = (function(g){
     } else {
       document.body.classList.remove('bg-light');
     }
-    elem.style.backgroundColor = color;
+    document.getElementById("brush-state").style.backgroundColor = color;
+    // elem.style.   = color;
     sethash();
   };
 

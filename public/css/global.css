@@ -1,6 +1,6 @@
 html { font-size: 100%; }
 body { margin: 0; font-size: 13px; line-height: 1.231; font-family: open sans, arial, sans-serif; color: rgba(0,0,0,0.75); position: relative; }
-html, body { min-height: 100vh; overflow: hidden; }
+html, body { min-height: 100vh; overflow: hidden; background: #191919; }
 button { font-weight: bold; background: #000; border-radius: 0; border: none; text-align: center; line-height: 2em; }
 a { text-decoration: none; color: rgba(255,255,255,0.7); }
 a:hover { text-decoration: underline; color: rgba(255,255,255,0.9); }
@@ -24,21 +24,40 @@ div.palette button:nth-child(16n + 14) { background: #3da4db; }
 div.palette button:nth-child(16n + 15) { background: #95c5f2; }
 div.palette button:nth-child(16n + 16) { background: #cacff9; }
 
+nav.world { position: absolute; top: 0; left: 0; z-index: 100; }
+nav.world a { float: left; background: #ccc;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+nav.world a span { float: left; line-height: 2em; padding: 0em 1.5em; color: #fff; font-weight: bold; text-shadow: 0 0 2px rgba(0,0,0,0.7); cursor: pointer; font-size: 1.5em; }
+nav.world a img { height: 3em; margin: 0 -1.5em 0 0; float: right; border-radius: 50%; padding: 0; }
+nav.world div.levels { width: 34em; height: 22em; background: rgba(255,255,255,0.9); margin-top: 3em; display: none; }
+nav.world div.levels div { width: 2em; height: 2em; float: left; content: "a"; color: rgba(0,0,0,0.7);
+    text-align: center; box-shadow: inset 0 0 1px rgba(0,0,0,0.5); font-size: 1em; line-height: 2em; font-family: monospace; }
+nav.world div.levels div:hover { box-shadow: inset 0 0 1px rgba(0,0,0,1); background: #fff; }
+nav.world.open div.levels { display: block; }
+nav.world div.levels div:nth-child(17n+1) { background: rgba(192,192,192,0.9); }
+nav.world div.levels div:nth-child(-n+17) { background: rgba(192,192,192,0.9); }
+
+nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+
 nav.user {
     background: #000;
     position: absolute; top: 0; right: 0;
     z-index: 100;
 }
 nav.user a { float: left; }
-nav.user a span { float: left; line-height: 3em; padding: 0em 1.5em 0em 1em; }
-nav.user a img { height: 3em; margin: 0 0.5em 0 -1.5em; float: left; border-radius: 50%; padding: 0; }
+nav.user a span { float: left; line-height: 3em; padding: 0em 1.5em; }
+nav.user a img { height: 3em; margin: 0 0 0 -1.5em; float: left; border-radius: 50%; padding: 0; }
 
 canvas#bgcanvas {
-    background: #000;
+    background: #666;
     position: absolute; top: 0; left: 0;
     z-index: 1;
     cursor: url(/i/cursor-dark.png) 5 5, cell;
-    cursor: pointer;
 }
 body.bg-light canvas#bgcanvas {
     cursor: url(/i/cursor-light.png) 5 5, cell;
