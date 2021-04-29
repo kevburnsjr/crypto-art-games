@@ -22,9 +22,11 @@ var Game = (function(g){
 
   var start = function(canvas, p) {
     paletteMenu = p;
-    console.log("start");
     elem = canvas;
-    ctx = elem.getContext('2d');
+    ctx = elem.getContext('2d', {
+      alpha: false,
+      desynchronized: true
+    });
     if(window.location.hash) {
       var parts = window.location.hash.substr(1).split(':');
       setColor(parts[0]);
@@ -34,8 +36,17 @@ var Game = (function(g){
       setColor(window.getComputedStyle(el).backgroundColor);
     }
     board = new Game.Board(Game, 16, 16);
+    var icanvas = document.createElement('canvas');
+    var ictx = icanvas.getContext("2d");
+    var img = new Image();
+    img.onload = function() {
+      icanvas.width = img.width;
+      icanvas.height = img.height;
+      ictx.drawImage(img, 0, 0);
+      board.setData(ictx);
+    };
+    img.src = "/palettes/autumn.gif";
     reset();
-    // Load board(s)
   };
 
   var reset = function() {
@@ -203,7 +214,6 @@ var Game = (function(g){
   document.addEventListener('keypress', function(e){
     if (e.key == " ") {
       e.preventDefault();
-      console.log(e);
       board.toggleActive();
     }
   });
