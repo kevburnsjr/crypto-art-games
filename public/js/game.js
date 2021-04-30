@@ -154,6 +154,10 @@ var Game = (function(g){
       e.preventDefault();
       document.body.classList.add("color-picking");
     }
+    if (k == "e") {
+      e.preventDefault();
+      document.body.classList.add("erasing");
+    }
     if (k == "w" || k == "arrowup") {
       e.preventDefault();
       // if ctrl move boards else move tiles
@@ -196,12 +200,19 @@ var Game = (function(g){
         paletteMenu.style.display = "block";
       }
     }
+    if (k == "escape") {
+      e.preventDefault();
+      board.cancelActive();
+    }
   });
   document.addEventListener('keyup', function(e){
     var k = e.key.toLowerCase();
     keyDownMap[k] = false;
     if (k == "alt") {
       document.body.classList.remove("color-picking");
+    }
+    if (k == "e") {
+      document.body.classList.remove("erasing");
     }
     if (k == "tab") {
       e.preventDefault();

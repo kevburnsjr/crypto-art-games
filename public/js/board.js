@@ -36,7 +36,7 @@ Game.Board = (function(g){
         this.tiles[i][j].render(ctx, x1 + i * this.scale, y1 + j * this.scale, this.scale/tilesize, dirty || this.dirty);
       }
     }
-    if (this.tile.active && this.tile.inBounds(curx, cury) && !this.game.keyDown("alt") && !this.game.keyDown("tab")) {
+    if (this.tile.active && this.tile.inBounds(curx, cury) && !this.game.keyDown("alt") && !this.game.keyDown("tab") && !this.game.keyDown("e")) {
       this.tile.cursor(ctx, curx, cury, c);
     }
     if (this.dirty || dirty) {
@@ -59,7 +59,12 @@ Game.Board = (function(g){
     }
     if (this.i == i && this.j == j) {
       if (this.tile.active && !this.game.keyDown("tab")) {
-        this.tile.setXY(curx, cury, this.game.color());
+        if (this.game.keyDown("e")) {
+          console.log("e");
+          this.tile.clearXY(curx, cury);
+        } else {
+          this.tile.setXY(curx, cury, this.game.color());
+        }
       }
     } else if (!this.tile || !this.tile.active && 0 <= i && i < this.xTiles && 0 <= j && j < this.yTiles) {
       this.i = i;
@@ -72,14 +77,18 @@ Game.Board = (function(g){
   board.prototype.handleMouseMove = function(curx, cury, mousedown, c) {
     if (mousedown && this.tile && this.tile.active && this.tile.inBounds(curx, cury) &&
       !this.game.keyDown("alt") && !this.game.keyDown("tab")) {
-      this.tile.setXY(curx, cury, c);
+      if (this.game.keyDown("e")) {
+        this.tile.clearXY(curx, cury);
+      } else {
+        this.tile.setXY(curx, cury, c);
+      }
     }
   }
 
   board.prototype.moveTile = function(dx, dy) {
     this.dirty = true;
     if (this.tile.active) {
-      this.tile.deactivate();
+      this.tile.commit();
       // Commit edits
     }
     if ((dx < 0 && this.i < 1) || (dx > 0 && this.i >= this.xTiles - 1) ||
@@ -92,8 +101,25 @@ Game.Board = (function(g){
   }
 
   board.prototype.toggleActive = function() {
-    this.dirty = true;
-    this.tile.toggleActive();
+    var self = this;
+    if (!this.tile.active) {
+      this.tile.lock().then(function(){
+        self.dirty = true;
+      });
+    } else {
+      this.tile.commit().then(function(){
+        self.dirty = true;
+      });
+    }
+  }
+
+  board.prototype.cancelActive = function() {
+    var self = this;
+    if (this.tile.active) {
+      this.tile.rollback().then(function(){
+        self.dirty = true;
+      });
+    }
   }
 
   board.prototype.isDirty = function() {
