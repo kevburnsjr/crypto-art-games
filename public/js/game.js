@@ -15,14 +15,17 @@ var Game = (function(g){
   var w;
   var h;
   var board;
+  var palette;
   var hoverX;
   var hoverY;
   var bgtimeout = null;
-  var paletteMenu;
+  var autumn = [
+    "ec6f1c", "b4522e", "7a3030", "f6ae3c", "fbdb7a", "eafba3", "e3f6d5", "9ce77f",
+    "49d866", "408761", "2d4647", "345452", "3a878b", "3da4db", "95c5f2", "cacff9"
+  ];
 
-  var start = function(canvas, p) {
-    paletteMenu = p;
-    elem = canvas;
+  var start = function(canvasElem, paletteElem) {
+    elem = canvasElem;
     ctx = elem.getContext('2d', {
       alpha: false,
       desynchronized: true
@@ -32,21 +35,19 @@ var Game = (function(g){
       setColor(parts[0]);
       zoom = parseInt(parts[1]);
     } else {
-      var el = paletteMenu.children[Math.floor(Math.random() * paletteMenu.children.length)];
-      setColor(window.getComputedStyle(el).backgroundColor);
+      setColor(autumn[Math.floor(Math.random() * autumn.length)]);
     }
-    board = new Game.Board(Game, 16, 16);
-    var icanvas = document.createElement('canvas');
-    var ictx = icanvas.getContext("2d");
-    var img = new Image();
-    img.onload = function() {
-      icanvas.width = img.width;
-      icanvas.height = img.height;
-      ictx.drawImage(img, 0, 0);
-      board.setData(ictx);
-    };
-    img.src = "/palettes/autumn.gif";
+    palette = new Game.Palette(paletteElem, autumn);
+    board = new Game.Board(Game, "/palettes/autumn.gif", palette, 16, 16);
     reset();
+    document.addEventListener('mousemove', mousemove);
+    document.addEventListener('mousedown', mousedown);
+    document.addEventListener('mouseup', mouseup);
+    document.addEventListener('keydown', keydown);
+    document.addEventListener('keyup', keyup);
+    document.addEventListener('keypress', keypress);
+    document.addEventListener('wheel', wheel);
+    window.addEventListener('resize', resize);
   };
 
   var reset = function() {
@@ -89,10 +90,16 @@ var Game = (function(g){
   // ----------------- Input Functions -------------------
 
   var clickpoint = [];
-  var mousedown = false;
+  var isMousedown = false;
   var worldnav = false;
   var brushState = false;
-  document.addEventListener('mousedown', function(e){
+  var keyDownMap = {};
+  var isKeyDown = function(k) {
+    return keyDownMap[k];
+  }
+
+  // mousedown
+  var mousedown = function(e){
     var t = e.target;
     if (t.parentElement.id == "logo") {
       e.preventDefault();
@@ -101,24 +108,20 @@ var Game = (function(g){
       return
     }
     if (t.id == "brush-state") {
-      if (paletteMenu.style.display != "block") {
-        paletteMenu.style.left = parseInt(t.offsetWidth*1.333);
-        paletteMenu.style.removeProperty("top");
-        paletteMenu.style.bottom = 0;
-        paletteMenu.style.display = "block";
+      if (!palette.active) {
+        palette.showBottom();
         brushState = true;
       }
       return
     }
-    mousedown = true;
+    isMousedown = true;
     clickpoint = [e.offsetX, e.offsetY];
-    if (t.nodeName == "BUTTON" && t.parentElement.id == "palette") {
+    if (t.id == "palette") {
       e.preventDefault();
       e.stopPropagation();
-      var color = window.getComputedStyle(t).backgroundColor.replaceAll(/%20/g,"");
-      setColor(color);
+      setColor(palette.getXY(e.pageX, e.pageY));
       if (brushState) {
-        paletteMenu.style.display = "none";
+        palette.hide();
         brushState = false;
       }
     } else {
@@ -127,27 +130,29 @@ var Game = (function(g){
     if (e.target.nodeName != "CANVAS") {
       return;
     }
-  });
-  document.addEventListener('mousemove', function(e){
+  };
+
+  // mousemove
+  var mousemove = function(e){
     hoverX = Math.round(e.pageX);
     hoverY = Math.round(e.pageY);
-    board.handleMouseMove(hoverX, hoverY, mousedown, color);
-  });
-  document.addEventListener('mouseup', function(e){
+    board.handleMouseMove(hoverX, hoverY, isMousedown, color);
+  };
+
+  // mouseup
+  var mouseup = function(e){
     if (worldnav) {
       document.getElementById("world-nav").classList.remove("open");
       worldnav = false;
       return
     }
-    mousedown = false;
+    isMousedown = false;
     clickpoint = [];
     animate = true;
-  });
-  var keyDownMap = {};
-  var keyDown = function(k) {
-    return keyDownMap[k];
-  }
-  document.addEventListener('keydown', function(e){
+  };
+
+  // keydown
+  var keydown = function(e){
     var k = e.key.toLowerCase();
     keyDownMap[k] = true;
     if (k == "alt") {
@@ -185,27 +190,27 @@ var Game = (function(g){
     }
     if (k == "pageup") {
       e.preventDefault();
-      // Navigate to next page
+      // Navigate to next board
     }
     if (k == "pagedown") {
       e.preventDefault();
-      // Navigate to previous page
+      // Navigate to previous board
     }
     if (k == "tab") {
       e.preventDefault();
       e.stopPropagation();
-      if (paletteMenu.style.display != "block") {
-        paletteMenu.style.left = hoverX;
-        paletteMenu.style.top = hoverY;
-        paletteMenu.style.display = "block";
+      if (!palette.active) {
+        palette.show(hoverX, hoverY);
       }
     }
     if (k == "escape") {
       e.preventDefault();
       board.cancelActive();
     }
-  });
-  document.addEventListener('keyup', function(e){
+  };
+
+  // keyup
+  var keyup = function(e){
     var k = e.key.toLowerCase();
     keyDownMap[k] = false;
     if (k == "alt") {
@@ -217,18 +222,20 @@ var Game = (function(g){
     if (k == "tab") {
       e.preventDefault();
       e.stopPropagation();
-      if (paletteMenu.style.display != "none") {
-        paletteMenu.style.display = "none";
-      }
+      palette.hide();
     }
-  });
-  document.addEventListener('keypress', function(e){
+  };
+
+  // keypress
+  var keypress = function(e){
     if (e.key == " ") {
       e.preventDefault();
       board.toggleActive();
     }
-  });
-  document.addEventListener('wheel', function(e) {
+  };
+
+  // wheel
+  var wheel = function(e) {
     if (e.deltaY < 0) {
       if (zoom < 6) {
         zoom += 1;
@@ -249,17 +256,14 @@ var Game = (function(g){
     }
     setZoom();
     sethash();
-  });
+  };
 
   // ----------------- View Functions -------------------
 
-  window.addEventListener('resize', function(e){
+  var resize = function(e){
     clearTimeout(bgtimeout);
-    bgtimeout = setTimeout(function(){
-      w = window.innerWidth;
-      h = window.innerHeight;
-    }, 300);
-  });
+    bgtimeout = setTimeout(reset, 100);
+  };
 
   // ----------------- State Functions -------------------
 
@@ -276,8 +280,13 @@ var Game = (function(g){
   };
 
   var setColor = function(c) {
+    console.log(c);
     color = c.replaceAll(/%20/g,"");
     var rgb = [...color.matchAll(/\d+/g)];
+    if (c.length == 6) {
+      color = "#" + color;
+      rgb = [parseInt(c.substr(0,2), 16), parseInt(c.substr(2,2), 16), parseInt(c.substr(4,2), 16)];
+    }
     var hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
     if (hsl[2] > 0.5) {
       document.body.classList.add('bg-light');
@@ -285,7 +294,6 @@ var Game = (function(g){
       document.body.classList.remove('bg-light');
     }
     document.getElementById("brush-state").style.backgroundColor = color;
-    // elem.style.   = color;
     sethash();
   };
 
@@ -298,7 +306,7 @@ var Game = (function(g){
       return mousedown;
     },
     setColor: setColor,
-    keyDown: keyDown
+    isKeyDown: isKeyDown
   };
 
 })(Game || {});

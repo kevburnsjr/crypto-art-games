@@ -4,13 +4,14 @@ Game.Tile = (function(g){
   var tilesize = 16;
   var editLimit = 64;
 
-  var tile = function(imgData){
+  var tile = function(imgData, palette){
     this.x1 = 0;
     this.y1 = 0;
     this.scale = 1;
     this.px = [];
     this.buffer = [];
     this.bufferCount = 0;
+    this.palette = palette;
     this.w = imgData.width;
     this.h = imgData.height;
     this.active = false;
@@ -93,11 +94,9 @@ Game.Tile = (function(g){
             n = i*self.w + parseInt(j);
             if (self.buffer[i][j] != "") {
               mask.set(n, 1);
-              colors.push(self.buffer[i][j]);
+              colors.push(this.palette.getIdx(self.buffer[i][j]));
               self.px[i][j] = self.buffer[i][j];
               self.buffer[i][j] = "";
-            } else {
-              mask.set(n, 0);
             }
           }
         }
@@ -105,7 +104,7 @@ Game.Tile = (function(g){
         self.dirty = true;
         self.bufferCount = 0;
         if (colors.length > 0) {
-          console.log(hex2b64(mask.slice(0,255).toString(16)), mask, colors);
+          console.log(hex2b64(mask.slice(0,255).toString(16)), mask.slice(0,255), colors);
         }
         resolve();
       }, 100);

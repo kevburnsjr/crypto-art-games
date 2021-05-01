@@ -3,7 +3,7 @@ Game.Board = (function(g){
 
   var tilesize = 16;
 
-  var board = function(g, xt, yt) {
+  var board = function(g, src, palette, xt, yt) {
     this.game = g;
     this.xTiles = xt;
     this.yTiles = yt;
@@ -11,14 +11,26 @@ Game.Board = (function(g){
     this.j = 0;
     this.dirty = true;
     this.scale = tilesize;
+    this.palette = palette;
     this.tiles = [];
+    var icanvas = document.createElement('canvas');
+    var ictx = icanvas.getContext("2d");
+    var img = new Image();
+    var that = this;
+    img.onload = function() {
+      icanvas.width = img.width;
+      icanvas.height = img.height;
+      ictx.drawImage(img, 0, 0);
+      that.setData(ictx);
+    };
+    img.src = src;
   };
 
   board.prototype.setData = function(bgctx) {
     for (var i = 0; i < this.xTiles; i++) {
       this.tiles[i] = [];
       for (var j = 0; j < this.yTiles; j++) {
-        this.tiles[i][j] = new Game.Tile(bgctx.getImageData(i*tilesize, j*tilesize, tilesize, tilesize));
+        this.tiles[i][j] = new Game.Tile(bgctx.getImageData(i*tilesize, j*tilesize, tilesize, tilesize), this.palette);
       }
     }
     this.tile = this.tiles[this.i][this.j];
@@ -36,7 +48,7 @@ Game.Board = (function(g){
         this.tiles[i][j].render(ctx, x1 + i * this.scale, y1 + j * this.scale, this.scale/tilesize, dirty || this.dirty);
       }
     }
-    if (this.tile.active && this.tile.inBounds(curx, cury) && !this.game.keyDown("alt") && !this.game.keyDown("tab") && !this.game.keyDown("e")) {
+    if (this.tile.active && this.tile.inBounds(curx, cury) && !this.game.isKeyDown("alt") && !this.game.isKeyDown("tab") && !this.game.isKeyDown("e")) {
       this.tile.cursor(ctx, curx, cury, c);
     }
     if (this.dirty || dirty) {
@@ -58,9 +70,8 @@ Game.Board = (function(g){
       return
     }
     if (this.i == i && this.j == j) {
-      if (this.tile.active && !this.game.keyDown("tab")) {
-        if (this.game.keyDown("e")) {
-          console.log("e");
+      if (this.tile.active && !this.game.isKeyDown("tab")) {
+        if (this.game.isKeyDown("e")) {
           this.tile.clearXY(curx, cury);
         } else {
           this.tile.setXY(curx, cury, this.game.color());
@@ -76,8 +87,8 @@ Game.Board = (function(g){
 
   board.prototype.handleMouseMove = function(curx, cury, mousedown, c) {
     if (mousedown && this.tile && this.tile.active && this.tile.inBounds(curx, cury) &&
-      !this.game.keyDown("alt") && !this.game.keyDown("tab")) {
-      if (this.game.keyDown("e")) {
+      !this.game.isKeyDown("alt") && !this.game.isKeyDown("tab")) {
+      if (this.game.isKeyDown("e")) {
         this.tile.clearXY(curx, cury);
       } else {
         this.tile.setXY(curx, cury, c);
