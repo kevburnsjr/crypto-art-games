@@ -230,10 +230,22 @@ var Game = (function(g){
   });
   document.addEventListener('wheel', function(e) {
     if (e.deltaY < 0) {
-      zoom += Math.max(parseInt(zoom/2), 1);
+      if (zoom < 6) {
+        zoom += 1;
+      } else if (zoom < 12) {
+        zoom += 2;
+      } else {
+        zoom += 4;
+      }
     }
     if (e.deltaY > 0) {
-      zoom -= Math.max(parseInt(zoom/2), 1);
+      if (zoom <= 6) {
+        zoom -= 1;
+      } else if (zoom <= 12) {
+        zoom -= 2;
+      } else {
+        zoom -= 4;
+      }
     }
     setZoom();
     sethash();
