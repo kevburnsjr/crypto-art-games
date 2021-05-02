@@ -7,6 +7,16 @@
       document.getElementById("palette")
     );
   });
+
+  var logRender = function(){
+    setTimeout(function(){
+      console.log("Renders:", window.renders);
+      window.renders = 0;
+      logRender();
+    }, 1000);
+  };
+  logRender();
+
 })();
 
 // convert rgb to hsl (ie. dark/light cursor selection)

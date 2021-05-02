@@ -40,10 +40,10 @@ canvas#bgcanvas {
     background: #666;
     position: absolute; top: 0; left: 0;
     z-index: 1;
-    /* cursor: url(/i/cursor-dark.png) 5 5, cell; */
 }
-body.bg-light canvas#bgcanvas {
-    /* cursor: url(/i/cursor-light.png) 5 5, cell; */
+body.editing canvas#bgcanvas {
+
+    cursor: crosshair;
 }
 
 body.color-picking canvas#bgcanvas {

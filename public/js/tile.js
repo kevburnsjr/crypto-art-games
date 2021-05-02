@@ -2,13 +2,18 @@ Game.Tile = (function(g){
   "use strict";
 
   var tilesize = 16;
-  var editLimit = 64;
+  var editLimit = 256;
+  var artificialLatency = 250;
 
   var tile = function(imgData, palette){
     this.x1 = 0;
     this.y1 = 0;
+    this.cursi = -1;
+    this.cursj = -1;
     this.scale = 1;
     this.px = [];
+    this.canvas = document.createElement('canvas');
+    this.ctx = this.canvas.getContext("2d");
     this.buffer = [];
     this.bufferCount = 0;
     this.palette = palette;
@@ -28,27 +33,34 @@ Game.Tile = (function(g){
   };
 
   tile.prototype.render = function(ctx, x1, y1, scale, dirty){
-    if (dirty || this.dirty) {
-      this.x1 = x1;
-      this.y1 = y1;
+    if (scale != this.scale) {
       this.scale = scale;
-      this.dirty = false;
-      this.cursorX = 0;
-      this.cursorY = 0;
-      var prev = "";
+      this.canvas.width = scale * this.w;
+      this.canvas.height = scale * this.h;
+      this.dirty = true;
+      console.log(scale, this.scale);
+    }
+    if (this.dirty) {
       for (var i = 0; i < this.w; i++) {
         for (var j = 0; j < this.h; j++) {
           if (this.buffer[i][j] != "") {
-            ctx.fillStyle = this.buffer[i][j];
-            ctx.fillRect(x1 + i * scale, y1 + j * scale, scale, scale);
+            this.ctx.fillStyle = this.buffer[i][j];
+            this.ctx.fillRect(i * scale, j * scale, scale, scale);
             continue
           }
-          if (this.px[i][j] != prev) {
-            ctx.fillStyle = this.px[i][j];
+          if (this.ctx.fillStyle != this.px[i][j]) {
+            this.ctx.fillStyle = this.px[i][j];
           }
-          ctx.fillRect(x1 + i * scale, y1 + j * scale, scale, scale);
+          this.ctx.fillRect(i * scale, j * scale, scale, scale);
         }
       }
+    }
+    if (dirty || this.dirty) {
+      this.x1 = x1;
+      this.y1 = y1;
+      this.dirty = false;
+      ctx.drawImage(this.canvas, x1, y1)
+      window.renders++;
     }
   };
 
@@ -58,13 +70,16 @@ Game.Tile = (function(g){
       setTimeout(() => {
         self.active = true;
         self.dirty = true;
+        self.cursi = -1;
+        self.cursj = -1;
         resolve();
-      }, 100);
+      }, artificialLatency);
     });
   };
 
   tile.prototype.rollback = function() {
     var self = this;
+    this.active = false;
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         for (var i in self.buffer) {
@@ -78,36 +93,29 @@ Game.Tile = (function(g){
         self.dirty = true;
         self.bufferCount = 0;
         resolve();
-      }, 100);
+      }, artificialLatency);
     });
   };
 
   tile.prototype.commit = function() {
     var self = this;
+    var f = new Game.Frame(this.palette, this.buffer);
+    this.active = false;
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const mask = new BitSet();
-        const colors = [];
-        var n = 0;
         for (var i in self.buffer) {
           for (var j in self.buffer[i]) {
-            n = i*self.w + parseInt(j);
             if (self.buffer[i][j] != "") {
-              mask.set(n, 1);
-              colors.push(this.palette.getIdx(self.buffer[i][j]));
               self.px[i][j] = self.buffer[i][j];
               self.buffer[i][j] = "";
             }
           }
         }
-        self.active = false;
+        var timecode = 12345;
         self.dirty = true;
         self.bufferCount = 0;
-        if (colors.length > 0) {
-          console.log(hex2b64(mask.slice(0,255).toString(16)), mask.slice(0,255), colors);
-        }
-        resolve();
-      }, 100);
+        resolve(timecode);
+      }, artificialLatency);
     });
   };
 
@@ -136,10 +144,25 @@ Game.Tile = (function(g){
     this.dirty = true;
   };
 
-  tile.prototype.setXY = function(x, y, c) {
+  tile.prototype.setXY = function(x, y, prevx, prevy, c) {
     var i = Math.floor((x-this.x1) / this.scale);
     var j = Math.floor((y-this.y1) / this.scale);
     this.set(i, j, c);
+    // Smoothing between mousemove samples
+    if (prevx > -1) {
+      // Delta between last pixel and current pixel
+      var di = Math.floor((prevx-this.x1) / this.scale) - i;
+      var dj = Math.floor((prevy-this.y1) / this.scale) - j;
+      while (di != 0 || dj != 0) {
+        if (-1 < i + di && i + di < (tilesize-1)
+         && -1 < j + dj && j + dj < (tilesize-1)) {
+          // Connect non-adjacent consecutive pixels
+          this.set(i + di, j + dj, c);
+        }
+        di -= di ? di / Math.abs(di) : 0;
+        dj -= dj ? dj / Math.abs(dj) : 0;
+      }
+    }
   };
 
   tile.prototype.clear = function(i, j) {
@@ -151,21 +174,51 @@ Game.Tile = (function(g){
     this.dirty = true;
   };
 
-  tile.prototype.clearXY = function(x, y) {
+  tile.prototype.clearXY = function(x, y, prevx, prevy) {
     var i = Math.floor((x-this.x1) / this.scale);
     var j = Math.floor((y-this.y1) / this.scale);
     this.clear(i, j);
+    // Smoothing between mousemove samples
+    if (prevx > -1) {
+      // Delta between last pixel and current pixel
+      var di = Math.floor((prevx-this.x1) / this.scale) - i;
+      var dj = Math.floor((prevy-this.y1) / this.scale) - j;
+      while (di != 0 || dj != 0) {
+        if (-1 < i + di && i + di < (tilesize-1)
+         && -1 < j + dj && j + dj < (tilesize-1)) {
+          // Connect non-adjacent consecutive pixels
+          this.clear(i + di, j + dj);
+        }
+        di -= di ? di / Math.abs(di) : 0;
+        dj -= dj ? dj / Math.abs(dj) : 0;
+      }
+    }
   };
 
-  tile.prototype.inBounds = function(x, y) {
-    return this.x1 < x && x < this.x1 + tilesize * this.scale &&
-      this.y1 < y && y < this.y1 + tilesize * this.scale
+  tile.prototype.inBounds = function(x, y, prevx, prevy) {
+    return this.x1 < x && x < this.x1 + tilesize * this.scale
+        && this.y1 < y && y < this.y1 + tilesize * this.scale;
   };
 
-  tile.prototype.cursor = function(ctx, x, y, c) {
+  tile.prototype.cursor = function(ctx, x, y, c, dirty) {
+    var i = Math.floor((x-this.x1) / this.scale);
+    var j = Math.floor((y-this.y1) / this.scale);
+    if (!dirty && this.cursi == i && this.cursj == j) {
+      return;
+    }
+    this.cursi = i;
+    this.cursj = j;
     this.drawPixel(ctx, x, y, c);
-    this.dirty = true;
+    if (!dirty) {
+      this.dirty = true;
+    }
   };
+
+  tile.prototype.clearCursor = function() {
+    this.cursi = -1;
+    this.cursj = -1;
+    this.dirty = true;
+  }
 
   tile.prototype.drawPixel = function(ctx, x, y, c) {
     var i = Math.floor((x-this.x1) / this.scale);
@@ -188,7 +241,6 @@ Game.Tile = (function(g){
     }
     ctx.strokeRect(this.x1, this.y1, this.scale * this.px.length, this.scale * this.px.length);
   }
-
 
   return tile
 

@@ -47,6 +47,7 @@ var Game = (function(g){
     document.addEventListener('keyup', keyup);
     document.addEventListener('keypress', keypress);
     document.addEventListener('wheel', wheel);
+    document.addEventListener('visibilitychange', visibilitychange);
     window.addEventListener('resize', resize);
   };
 
@@ -58,6 +59,7 @@ var Game = (function(g){
   };
 
   var draw = function() {
+    window.cancelAnimationFrame(animationFrame);
     animationFrame = window.requestAnimationFrame(draw);
     var dirty = false;
     if (elem.width != w || elem.height != h || zoom != pzoom) {
@@ -66,8 +68,11 @@ var Game = (function(g){
         pzoom = zoom;
         dirty = true;
     }
-    if (dirty || board.isDirty()) {
+    if (dirty || board.dirty) {
+      // ctx.fillStyle = "#666";
+      // ctx.fillRect(0, 0, w, h);
       ctx.clearRect(0, 0, w, h);
+      console.log("Clearing board", w, h)
     }
     try {
       board.render(ctx, w/2, h/2, hoverX, hoverY, zoom, dirty, mousedown, color);
@@ -147,8 +152,8 @@ var Game = (function(g){
       return
     }
     isMousedown = false;
+    board.clearPath();
     clickpoint = [];
-    animate = true;
   };
 
   // keydown
@@ -157,31 +162,49 @@ var Game = (function(g){
     keyDownMap[k] = true;
     if (k == "alt") {
       e.preventDefault();
-      document.body.classList.add("color-picking");
+      if (!document.body.classList.contains("color-picking")) {
+        document.body.classList.add("color-picking");
+        board.toggleDropper();
+      }
     }
     if (k == "e") {
       e.preventDefault();
-      document.body.classList.add("erasing");
+      if (!document.body.classList.contains("erasing")) {
+        document.body.classList.add("erasing");
+        board.toggleEraser();
+      }
+    }
+    if (k == "tab") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!palette.active) {
+        palette.show(hoverX, hoverY);
+        board.togglePalette();
+      }
     }
     if (k == "w" || k == "arrowup") {
       e.preventDefault();
       // if ctrl move boards else move tiles
       board.moveTile(0, -1);
+      document.body.classList.remove("editing");
     }
     if (k == "a" || k == "arrowleft") {
       e.preventDefault();
       // if ctrl move boards else move tiles
       board.moveTile(-1, 0);
+      document.body.classList.remove("editing");
     }
     if (k == "s" || k == "arrowdown") {
       e.preventDefault();
       // if ctrl move boards else move tiles
       board.moveTile(0, 1);
+      document.body.classList.remove("editing");
     }
     if (k == "d" || k == "arrowright") {
       e.preventDefault();
       // if ctrl move boards else move tiles
       board.moveTile(1, 0);
+      document.body.classList.remove("editing");
     }
     if (k == "0" || k == "numpad0") {
       e.preventDefault();
@@ -196,16 +219,15 @@ var Game = (function(g){
       e.preventDefault();
       // Navigate to previous board
     }
-    if (k == "tab") {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!palette.active) {
-        palette.show(hoverX, hoverY);
-      }
-    }
     if (k == "escape") {
       e.preventDefault();
-      board.cancelActive();
+      board.cancelActive().then(function() {
+        document.body.classList.remove("editing");
+      });
+      if (brushState) {
+        palette.hide();
+        brushState = false;
+      }
     }
   };
 
@@ -215,14 +237,17 @@ var Game = (function(g){
     keyDownMap[k] = false;
     if (k == "alt") {
       document.body.classList.remove("color-picking");
+      board.toggleDropper();
     }
     if (k == "e") {
       document.body.classList.remove("erasing");
+      board.toggleEraser();
     }
     if (k == "tab") {
       e.preventDefault();
       e.stopPropagation();
       palette.hide();
+      board.togglePalette();
     }
   };
 
@@ -230,7 +255,13 @@ var Game = (function(g){
   var keypress = function(e){
     if (e.key == " ") {
       e.preventDefault();
-      board.toggleActive();
+      board.toggleActive().then(function(active){
+        if (active) {
+          document.body.classList.add("editing");
+        } else {
+          document.body.classList.remove("editing");
+        }
+      });
     }
   };
 
@@ -262,7 +293,17 @@ var Game = (function(g){
 
   var resize = function(e){
     clearTimeout(bgtimeout);
-    bgtimeout = setTimeout(reset, 100);
+    bgtimeout = setTimeout(function(){
+      w = window.innerWidth;
+      h = window.innerHeight;
+    }, 100);
+  };
+  var visibilitychange = function(e){
+    document.getElementById("world-nav").classList.remove("open");
+    document.body.classList.remove("color-picking");
+    document.body.classList.remove("erasing");
+    document.body.classList.remove("editing");
+    board.cancelActive();
   };
 
   // ----------------- State Functions -------------------
@@ -280,7 +321,6 @@ var Game = (function(g){
   };
 
   var setColor = function(c) {
-    console.log(c);
     color = c.replaceAll(/%20/g,"");
     var rgb = [...color.matchAll(/\d+/g)];
     if (c.length == 6) {
