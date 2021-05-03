@@ -92,8 +92,16 @@ Game.Board = (function(g){
         } else {
           this.tile.setXY(curx, cury, this.prevx, this.prevy, this.game.color());
         }
+      } else if(!this.tile.active) {
+        this.toggleActive();
       }
-    } else if (!this.tile || !this.tile.active && 0 <= i && i < this.xTiles && 0 <= j && j < this.yTiles) {
+    } else if (!this.tile || (!this.tile.active && 0 <= i && i < this.xTiles && 0 <= j && j < this.yTiles)) {
+      this.i = i;
+      this.j = j;
+      this.tile = this.tiles[i][j];
+      this.dirty = true;
+    } else if (this.tile.active && 0 <= i && i < this.xTiles && 0 <= j && j < this.yTiles) {
+      this.tile.commit();
       this.i = i;
       this.j = j;
       this.tile = this.tiles[i][j];
