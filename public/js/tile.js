@@ -1,11 +1,14 @@
 Game.Tile = (function(g){
   "use strict";
 
+  var maxScale = 32;
   var tilesize = 16;
   var editLimit = 256;
   var artificialLatency = 250;
 
-  var tile = function(imgData, palette){
+  var tile = function(imgData, palette, ti, tj){
+    this.ti = ti;
+    this.tj = tj;
     this.x1 = 0;
     this.y1 = 0;
     this.cursi = -1;
@@ -13,12 +16,17 @@ Game.Tile = (function(g){
     this.scale = 1;
     this.px = [];
     this.canvas = document.createElement('canvas');
+    if ("OffscreenCanvas" in window) {
+      this.canvas = this.canvas.transferControlToOffscreen();
+    }
     this.ctx = this.canvas.getContext("2d");
     this.buffer = [];
     this.bufferCount = 0;
     this.palette = palette;
     this.w = imgData.width;
     this.h = imgData.height;
+    this.canvas.width = this.w * maxScale;
+    this.canvas.height = this.h * maxScale;
     this.active = false;
     for (var i = 0; i < this.w; i++) {
       this.px[i] = [];
@@ -30,28 +38,26 @@ Game.Tile = (function(g){
       }
     }
     this.dirty = true;
+    // temporary variable singleton to minimize garbage collection in render loop
+    this.v = {};
   };
 
   tile.prototype.render = function(ctx, x1, y1, scale, dirty){
     if (scale != this.scale) {
       this.scale = scale;
-      this.canvas.width = scale * this.w;
-      this.canvas.height = scale * this.h;
-      this.dirty = true;
-      console.log(scale, this.scale);
     }
     if (this.dirty) {
-      for (var i = 0; i < this.w; i++) {
-        for (var j = 0; j < this.h; j++) {
-          if (this.buffer[i][j] != "") {
-            this.ctx.fillStyle = this.buffer[i][j];
-            this.ctx.fillRect(i * scale, j * scale, scale, scale);
+      for (this.v.i = 0; this.v.i < this.w; this.v.i++) {
+        for (this.v.j = 0; this.v.j < this.h; this.v.j++) {
+          if (this.buffer[this.v.i][this.v.j] != "") {
+            this.ctx.fillStyle = this.buffer[this.v.i][this.v.j];
+            this.ctx.fillRect(this.v.i * maxScale, this.v.j * maxScale, maxScale, maxScale);
             continue
           }
-          if (this.ctx.fillStyle != this.px[i][j]) {
-            this.ctx.fillStyle = this.px[i][j];
+          if (this.ctx.fillStyle != this.px[this.v.i][this.v.j]) {
+            this.ctx.fillStyle = this.px[this.v.i][this.v.j];
           }
-          this.ctx.fillRect(i * scale, j * scale, scale, scale);
+          this.ctx.fillRect(this.v.i * maxScale, this.v.j * maxScale, maxScale, maxScale);
         }
       }
     }
@@ -59,7 +65,7 @@ Game.Tile = (function(g){
       this.x1 = x1;
       this.y1 = y1;
       this.dirty = false;
-      ctx.drawImage(this.canvas, x1, y1)
+      ctx.drawImage(this.canvas, x1, y1, this.w * scale, this.h * scale);
       window.renders++;
     }
   };
@@ -99,7 +105,12 @@ Game.Tile = (function(g){
 
   tile.prototype.commit = function() {
     var self = this;
-    var f = new Game.Frame(this.palette, this.buffer);
+    if (this.bufferCount == 0) {
+      self.active = false;
+      self.dirty = true;
+      return Promise.resolve();
+    }
+    var f = new Game.Frame(this);
     this.active = false;
     return new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -111,10 +122,9 @@ Game.Tile = (function(g){
             }
           }
         }
-        var timecode = 12345;
         self.dirty = true;
         self.bufferCount = 0;
-        resolve(timecode);
+        resolve(f);
       }, artificialLatency);
     });
   };

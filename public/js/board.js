@@ -27,13 +27,15 @@ Game.Board = (function(g){
       self.setData(ictx);
     };
     img.src = src;
+    // temporary variable singleton to minimize garbage collection in render loop
+    this.v = {};
   };
 
   board.prototype.setData = function(bgctx) {
     for (var i = 0; i < this.xTiles; i++) {
       this.tiles[i] = [];
       for (var j = 0; j < this.yTiles; j++) {
-        this.tiles[i][j] = new Game.Tile(bgctx.getImageData(i*tilesize, j*tilesize, tilesize, tilesize), this.palette);
+        this.tiles[i][j] = new Game.Tile(bgctx.getImageData(i*tilesize, j*tilesize, tilesize, tilesize), this.palette, i, j);
       }
     }
     this.tile = this.tiles[this.i][this.j];
@@ -44,16 +46,24 @@ Game.Board = (function(g){
       return;
     }
     this.scale = tilesize*zoom;
-    var x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
-    var y1 = parseInt(cy - (this.j+1)*this.scale + this.scale/2);
-    var tileDirty = this.tile.dirty;
+    this.v.x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
+    this.v.y1 = parseInt(cy - (this.j+1)*this.scale + this.scale/2);
+    this.v.x2 = this.v.x1 + this.xTiles * this.scale;
+    this.v.y2 = this.v.y1 + this.yTiles * this.scale;
+    this.v.tileDirty = this.tile.dirty;
     for (var i = 0; i < this.xTiles; i++) {
       for (var j = 0; j < this.yTiles; j++) {
-        this.tiles[i][j].render(ctx, x1 + i * this.scale, y1 + j * this.scale, this.scale/tilesize, dirty || this.dirty);
+        this.v.tx = this.v.x1 + i * this.scale;
+        this.v.ty = this.v.y1 + j * this.scale;
+        if (this.v.tx + this.scale < 0 || this.v.ty + this.scale < 0 || this.v.tx > cx * 2 || this.v.ty > cy * 2) {
+          // Don't render offscreen tiles
+          continue;
+        }
+        this.tiles[i][j].render(ctx, this.v.tx, this.v.ty, this.scale/tilesize, dirty || this.dirty);
       }
     }
     if (this.tile.active && (this.tile.dirty || this.tile.inBounds(curx, cury)) && !this.game.isKeyDown("alt") && !this.game.isKeyDown("tab") && !this.game.isKeyDown("e")) {
-      this.tile.cursor(ctx, curx, cury, c, tileDirty);
+      this.tile.cursor(ctx, curx, cury, c, this.v.tileDirty);
     } else if (this.tile.cursi > -1) {
       this.tile.clearCursor();
     }
@@ -111,7 +121,7 @@ Game.Board = (function(g){
 
   board.prototype.moveTile = function(dx, dy) {
     var self = this;
-    (this.tile.active ? this.tile.commit() : Promise.resolve()).then(function() {
+    (this.tile.active ? this.tile.commit() : Promise.resolve()).then(function(tile) {
       if ((dx < 0 && self.i < 1) || (dx > 0 && self.i >= self.xTiles - 1) ||
          ( dy < 0 && self.j < 1) || (dy > 0 && self.j >= self.yTiles - 1)) {
          return;
@@ -127,13 +137,12 @@ Game.Board = (function(g){
     var self = this;
     if (!this.tile.active) {
       return this.tile.lock().then(function(e){
-        console.log("toggleActive lock", e);
         self.dirty = true;
         return true;
       });
     } else {
-      return this.tile.commit().then(function(timecode){
-        self.edits.push(timecode);
+      return this.tile.commit().then(function(tile){
+        self.edits.push(tile);
         self.dirty = true;
         return false;
       });

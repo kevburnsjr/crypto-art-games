@@ -8,14 +8,15 @@
     );
   });
 
-  var logRender = function(){
-    setTimeout(function(){
+  var lto;
+  var debug = function(){
+    if (window.debug) {
       console.log("Renders:", window.renders);
-      window.renders = 0;
-      logRender();
-    }, 1000);
+    }
+    window.renders = 0;
+    lto = setTimeout(debug, 1000);
   };
-  logRender();
+  debug();
 
 })();
 

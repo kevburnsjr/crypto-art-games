@@ -1,10 +1,11 @@
 var Game = (function(g){
   "use strict";
 
-  var defaultZoom = 16
+  var defaultZoom = 16;
   var animationFrame;
   var deg_to_rad = Math.PI / 180.0;
-  var color = "#000"
+  var bgcolor = "#666";
+  var color = "#000";
   var zoom = defaultZoom;
   var pzoom = defaultZoom;
   var ctx, elem;
@@ -23,6 +24,8 @@ var Game = (function(g){
     "ec6f1c", "b4522e", "7a3030", "f6ae3c", "fbdb7a", "eafba3", "e3f6d5", "9ce77f",
     "49d866", "408761", "2d4647", "345452", "3a878b", "3da4db", "95c5f2", "cacff9"
   ];
+  var socket;
+  var last;
 
   var start = function(canvasElem, paletteElem) {
     elem = canvasElem;
@@ -49,6 +52,15 @@ var Game = (function(g){
     document.addEventListener('wheel', wheel);
     document.addEventListener('visibilitychange', visibilitychange);
     window.addEventListener('resize', resize);
+    // initiate websocket
+    socket = new Game.socket({
+      url: function() {
+        return "/project64/socket?ts="+(last || 0);
+      }
+    });
+    socket.on('message', function(e) {
+      console.log(e);
+    });
   };
 
   var reset = function() {
@@ -69,10 +81,8 @@ var Game = (function(g){
         dirty = true;
     }
     if (dirty || board.dirty) {
-      // ctx.fillStyle = "#666";
-      // ctx.fillRect(0, 0, w, h);
-      ctx.clearRect(0, 0, w, h);
-      console.log("Clearing board", w, h)
+      ctx.fillStyle = bgcolor;
+      ctx.fillRect(0, 0, w, h);
     }
     try {
       board.render(ctx, w/2, h/2, hoverX, hoverY, zoom, dirty, mousedown, color);
@@ -321,7 +331,7 @@ var Game = (function(g){
   };
 
   var setColor = function(c) {
-    color = c.replaceAll(/%20/g,"");
+    color = c.replace(/%20/g,"");
     var rgb = [...color.matchAll(/\d+/g)];
     if (c.length == 6) {
       color = "#" + color;
@@ -340,7 +350,7 @@ var Game = (function(g){
   return {
     start: start,
     color: function(){
-      return color.replaceAll(/%20/g, "");
+      return color.replace(/%20/g, "");
     },
     mousedown: function(){
       return mousedown;

@@ -40,6 +40,10 @@ canvas#bgcanvas {
     background: #666;
     position: absolute; top: 0; left: 0;
     z-index: 1;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 body.editing canvas#bgcanvas {
 
