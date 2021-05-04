@@ -68,14 +68,3 @@
       clearTimeout(id);
     };
 }());
-
-var logTimer = new Date();
-var log = function(...args) {
-  if (logTimer > new Date()) {
-    return
-  }
-  console.log(...args);
-  logTimer = new Date((new Date()).getTime() + 1000);
-}
-
-

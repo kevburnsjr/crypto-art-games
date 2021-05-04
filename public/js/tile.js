@@ -112,6 +112,8 @@ Game.Tile = (function(g){
     }
     var f = new Game.Frame(this);
     this.active = false;
+    console.log(f.toBytes().data);
+    Game.getSocket().connection.send(new Int32Array(f.toBytes().data));
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         for (var i in self.buffer) {

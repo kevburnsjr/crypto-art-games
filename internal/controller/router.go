@@ -12,9 +12,12 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	oauth := newOAuth(cfg, logger)
 
+	socket := newSocket(logger, oauth)
+
 	router.Handle("/", index{oauth, cfg, logger})
 	router.Handle("/login", newLogin(logger, oauth))
 	router.Handle("/oauth", oauth)
+	router.Handle("/socket", socket)
 	router.NotFoundHandler = &static{"public"}
 
 	return router

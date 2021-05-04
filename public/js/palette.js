@@ -41,8 +41,8 @@ Game.Palette = (function(g){
       this.scale = defaultScale;
       this.render();
     }
-    this.el.style.left = x;
-    this.el.style.top = y;
+    this.el.style.left = x - this.el.width / 2;
+    this.el.style.top = y - this.el.height / 2;
     this.el.style.removeProperty("bottom");
     this.el.style.display = "block";
     this.active = true;

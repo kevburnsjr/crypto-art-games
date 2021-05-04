@@ -20,7 +20,7 @@ Game.socket = (function (g) {
     };
 
     this.start = function() {
-      var failures = 1;
+      var failures = 0;
       var backoff = function() {
         return Math.max(failures*2*1000, 64 * 1000);
       }
@@ -38,23 +38,24 @@ Game.socket = (function (g) {
             return;
           }
           self.connection = new WebSocket(scheme+"://"+host+port+url);
-          connected = true;
+          self.connection.binaryType = "arraybuffer";
           self.connection.onclose = function(evt) {
+            g.online = false;
             failures++;
             connected = false;
           }
+          self.connection.onopen = function(evt) {
+            g.online = true;
+            failures = 0;
+            connected = true;
+          }
           self.connection.onmessage = function(evt) {
-            g.app.online = true;
-            failures = Math.min(failures, 10);
-            if(evt.ts && typeof evt.ts === 'number') {
-              evt.ts = '' + evt.ts;
-            }
+            console.log(evt);
             try {
-              var data = JSON.parse(evt.data);
-              self.emit('message', data);
+              self.emit('message', evt.data);
             } catch(e) {
-              g.app.log('Socket event parse failed: ' + evt);
-              g.app.log(e);
+              g.log('Socket event parse failed: ' + evt);
+              g.log(e);
             }
           }
         }

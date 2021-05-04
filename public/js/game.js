@@ -24,8 +24,8 @@ var Game = (function(g){
     "ec6f1c", "b4522e", "7a3030", "f6ae3c", "fbdb7a", "eafba3", "e3f6d5", "9ce77f",
     "49d866", "408761", "2d4647", "345452", "3a878b", "3da4db", "95c5f2", "cacff9"
   ];
-  var socket;
   var last;
+  var socket;
 
   var start = function(canvasElem, paletteElem) {
     elem = canvasElem;
@@ -55,12 +55,13 @@ var Game = (function(g){
     // initiate websocket
     socket = new Game.socket({
       url: function() {
-        return "/project64/socket?ts="+(last || 0);
+        return "/socket?ts="+(last || 0);
       }
     });
     socket.on('message', function(e) {
       console.log(e);
     });
+    socket.start();
   };
 
   var reset = function() {
@@ -347,6 +348,16 @@ var Game = (function(g){
     sethash();
   };
 
+  var log = function() {
+    if ("console" in window) {
+      console.log(...args);
+    }
+  };
+
+  var getSocket = function() {
+    return socket;
+  };
+
   return {
     start: start,
     color: function(){
@@ -356,7 +367,10 @@ var Game = (function(g){
       return mousedown;
     },
     setColor: setColor,
-    isKeyDown: isKeyDown
+    isKeyDown: isKeyDown,
+    online: false,
+    log: log,
+    getSocket: getSocket
   };
 
-})(Game || {});
+})({});
