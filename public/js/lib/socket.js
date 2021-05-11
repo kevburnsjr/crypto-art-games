@@ -50,11 +50,10 @@ Game.socket = (function (g) {
             connected = true;
           }
           self.connection.onmessage = function(evt) {
-            console.log(evt);
             try {
               self.emit('message', evt.data);
             } catch(e) {
-              g.log('Socket event parse failed: ' + evt);
+              g.log('Socket event parse failed', evt);
               g.log(e);
             }
           }

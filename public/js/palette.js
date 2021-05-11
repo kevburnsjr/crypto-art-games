@@ -14,6 +14,7 @@ Game.Palette = (function(g){
     this.w = paletterowsize;
     this.h = parseInt(colors.length / paletterowsize);
     this.active = false;
+    this.nearest = nearestColor.from(colors);
     for(var i in colors) {
       this.colorIdx[colors[i]] = parseInt(i);
     }
@@ -78,6 +79,10 @@ Game.Palette = (function(g){
     var i = Math.floor((x-this.el.offsetLeft) / this.scale);
     var j = Math.floor((y-this.el.offsetTop) / this.scale);
     return this.colors[j*paletterowsize+i];
+  };
+
+  palette.prototype.nearestColor = function(r, g, b) {
+    return this.nearest({r: r, g: g, b: b});
   };
 
   var rgbToHex = function(str) {

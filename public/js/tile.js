@@ -33,7 +33,7 @@ Game.Tile = (function(g){
       this.buffer[i] = [];
       for (var j = 0; j < this.h; j++) {
         var n = j*this.w*4 + i*4;
-        this.px[i][j] = "rgb("+imgData.data[n]+","+imgData.data[n+1]+","+imgData.data[n+2]+")";
+        this.px[i][j] = "#" + this.palette.nearestColor(imgData.data[n], imgData.data[n+1], imgData.data[n+2]);
         this.buffer[i][j] = "";
       }
     }
@@ -41,6 +41,18 @@ Game.Tile = (function(g){
     // temporary variable singleton to minimize garbage collection in render loop
     this.v = {};
   };
+
+  tile.prototype.setBufferData = function(imgData){
+    for (var i = 0; i < this.w; i++) {
+      for (var j = 0; j < this.h; j++) {
+        var n = j*this.w*4 + i*4;
+        if (imgData.data[n+3] > 0) {
+          this.set(i, j, "#" + this.palette.nearestColor(imgData.data[n], imgData.data[n+1], imgData.data[n+2]));
+        }
+      }
+    }
+    this.dirty = true;
+  }
 
   tile.prototype.render = function(ctx, x1, y1, scale, dirty){
     if (scale != this.scale) {
@@ -81,6 +93,7 @@ Game.Tile = (function(g){
         resolve();
       }, artificialLatency);
     });
+    return Game.getSocket().lockFrame(this.ti, this.tj);
   };
 
   tile.prototype.rollback = function() {
@@ -104,31 +117,26 @@ Game.Tile = (function(g){
   };
 
   tile.prototype.commit = function() {
-    var self = this;
     if (this.bufferCount == 0) {
-      self.active = false;
-      self.dirty = true;
+      this.active = false;
+      this.dirty = true;
       return Promise.resolve();
     }
     var f = new Game.Frame(this);
     this.active = false;
-    console.log(f.toBytes().data);
-    Game.getSocket().connection.send(new Int32Array(f.toBytes().data));
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        for (var i in self.buffer) {
-          for (var j in self.buffer[i]) {
-            if (self.buffer[i][j] != "") {
-              self.px[i][j] = self.buffer[i][j];
-              self.buffer[i][j] = "";
-            }
-          }
+    this.clearBuffer();
+    return Game.getSocket().sendFrame(f);
+  };
+
+  tile.prototype.clearBuffer = function() {
+    for (var i in this.buffer) {
+      for (var j in this.buffer[i]) {
+        if (this.buffer[i][j] != "") {
+          this.buffer[i][j] = "";
         }
-        self.dirty = true;
-        self.bufferCount = 0;
-        resolve(f);
-      }, artificialLatency);
-    });
+      }
+    }
+    this.bufferCount = 0;
   };
 
   tile.prototype.get = function(i, j) {
@@ -153,6 +161,20 @@ Game.Tile = (function(g){
       this.bufferCount++;
     }
     this.buffer[i][j] = c;
+    this.dirty = true;
+  };
+
+  tile.prototype.applyFrame = function(f) {
+    if (!f) {
+      return
+    }
+    const a = f.mask.toArray();
+    for (var n in a) {
+      const i = Math.floor(a[n]/16);
+      const j = a[n]%16;
+      f.prev.push(this.palette.getIdx(this.px[i][j]));
+      this.px[i][j] = "#" + this.palette.colors[f.colors[n]];
+    }
     this.dirty = true;
   };
 

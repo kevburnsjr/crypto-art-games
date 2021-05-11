@@ -52,14 +52,36 @@ var Game = (function(g){
     document.addEventListener('wheel', wheel);
     document.addEventListener('visibilitychange', visibilitychange);
     window.addEventListener('resize', resize);
+    window.addEventListener('contextmenu', e => e.preventDefault());
+    window.addEventListener('paste', paste);
     // initiate websocket
     socket = new Game.socket({
       url: function() {
         return "/socket?ts="+(last || 0);
+      },
+      awaiting: null,
+      sendFrame: function(f) {
+        return new Promise((resolve, reject) => {
+          f.getHash().then(function(hash) {
+            socket.awaiting = hash;
+            socket.on('complete', function(h) {
+              if (h == hash) {
+                socket.awaiting = null;
+                resolve();
+                socket.off('complete');
+              }
+            });
+            socket.connection.send(f.data);
+          });
+        })
       }
     });
     socket.on('message', function(e) {
-      console.log(e);
+      const f = Game.Frame.fromBytes(e);
+      board.tiles[f.ti][f.tj].applyFrame(f);
+      if (socket.awaiting) {
+        f.getHash().then(h => h == socket.awaiting ? socket.emit('complete', h) : null);
+      }
     });
     socket.start();
   };
@@ -309,13 +331,47 @@ var Game = (function(g){
       h = window.innerHeight;
     }, 100);
   };
+
   var visibilitychange = function(e){
     document.getElementById("world-nav").classList.remove("open");
     document.body.classList.remove("color-picking");
     document.body.classList.remove("erasing");
     document.body.classList.remove("editing");
+    keyDownMap = {};
     board.cancelActive();
   };
+
+  // ----------------- Clipboard  Functions -------------------
+
+  var paste = function(e) {
+    // e.preventDefault();
+    if (!board.tile || !board.tile.active) {
+      return
+    }
+    var items = (e.clipboardData  || e.originalEvent.clipboardData).items;
+    var blob = null;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") === 0) {
+        blob = items[i].getAsFile();
+      }
+    }
+    if (blob !== null) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var icanvas = document.createElement('canvas');
+        var ictx = icanvas.getContext("2d");
+        var img = new Image();
+        img.onload = function() {
+          icanvas.width = 16;
+          icanvas.height = 16;
+          ictx.drawImage(img, 0, 0, 16, 16);
+          board.tile.setBufferData(ictx.getImageData(0,0,16,16));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(blob);
+    }
+  }
 
   // ----------------- State Functions -------------------
 
@@ -350,7 +406,7 @@ var Game = (function(g){
 
   var log = function() {
     if ("console" in window) {
-      console.log(...args);
+      console.log(...arguments);
     }
   };
 

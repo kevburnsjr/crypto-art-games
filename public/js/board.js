@@ -15,6 +15,7 @@ Game.Board = (function(g){
     this.scale = tilesize;
     this.palette = palette;
     this.tiles = [];
+    this.tile = null;
     this.edits = [];
     var icanvas = document.createElement('canvas');
     var ictx = icanvas.getContext("2d");
@@ -27,7 +28,7 @@ Game.Board = (function(g){
       self.setData(ictx);
     };
     img.src = src;
-    // temporary variable singleton to minimize garbage collection in render loop
+    // temporary variable collection to minimize garbage collection in render loop
     this.v = {};
   };
 
@@ -85,6 +86,20 @@ Game.Board = (function(g){
       this.game.setColor(this.tiles[i][j].getXY(curx, cury));
       return
     }
+    if (e.button == 2) {
+      e.preventDefault();
+      if (this.tile.active) {
+        if (this.i == i && this.j == j) {
+          var self = this;
+          this.tile.commit().then(function(f){
+            self.dirty = true;
+          });
+        } else {
+          this.cancelActive();
+        }
+      }
+      return
+    }
     if (this.i == i && this.j == j) {
       if (this.tile.active && !this.game.isKeyDown("tab")) {
         if (this.game.isKeyDown("e")) {
@@ -96,12 +111,6 @@ Game.Board = (function(g){
         this.toggleActive();
       }
     } else if (!this.tile || (!this.tile.active && 0 <= i && i < this.xTiles && 0 <= j && j < this.yTiles)) {
-      this.i = i;
-      this.j = j;
-      this.tile = this.tiles[i][j];
-      this.dirty = true;
-    } else if (this.tile.active && 0 <= i && i < this.xTiles && 0 <= j && j < this.yTiles) {
-      this.tile.commit();
       this.i = i;
       this.j = j;
       this.tile = this.tiles[i][j];
