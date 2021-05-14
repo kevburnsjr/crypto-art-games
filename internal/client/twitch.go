@@ -1,14 +1,12 @@
 package client
 
 import (
-
 	"github.com/sirupsen/logrus"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 )
 
 type Twitch interface {
-
 }
 
 type twitch struct {
@@ -29,4 +27,3 @@ func (c *twitch) WithOAuth() Twitch {
 		log: c.log,
 	}
 }
-

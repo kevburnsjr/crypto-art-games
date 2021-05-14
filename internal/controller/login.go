@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"golang.org/x/oauth2"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
 )
 
 func newLogin(logger *logrus.Logger, oauth *oauth) *login {

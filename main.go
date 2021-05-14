@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/signal"
 	"time"

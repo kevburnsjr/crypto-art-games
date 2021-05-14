@@ -10,6 +10,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
+	github.com/gorilla/websocket v1.4.2
 	github.com/nicklaw5/helix v1.13.0
 	github.com/onrik/logrus v0.9.0
 	github.com/pquerna/cachecontrol v0.1.0 // indirect

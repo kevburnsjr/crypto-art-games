@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
+	sock "github.com/kevburnsjr/crypto-art-games/internal/socket"
 )
 
 func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
@@ -12,7 +13,9 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	oauth := newOAuth(cfg, logger)
 
-	socket := newSocket(logger, oauth)
+	hub := sock.NewHub()
+	go hub.Run()
+	socket := newSocket(logger, oauth, hub)
 
 	router.Handle("/", index{oauth, cfg, logger})
 	router.Handle("/login", newLogin(logger, oauth))

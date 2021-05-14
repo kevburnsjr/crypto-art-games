@@ -46,7 +46,6 @@ Game.Frame = (function(g){
     if (this.data) {
       return this.data
     }
-    console.log(this);
     var o = 0;
     var b = new BitSet();
     var bs = n => b.set(o++, parseInt(n));
@@ -78,7 +77,7 @@ Game.Frame = (function(g){
 
     // Run length encoding may produce a smaller mask than simple enumeration
     var uniq = 0;
-    var initial = "1111111111111111";
+    var initial = "1".repeat(16);
     var prev = initial;
     var quads = [];
     for (i = 0; i < 16; i++) {
@@ -202,7 +201,7 @@ Game.Frame = (function(g){
     var bits = Math.ceil(Math.log2(f.colorCount));
     var numpx = 0;
     if (b.get(headerflag_runLengthEncodedMask)) {
-      var initial = "1111111111111111";
+      var initial = "1".repeat(16);
       var quad = initial;
       for (i = 0; i < 16; i++) {
         if (intAt(b, 1, o)) {

@@ -79,6 +79,7 @@ var Game = (function(g){
     socket.on('message', function(e) {
       const f = Game.Frame.fromBytes(e);
       board.tiles[f.ti][f.tj].applyFrame(f);
+      board.dirty = true;
       if (socket.awaiting) {
         f.getHash().then(h => h == socket.awaiting ? socket.emit('complete', h) : null);
       }

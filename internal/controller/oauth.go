@@ -1,8 +1,9 @@
 package controller
 
 import (
-	"encoding/gob"
 	"context"
+	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
+	"github.com/nicklaw5/helix"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 )
@@ -21,9 +23,10 @@ func (e oauthError) Error() string {
 }
 
 const (
-	stateCallbackKey = "oauth-state-callback"
-	oauthSessionName = "oauth-oidc-session"
-	oauthTokenKey    = "oauth-token"
+	stateCallbackKey  = "oauth-state-callback"
+	oauthSessionName  = "oauth-oidc-session"
+	oauthTokenKey     = "oauth-token"
+	twitchUserDataKey = "twitch-user"
 
 	ErrorTokenNotFound = oauthError("Token not found")
 )
@@ -49,10 +52,10 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger) *oauth {
 }
 
 type oauth struct {
-	log          *logrus.Logger
-	cookieStore  *sessions.CookieStore
-	oidcVerifier *oidc.IDTokenVerifier
-	oauth2Config *oauth2.Config
+	log            *logrus.Logger
+	cookieStore    *sessions.CookieStore
+	oidcVerifier   *oidc.IDTokenVerifier
+	oauth2Config   *oauth2.Config
 }
 
 func (c oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -145,4 +148,41 @@ func (c oauth) getToken(r *http.Request) (*oauth2.Token, error) {
 		return nil, ErrorTokenNotFound
 	}
 	return token.(*oauth2.Token), nil
+}
+
+func (c oauth) getUser(r *http.Request, w http.ResponseWriter) (*helix.User, error) {
+	session, err := c.cookieStore.Get(r, oauthSessionName)
+	if err != nil {
+		return nil, err
+	}
+
+	var user helix.User
+	if userData, ok := session.Values[twitchUserDataKey]; ok {
+		json.Unmarshal(userData.([]byte), &user)
+		return &user, nil
+	}
+	token, ok := session.Values[oauthTokenKey]
+	if !ok {
+		return nil, ErrorTokenNotFound
+	}
+	if err == nil && token != nil {
+		client, err := helix.NewClient(&helix.Options{
+			ClientID:        c.oauth2Config.ClientID,
+			UserAccessToken: token.(*oauth2.Token).AccessToken,
+		})
+		if err != nil {
+			return nil, err
+		}
+		resp, err := client.GetUsers(&helix.UsersParams{})
+		if err != nil {
+			return nil, err
+		}
+		if len(resp.Data.Users) > 0 {
+			user = resp.Data.Users[0]
+			session.Values[twitchUserDataKey], _ = json.Marshal(user)
+			session.Save(r, w)
+			return &user, nil
+		}
+	}
+	return nil, nil
 }

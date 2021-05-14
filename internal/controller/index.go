@@ -2,40 +2,24 @@ package controller
 
 import (
 	"bytes"
-	"net/http"
 	"html/template"
+	"net/http"
 
-	"github.com/nicklaw5/helix"
 	"github.com/sirupsen/logrus"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 )
 
-type index struct{
+type index struct {
 	*oauth
 	cfg *config.Api
 	log *logrus.Logger
-
 }
 
 func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var user helix.User
-	token, err := c.oauth.getToken(r)
-	if err == nil && token != nil {
-		client, err := helix.NewClient(&helix.Options{
-			ClientID:        c.cfg.Twitch.ClientID,
-			UserAccessToken: token.AccessToken,
-		})
-		if c.check(w, err) {
-			return
-		}
-		resp, err := client.GetUsers(&helix.UsersParams{})
-		if c.check(w, err) {
-			return
-		}
-		if len(resp.Data.Users) > 0 {
-			user = resp.Data.Users[0]
-		}
+	user, err := c.oauth.getUser(r, w)
+	if c.check(w, err) {
+		return
 	}
 
 	t, err := template.ParseFiles("./template/index.html")
@@ -45,6 +29,9 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	b := bytes.NewBuffer(nil)
 	err = t.Execute(b, user)
+	if c.check(w, err) {
+		return
+	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(200)
 	w.Write(b.Bytes())
