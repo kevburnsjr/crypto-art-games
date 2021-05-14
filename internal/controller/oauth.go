@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/nicklaw5/helix"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
+	"github.com/kevburnsjr/crypto-art-games/internal/entity"
 )
 
 type oauthError string
@@ -150,16 +150,16 @@ func (c oauth) getToken(r *http.Request) (*oauth2.Token, error) {
 	return token.(*oauth2.Token), nil
 }
 
-func (c oauth) getUser(r *http.Request, w http.ResponseWriter) (*helix.User, error) {
+func (c oauth) getUser(r *http.Request, w http.ResponseWriter) (*entity.User, error) {
 	session, err := c.cookieStore.Get(r, oauthSessionName)
 	if err != nil {
 		return nil, err
 	}
 
-	var user helix.User
 	if userData, ok := session.Values[twitchUserDataKey]; ok {
-		json.Unmarshal(userData.([]byte), &user)
-		return &user, nil
+		if u := entity.UserFromJson(userData.([]byte)); u != nil {
+			return u, nil
+		}
 	}
 	token, ok := session.Values[oauthTokenKey]
 	if !ok {
@@ -178,8 +178,8 @@ func (c oauth) getUser(r *http.Request, w http.ResponseWriter) (*helix.User, err
 			return nil, err
 		}
 		if len(resp.Data.Users) > 0 {
-			user = resp.Data.Users[0]
-			session.Values[twitchUserDataKey], _ = json.Marshal(user)
+			user := entity.User(resp.Data.Users[0])
+			session.Values[twitchUserDataKey] = user.ToJson()
 			session.Save(r, w)
 			return &user, nil
 		}

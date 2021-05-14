@@ -19,7 +19,7 @@ type Hub interface {
 	Unregister(*connection)
 }
 
-type MessageHandler func(int, []byte)
+type MessageHandler func(int, []byte) error
 
 func NewHub() *hub {
 	return &hub{

@@ -113,10 +113,7 @@ Game.Frame = (function(g){
         bs(this.mask.get(i));
       }
     } else {
-      // Pixel count is explicit when color table is run length encoded
-      if (b.get(headerflag_runLengthEncodedColorTable)) {
-        append(8, this.colors.length);
-      }
+      append(8, this.colors.length);
       // Dump 8 bit pixel positions to bitset
       this.mask.toArray().forEach(a => append(8, a));
     }
@@ -219,19 +216,8 @@ Game.Frame = (function(g){
       numpx = f.mask.cardinality();
       o += 256;
     } else {
-      if (b.get(headerflag_runLengthEncodedColorTable)) {
-        numpx = intAt(b, 8, o);
-        o += 8;
-      } else {
-        var hex = b.slice(o).toString(16);
-        if (f.colorCount == 1) {
-          numpx = Math.ceil((hex.length - 1) / 2);
-        } else if (bits == 4) {
-          numpx = Math.floor((hex.length) / 2 / (1 + bits/8));
-        } else {
-          numpx = Math.floor((hex.length - f.colorCount) / 2 / (1 + bits/8));
-        }
-      }
+      numpx = intAt(b, 8, o);
+      o += 8;
       for (i = 0; i < numpx; i++) {
         f.mask.set(intAt(b, 8, o), 1);
         o += 8;

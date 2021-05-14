@@ -5,6 +5,7 @@ type Api struct {
 	Log    Log    `yaml:"log"`
 	Twitch Twitch `yaml:"twitch"`
 	Secret string `yaml:"secret"`
+	Repo   Repos  `yaml:"repo"`
 }
 
 type Http struct {

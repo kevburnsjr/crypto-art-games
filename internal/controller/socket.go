@@ -3,34 +3,56 @@ package controller
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
 
-	// "github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 
-	// "github.com/kevburnsjr/crypto-art-games/internal/repo"
+	"github.com/kevburnsjr/crypto-art-games/internal/entity"
+	"github.com/kevburnsjr/crypto-art-games/internal/repo"
 	sock "github.com/kevburnsjr/crypto-art-games/internal/socket"
 )
 
-func newSocket(logger *logrus.Logger, oauth *oauth, hub sock.Hub) *socket {
+func newSocket(
+	logger *logrus.Logger,
+	oauth *oauth,
+	hub sock.Hub,
+	rUser repo.User,
+	rFrame repo.Frame,
+	rFrameLock repo.FrameLock,
+	rTileHistory repo.TileHistory,
+	rUserFrameHistory repo.UserFrameHistory,
+) *socket {
 	return &socket{
-		log:   logger,
-		oauth: oauth,
-		hub:   hub,
+		log:       logger,
+		oauth:     oauth,
+		hub:       hub,
+		repoUser:  rUser,
+		repoFrame: rFrame,
+		repoFrameLock: rFrameLock,
+		repoTileHistory: rTileHistory,
+		repoUserFrameHistory: rUserFrameHistory,
 	}
 }
 
 type socket struct {
-	log   *logrus.Logger
-	oauth *oauth
-	hub   sock.Hub
+	log       *logrus.Logger
+	oauth     *oauth
+	hub       sock.Hub
+	repoUser  repo.User
+	repoFrame repo.Frame
+	repoFrameLock repo.FrameLock
+	repoTileHistory repo.TileHistory
+	repoUserFrameHistory repo.UserFrameHistory
 }
 
 func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	session, err := c.oauth.getSession(r)
+	user, err := c.oauth.getUser(r, w)
 	// lsn := r.FormValue("lsn")
-	// timecode := r.FormValue("timecode")
+	timecode := r.FormValue("timecode")
 	boardId := r.FormValue("boardId")
 
 	if r.Method != "GET" {
@@ -47,20 +69,19 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn := sock.CreateConnection([]string{boardId}, ws)
-	/* Log replay
-	if ts != "0" && ts != "" {
-		logs, err := c.repoBoard.LogSince(boardId, lsn)
-		if err == nil {
-			log_objs := model.TeamLogParse(logs)
-			for _, log := range log_objs {
-				c.Write(websocket.TextMessage, socket.JsonMessage(team.Id, log))
-			}
-		}
-	}
-	*/
+	tc, _ := strconv.Atoi(timecode)
 
-	ctx := context.WithValue(context.Background(), "session", session)
+	conn := sock.CreateConnection([]string{boardId}, ws)
+	frames, err := c.repoFrame.Since(uint16(tc))
+	for _, frame := range frames {
+		conn.Write(sock.BinaryMsgFromBytes(boardId, frame.Data))
+	}
+	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
+		"type": "timecode-update",
+		"timecode": tc + len(frames),
+	}))
+
+	ctx := context.WithValue(context.Background(), "user", user)
 	ctx = context.WithValue(ctx, "boardId", boardId)
 
 	c.hub.Register(conn)
@@ -69,16 +90,67 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
-	return func(t int, msg []byte) {
+	return func(t int, msg []byte) error {
 		// Handle all operations and persist frames before broadcast
 		if t == websocket.TextMessage {
 			c.log.Debugf("Text: %#v", string(msg))
+			var m = map[string]interface{}{}
+			err := json.Unmarshal(msg, &m)
+			if err != nil {
+				return err
+			}
+			if _, ok := m["type"]; !ok {
+				return err
+			}
+			switch m["type"].(string) {
+			case "tile-lock":
+				if err := c.repoFrameLock.Acquire(m["userID"].(uint16), m["tileID"].(uint16)); err != nil {
+					// User does not have lock
+					return err
+				}
+			case "frame-undo":
+				// Mark frame hidden
+				// Broadcast frame update
+			case "frame-redo":
+				// Mark frame unhidden
+				// Broadcast frame update
+			}
 			c.hub.Broadcast(sock.TextMsgFromBytes(ctx.Value("boardId").(string), msg))
 		} else if t == websocket.BinaryMessage {
 			c.log.Debugf("Binary: %s", base64.StdEncoding.EncodeToString(msg))
-			c.hub.Broadcast(sock.BinaryMsgFromBytes(ctx.Value("boardId").(string), msg))
+			userID, err := c.repoUser.FindOrInsert(ctx.Value("user").(*entity.User))
+			if err != nil {
+				return err
+			}
+			frame := &entity.Frame{
+				Data: msg,
+			}
+			frame.SetUserID(userID)
+			if err = c.repoFrameLock.Release(userID, frame.TileID()); err != nil {
+				// User does not have lock
+				// return
+			}
+			_, err = c.repoFrame.Insert(frame)
+			if err != nil {
+				return err
+			}
+			err = c.repoTileHistory.Insert(frame)
+			if err != nil {
+				return err
+			}
+			err = c.repoUserFrameHistory.Insert(frame)
+			if err != nil {
+				return err
+			}
+			c.hub.Broadcast(sock.JsonMessagePure(ctx.Value("boardId").(string), map[string]interface{}{
+				"type": "tile-lock-release",
+				"tileID": frame.TileID(),
+				"userID": userID,
+			}))
+			c.hub.Broadcast(sock.BinaryMsgFromBytes(ctx.Value("boardId").(string), frame.Data))
 		} else {
 			c.log.Debugf("Uknown: %d, %s", t, string(msg))
 		}
+		return nil
 	}
 }

@@ -31,7 +31,11 @@ func (c *connection) Reader(hub Hub, handler MessageHandler) {
 			log.Println(err.Error());
 			break
 		}
-		handler(t, b)
+		err = handler(t, b)
+		if err != nil {
+			log.Println(err.Error());
+			break
+		}
 	}
 }
 

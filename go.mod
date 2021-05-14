@@ -15,6 +15,7 @@ require (
 	github.com/onrik/logrus v0.9.0
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
+	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tidwall/gjson v1.7.5 // indirect
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
 	golang.org/x/net v0.0.0-20210423184538-5f58ad60dda6 // indirect
