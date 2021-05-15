@@ -3,10 +3,10 @@ package config
 type Repos struct {
 	Global *KeyValueStore `yaml:"global"`
 
-	User  KeyValueStore `yaml:"user"`
-	Frame KeyValueStore `yaml:"frame"`
-	FrameLock KeyValueStore `yaml:"frameLock"`
-	TileHistory KeyValueStore `yaml:"tileHistory"`
+	User             KeyValueStore `yaml:"user"`
+	Frame            KeyValueStore `yaml:"frame"`
+	TileLock         KeyValueStore `yaml:"tileLock"`
+	TileHistory      KeyValueStore `yaml:"tileHistory"`
 	UserFrameHistory KeyValueStore `yaml:"userFrameHistory"`
 }
 

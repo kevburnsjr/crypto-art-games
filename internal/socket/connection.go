@@ -28,12 +28,16 @@ func (c *connection) Reader(hub Hub, handler MessageHandler) {
 	for {
 		t, b, err := c.ws.ReadMessage()
 		if err != nil {
-			log.Println(err.Error());
+			log.Println(err.Error())
 			break
 		}
 		err = handler(t, b)
 		if err != nil {
-			log.Println(err.Error());
+			log.Println(err.Error())
+			c.Write(JsonMessagePure("", map[string]interface{}{
+				"type": "err",
+				"msg":  err.Error(),
+			}))
 			break
 		}
 	}

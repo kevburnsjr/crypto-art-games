@@ -1,0 +1,53 @@
+<html><head>
+<title>Project 64 - Debug</title>
+<style>
+pre { padding: 0.5em 1.5em; background: #e9e9e9; }
+nav.section { float: right; }
+nav.section a { float: left; line-height: 1.5em; padding: 0 1em; }
+</style>
+</head><body>
+<nav class="section">
+    <a href="?section=auth">Auth</a>
+    <a href="?section=user">User</a>
+    <a href="?section=frame">Frame</a>
+    <a href="?section=tileLock">TileLock</a>
+</nav>
+<h2>{{.Section}}</h2>
+{{if eq .Section "auth"}}
+<pre>
+{{if .User}}
+{{pjson .User}}
+{{else}}
+No user
+{{end}}
+</pre>
+{{end}}
+{{if eq .Section "user"}}
+    {{range $k, $v := .RepoUser.All}}
+        {{if or (eq $k "_id") (hasPrefix "twitch" $k)}}
+            <pre>Key: {{$k}}
+Val: 0x{{hex $v}}</pre>
+        {{else}}
+            <pre>Key: 0x{{hex $k}}
+Val: {{pjson $v}}</pre>
+        {{end}}
+    {{end}}
+{{end}}
+{{if eq .Section "frame"}}
+    {{range $i, $f := .RepoFrame.Since 0}}
+        <pre>Key: {{$f.TimecodeHex}} ({{len $f.Data}} Bytes)
+Val: {{$f.DataHex}}</pre>
+    {{end}}
+{{end}}
+{{if eq .Section "tileLock"}}
+    {{range $k, $v := .RepoTileLock.All}}
+        {{if or (eq $k "_id")}}
+            <pre>Key: {{$k}}
+Val: 0x{{hex $v}}</pre>
+        {{else}}
+            <pre>Key: 0x{{hex $k}}
+Val: {{hex $v}}</pre>
+        {{end}}
+    {{end}}
+{{end}}
+</body></html>

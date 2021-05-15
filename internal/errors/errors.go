@@ -1,9 +1,9 @@
 package errors
 
 const (
-	RepoDBUnavailable        = temporaryError("Could not open database")
-	RepoItemVersionConflict  = err("Item version does not match")
-	RepoItemNotFound         = err("Item not found")
+	RepoDBUnavailable       = temporaryError("Could not open database")
+	RepoItemVersionConflict = err("Item version does not match")
+	RepoItemNotFound        = err("Item not found")
 )
 
 func New(s string) error {

@@ -6,7 +6,7 @@ type DB interface {
 	Delete(key []byte, prev string) (err error)
 	Has(key []byte) (exists bool, err error)
 	PutRanged(id, date string, value []byte) (err error)
-	GetRanged(start []byte, limit int, reverse bool) (values [][]byte, err error)
+	GetRanged(start []byte, limit int, reverse bool) (keys [][]byte, values [][]byte, err error)
 	Close() error
 	/*
 		Batch() Batch

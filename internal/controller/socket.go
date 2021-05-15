@@ -2,7 +2,7 @@ package controller
 
 import (
 	"context"
-	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -22,30 +22,30 @@ func newSocket(
 	hub sock.Hub,
 	rUser repo.User,
 	rFrame repo.Frame,
-	rFrameLock repo.FrameLock,
+	rTileLock repo.TileLock,
 	rTileHistory repo.TileHistory,
 	rUserFrameHistory repo.UserFrameHistory,
 ) *socket {
 	return &socket{
-		log:       logger,
-		oauth:     oauth,
-		hub:       hub,
-		repoUser:  rUser,
-		repoFrame: rFrame,
-		repoFrameLock: rFrameLock,
-		repoTileHistory: rTileHistory,
+		log:                  logger,
+		oauth:                oauth,
+		hub:                  hub,
+		repoUser:             rUser,
+		repoFrame:            rFrame,
+		repoTileLock:         rTileLock,
+		repoTileHistory:      rTileHistory,
 		repoUserFrameHistory: rUserFrameHistory,
 	}
 }
 
 type socket struct {
-	log       *logrus.Logger
-	oauth     *oauth
-	hub       sock.Hub
-	repoUser  repo.User
-	repoFrame repo.Frame
-	repoFrameLock repo.FrameLock
-	repoTileHistory repo.TileHistory
+	log                  *logrus.Logger
+	oauth                *oauth
+	hub                  sock.Hub
+	repoUser             repo.User
+	repoFrame            repo.Frame
+	repoTileLock         repo.TileLock
+	repoTileHistory      repo.TileHistory
 	repoUserFrameHistory repo.UserFrameHistory
 }
 
@@ -77,7 +77,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		conn.Write(sock.BinaryMsgFromBytes(boardId, frame.Data))
 	}
 	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
-		"type": "timecode-update",
+		"type":     "timecode-update",
 		"timecode": tc + len(frames),
 	}))
 
@@ -91,9 +91,13 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 	return func(t int, msg []byte) error {
+		userID, err := c.repoUser.FindOrInsert(ctx.Value("user").(*entity.User))
+		if err != nil {
+			return err
+		}
 		// Handle all operations and persist frames before broadcast
 		if t == websocket.TextMessage {
-			c.log.Debugf("Text: %#v", string(msg))
+			c.log.Debugf("Text: %s", string(msg))
 			var m = map[string]interface{}{}
 			err := json.Unmarshal(msg, &m)
 			if err != nil {
@@ -104,10 +108,27 @@ func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 			}
 			switch m["type"].(string) {
 			case "tile-lock":
-				if err := c.repoFrameLock.Acquire(m["userID"].(uint16), m["tileID"].(uint16)); err != nil {
+				var tileID = uint16(m["tileID"].(float64))
+				if err := c.repoTileLock.Acquire(userID, tileID, time.Now()); err != nil {
 					// User does not have lock
 					return err
 				}
+				c.hub.Broadcast(sock.JsonMessagePure(ctx.Value("boardId").(string), map[string]interface{}{
+					"type":   "tile-locked",
+					"tileID": tileID,
+					"userID": userID,
+				}))
+			case "tile-lock-release":
+				var tileID = uint16(m["tileID"].(float64))
+				if err := c.repoTileLock.Release(userID, tileID, time.Now()); err != nil {
+					// User does not have lock
+					return err
+				}
+				c.hub.Broadcast(sock.JsonMessagePure(ctx.Value("boardId").(string), map[string]interface{}{
+					"type":   "tile-lock-released",
+					"tileID": tileID,
+					"userID": userID,
+				}))
 			case "frame-undo":
 				// Mark frame hidden
 				// Broadcast frame update
@@ -117,18 +138,13 @@ func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 			}
 			c.hub.Broadcast(sock.TextMsgFromBytes(ctx.Value("boardId").(string), msg))
 		} else if t == websocket.BinaryMessage {
-			c.log.Debugf("Binary: %s", base64.StdEncoding.EncodeToString(msg))
-			userID, err := c.repoUser.FindOrInsert(ctx.Value("user").(*entity.User))
-			if err != nil {
-				return err
-			}
 			frame := &entity.Frame{
 				Data: msg,
 			}
 			frame.SetUserID(userID)
-			if err = c.repoFrameLock.Release(userID, frame.TileID()); err != nil {
+			if err = c.repoTileLock.Release(userID, frame.TileID(), time.Now()); err != nil {
 				// User does not have lock
-				// return
+				return err
 			}
 			_, err = c.repoFrame.Insert(frame)
 			if err != nil {
@@ -143,11 +159,12 @@ func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 				return err
 			}
 			c.hub.Broadcast(sock.JsonMessagePure(ctx.Value("boardId").(string), map[string]interface{}{
-				"type": "tile-lock-release",
+				"type":   "tile-lock-release",
 				"tileID": frame.TileID(),
 				"userID": userID,
 			}))
 			c.hub.Broadcast(sock.BinaryMsgFromBytes(ctx.Value("boardId").(string), frame.Data))
+			c.log.Debugf("Binary: %s", hex.EncodeToString(frame.Data))
 		} else {
 			c.log.Debugf("Uknown: %d, %s", t, string(msg))
 		}

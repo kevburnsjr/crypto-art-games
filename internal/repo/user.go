@@ -33,7 +33,7 @@ type user struct {
 
 // Find retrieves an user
 func (r *user) FindOrInsert(user *entity.User) (userID uint16, err error) {
-	_, bytes, err := r.db.Get([]byte("twitch-"+user.ID))
+	_, bytes, err := r.db.Get([]byte("twitch-" + user.ID))
 	if err == errors.RepoItemNotFound {
 		return r.Insert(user)
 	} else if err != nil {
@@ -72,6 +72,20 @@ func (r *user) Insert(user *entity.User) (userID uint16, err error) {
 		return
 	}
 
+	return
+}
+
+// All returns all records from the table
+func (r *user) All() (all map[string]string, err error) {
+	all = map[string]string{}
+	var start = make([]byte, 2)
+	keys, vals, err := r.db.GetRanged(start, 0, false)
+	if err != nil {
+		return
+	}
+	for i, v := range vals {
+		all[string(keys[i])] = string(v)
+	}
 	return
 }
 

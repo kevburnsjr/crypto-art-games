@@ -5,10 +5,10 @@
 <title>Project 64 - Crypto Art Games</title>
 </head><body>
 <nav class="user">
-{{if .}}
-    <a href="#{{.ID}}-{{.Login}}">
-        <img src="{{.ProfileImageURL}}"/>
-        <span>{{.DisplayName}}</span>
+{{if .User}}
+    <a href="#{{.User.Login}}" id="user" data-userid="{{.UserID}}">
+        <img src="{{.User.ProfileImageURL}}"/>
+        <span>{{.User.DisplayName}}</span>
     </a>
 {{else}}
     <a href="/login" class="login">

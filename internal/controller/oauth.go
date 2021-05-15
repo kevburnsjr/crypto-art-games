@@ -8,9 +8,9 @@ import (
 
 	oidc "github.com/coreos/go-oidc"
 	"github.com/gorilla/sessions"
+	"github.com/nicklaw5/helix"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
-	"github.com/nicklaw5/helix"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
@@ -52,10 +52,10 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger) *oauth {
 }
 
 type oauth struct {
-	log            *logrus.Logger
-	cookieStore    *sessions.CookieStore
-	oidcVerifier   *oidc.IDTokenVerifier
-	oauth2Config   *oauth2.Config
+	log          *logrus.Logger
+	cookieStore  *sessions.CookieStore
+	oidcVerifier *oidc.IDTokenVerifier
+	oauth2Config *oauth2.Config
 }
 
 func (c oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {

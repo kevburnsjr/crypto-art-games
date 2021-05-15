@@ -6,6 +6,7 @@ Game.socket = (function (g) {
     g.object.extend(this, {
       timeout:    null,
       connect:    null,
+      connected:  false,
       connection: null
     });
     g.object.extend(this, data);
@@ -22,13 +23,12 @@ Game.socket = (function (g) {
     this.start = function() {
       var failures = 0;
       var backoff = function() {
-        return Math.max(failures*2*1000, 64 * 1000);
+        return Math.max(failures*1000, 64 * 1000);
       }
       self.emit('start');
       self.connect = true;
-      var connected = false;
       var wrapperfunc = function(){
-        if (typeof(WebSocket) === "function" && (!self.connection || self.connection.readyState > 0) && !connected) {
+        if (typeof(WebSocket) === "function" && (!self.connection || self.connection.readyState > 0) && !self.connected) {
           var uri = new Uri(window.location);
           var host = uri.host();
           var scheme = uri.protocol() == 'https' ? 'wss' : 'ws';
@@ -42,12 +42,12 @@ Game.socket = (function (g) {
           self.connection.onclose = function(evt) {
             g.online = false;
             failures++;
-            connected = false;
+            self.connected = false;
           }
           self.connection.onopen = function(evt) {
             g.online = true;
             failures = 0;
-            connected = true;
+            self.connected = true;
           }
           self.connection.onmessage = function(evt) {
             try {
@@ -61,6 +61,19 @@ Game.socket = (function (g) {
         self.timeout = setTimeout(wrapperfunc, backoff());
       };
       wrapperfunc();
+    };
+
+    this.send = function(msg, retries) {
+      if (retries > 10) {
+        return
+      }
+      try {
+        this.connection.send(msg);
+      } catch(e) {
+        console.log(e);
+        this.connected = false;
+        setTimeout(this.send, 200, msg, (retries ? parseInt(retries) : 0) + 1);
+      }
     };
 
     g.event.extend(this);

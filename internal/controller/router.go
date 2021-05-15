@@ -5,8 +5,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
-	sock "github.com/kevburnsjr/crypto-art-games/internal/socket"
 	"github.com/kevburnsjr/crypto-art-games/internal/repo"
+	sock "github.com/kevburnsjr/crypto-art-games/internal/socket"
 )
 
 func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
@@ -27,7 +27,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		logger.Fatal(err)
 	}
 
-	rFrameLock, err := repo.NewFrameLock(cfg.Repo.FrameLock)
+	rTileLock, err := repo.NewTileLock(cfg.Repo.TileLock)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -42,12 +42,15 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		logger.Fatal(err)
 	}
 
-	socket := newSocket(logger, oauth, hub, rUser, rFrame, rFrameLock, rTileHistory, rUserFrameHistory)
+	socket := newSocket(logger, oauth, hub, rUser, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+
+	debug := newDebug(logger, oauth, hub, rUser, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
 	router.Handle("/", index{oauth, cfg, logger})
 	router.Handle("/login", newLogin(logger, oauth))
 	router.Handle("/oauth", oauth)
 	router.Handle("/socket", socket)
+	router.Handle("/debug", debug)
 	router.NotFoundHandler = &static{"public"}
 
 	return router

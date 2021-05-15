@@ -93,6 +93,9 @@ Game.Board = (function(g){
           var self = this;
           this.tile.commit().then(function(f){
             self.dirty = true;
+          }).catch((e) => {
+            console.log("Tile commit failed");
+            self.cancelActive();
           });
         } else {
           this.cancelActive();
@@ -156,6 +159,8 @@ Game.Board = (function(g){
       return this.tile.lock().then(function(e){
         self.dirty = true;
         return true;
+      }).catch(() => {
+        console.log("Unable to activate Tile");
       });
     } else {
       return this.tile.commit().then(function(tile){

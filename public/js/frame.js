@@ -51,8 +51,7 @@ Game.Frame = (function(g){
     var bs = n => b.set(o++, parseInt(n));
     var append = (bits, a) => [...a.toString(2).padStart(bits, 0)].forEach(bs);
     append(16, this.userid);
-    append(4, this.ti);
-    append(4, this.tj);
+    append(8, this.ti*16 + this.tj);
     append(4, 0 + (this.colorCount-1));
     append(1, 0 + (this.colors.length >= 32)); // headerflag_useMask
     append(1, 0 + (this.deleted)); // headerflag_deleted
@@ -167,7 +166,7 @@ Game.Frame = (function(g){
       }
     }
     b = b.slice(0, o);
-    this.data = (new Int32Array(b.data)).buffer;
+    this.data = (new Int32Array(b.data)).buffer.slice(0, Math.ceil(o/8));
     return this.data;
   };
 
@@ -189,8 +188,9 @@ Game.Frame = (function(g){
     var f = new Game.Frame();
     f.data = bytes;
     f.userid = intAt(b, 16, 0);
-    f.ti = intAt(b, 4, 16);
-    f.tj = intAt(b, 4, 20);
+    var tileID = intAt(b, 8, 16);
+    f.ti = Math.floor(tileID/16);
+    f.tj = tileID % 16;
     f.colorCount = intAt(b, 4, 24)+1;
     f.deleted = !!b.get(headerflag_deleted);
     var useMask = b.get(headerflag_useMask);

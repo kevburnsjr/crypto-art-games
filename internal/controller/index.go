@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
+	"github.com/kevburnsjr/crypto-art-games/internal/entity"
 )
 
 type index struct {
@@ -26,7 +27,13 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	b := bytes.NewBuffer(nil)
-	err = t.Execute(b, user)
+	err = t.Execute(b, struct {
+		UserID uint16
+		User   *entity.User
+	}{
+		0,
+		user,
+	})
 	if check(err, w, c.log) {
 		return
 	}

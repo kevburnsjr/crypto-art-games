@@ -84,43 +84,33 @@ Game.Tile = (function(g){
 
   tile.prototype.lock = function() {
     var self = this;
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        self.active = true;
-        self.dirty = true;
-        self.cursi = -1;
-        self.cursj = -1;
-        resolve();
-      }, artificialLatency);
+    return Game.getSocket().lockTile(this).then(() => {
+      self.active = true;
+      self.dirty = true;
+      self.cursi = -1;
+      self.cursj = -1;
     });
-    return Game.getSocket().lockFrame(this.ti, this.tj);
   };
 
   tile.prototype.rollback = function() {
     var self = this;
-    this.active = false;
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        for (var i in self.buffer) {
-          for (var j in self.buffer[i]) {
-            if (self.buffer[i][j] != "") {
-              self.buffer[i][j] = "";
-            }
+    return Game.getSocket().unlockTile(this).then(() => {
+      for (var i in self.buffer) {
+        for (var j in self.buffer[i]) {
+          if (self.buffer[i][j] != "") {
+            self.buffer[i][j] = "";
           }
         }
-        self.active = false;
-        self.dirty = true;
-        self.bufferCount = 0;
-        resolve();
-      }, artificialLatency);
+      }
+      self.active = false;
+      self.dirty = true;
+      self.bufferCount = 0;
     });
   };
 
   tile.prototype.commit = function() {
     if (this.bufferCount == 0) {
-      this.active = false;
-      this.dirty = true;
-      return Promise.resolve();
+      return this.rollback();
     }
     var f = new Game.Frame(this);
     this.active = false;

@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
-	"github.com/kevburnsjr/crypto-art-games/internal/errors"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
+	"github.com/kevburnsjr/crypto-art-games/internal/errors"
 	"github.com/kevburnsjr/crypto-art-games/internal/repo/driver"
 )
 
@@ -61,13 +61,17 @@ func (r *frame) Insert(frame *entity.Frame) (timecode uint16, err error) {
 func (r *frame) Since(timecode uint16) (frames []*entity.Frame, err error) {
 	var start = make([]byte, 2)
 	binary.BigEndian.PutUint16(start, timecode)
-	vals, err := r.db.GetRanged(start, 0, false)
+	keys, vals, err := r.db.GetRanged(start, 0, false)
 	if err != nil {
 		return
 	}
-	for _, b := range vals {
+	for i, b := range vals {
+		if len(keys[i]) != 2 {
+			continue
+		}
 		frame := &entity.Frame{
-			Data: b,
+			Timecode: binary.BigEndian.Uint16(keys[i]),
+			Data:     b,
 		}
 		frames = append(frames, frame)
 	}

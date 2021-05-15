@@ -77,7 +77,7 @@ func (d *inmemoryDriver) PutRanged(id, date string, value []byte) (err error) {
 	return
 }
 
-func (d *inmemoryDriver) GetRanged(start []byte, limit int, reverse bool) (values [][]byte, err error) {
+func (d *inmemoryDriver) GetRanged(start []byte, limit int, reverse bool) (keys [][]byte, values [][]byte, err error) {
 	startKey := string(start)
 	d.m.Range(func(k, v interface{}) bool {
 		key, ok := k.(string)
@@ -85,6 +85,7 @@ func (d *inmemoryDriver) GetRanged(start []byte, limit int, reverse bool) (value
 			return true
 		}
 		if len(start) == 0 || key > startKey {
+			keys = append(keys, k.([]byte))
 			values = append(values, v.([]byte))
 			if limit > 0 && len(values) >= limit {
 				return false

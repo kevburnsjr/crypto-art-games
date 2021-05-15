@@ -71,17 +71,56 @@ var Game = (function(g){
                 socket.off('complete');
               }
             });
-            socket.connection.send(f.data);
+            socket.send(f.data);
           });
+        })
+      },
+      lockTile: function(t) {
+        return new Promise((resolve, reject) => {
+          socket.on(['tile-locked', 'err'], function(e) {
+            if (e.type == 'error') {
+              socket.off('tile-locked');
+              socket.off('err');
+              reject();
+            } else {
+              socket.off('tile-locked');
+              socket.off('err');
+              resolve();
+            }
+          });
+          var tileID = t.ti * 16 + t.tj;
+          socket.send(JSON.stringify({type:'tile-lock', tileID: tileID}));
+        })
+      },
+      unlockTile: function(t) {
+        return new Promise((resolve, reject) => {
+          socket.on(['tile-lock-released', 'err'], function(e) {
+            if (e.type == 'error') {
+              socket.off('tile-lock-released');
+              socket.off('err');
+              reject();
+            } else {
+              socket.off('tile-lock-released');
+              socket.off('err');
+              resolve();
+            }
+          });
+          var tileID = t.ti * 16 + t.tj;
+          socket.send(JSON.stringify({type:'tile-lock-release', tileID: tileID}));
         })
       }
     });
-    socket.on('message', function(e) {
-      const f = Game.Frame.fromBytes(e);
-      board.tiles[f.ti][f.tj].applyFrame(f);
-      board.dirty = true;
-      if (socket.awaiting) {
-        f.getHash().then(h => h == socket.awaiting ? socket.emit('complete', h) : null);
+    socket.on('message', function(msg) {
+      if (msg instanceof ArrayBuffer) {
+        const f = Game.Frame.fromBytes(msg);
+        board.tiles[f.ti][f.tj].applyFrame(f);
+        board.dirty = true;
+        if (socket.awaiting) {
+          f.getHash().then(h => h == socket.awaiting ? socket.emit('complete', h) : null);
+        }
+      } else {
+        var e = JSON.parse(msg);
+        socket.emit(e.type, e);
       }
     });
     socket.start();

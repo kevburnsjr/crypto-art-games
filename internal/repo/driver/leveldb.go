@@ -86,10 +86,11 @@ func (w *leveldbDriver) PutRanged(id, date string, value []byte) (err error) {
 	return
 }
 
-func (w *leveldbDriver) GetRanged(start []byte, limit int, reverse bool) (values [][]byte, err error) {
+func (w *leveldbDriver) GetRanged(start []byte, limit int, reverse bool) (keys [][]byte, values [][]byte, err error) {
 	iter := w.db.NewIterator(&util.Range{start, nil}, nil)
 	defer iter.Release()
 	for iter.First(); iter.Valid(); iter.Next() {
+		keys = append(keys, []byte(string(iter.Key())))
 		values = append(values, []byte(string(iter.Value()[16:])))
 		if limit > 0 && len(values) >= limit {
 			break
