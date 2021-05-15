@@ -9,18 +9,27 @@ import (
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
+	"github.com/kevburnsjr/crypto-art-games/internal/repo"
 )
 
 type index struct {
 	*oauth
 	cfg *config.Api
 	log *logrus.Logger
+	repoUser repo.User
 }
 
 func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, err := c.oauth.getUser(r, w)
-	if check(err, w, c.log) {
+	if err != ErrorTokenNotFound && check(err, w, c.log) {
 		return
+	}
+	var userID uint16
+	if user != nil {
+		userID, err = c.repoUser.FindOrInsert(user)
+		if check(err, w, c.log) {
+			return
+		}
 	}
 	t, err := template.ParseFiles("./template/index.html")
 	if check(err, w, c.log) {
@@ -31,7 +40,7 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		UserID uint16
 		User   *entity.User
 	}{
-		0,
+		userID,
 		user,
 	})
 	if check(err, w, c.log) {

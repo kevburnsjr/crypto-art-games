@@ -7,7 +7,8 @@ Game.socket = (function (g) {
       timeout:    null,
       connect:    null,
       connected:  false,
-      connection: null
+      connection: null,
+      failures:   0
     });
     g.object.extend(this, data);
 
@@ -20,11 +21,12 @@ Game.socket = (function (g) {
       self.emit('stop');
     };
 
+    var backoff = function() {
+      return Math.min((self.failures+1)*1000, 64 * 1000);
+    }
+
     this.start = function() {
-      var failures = 0;
-      var backoff = function() {
-        return Math.max(failures*1000, 64 * 1000);
-      }
+      self.failures = 0;
       self.emit('start');
       self.connect = true;
       var wrapperfunc = function(){
@@ -35,18 +37,23 @@ Game.socket = (function (g) {
           var port = uri.port() ? ':' + uri.port() : '';
           var url = self.url();
           if(!url) {
+            console.log("bad url");
             return;
           }
           self.connection = new WebSocket(scheme+"://"+host+port+url);
           self.connection.binaryType = "arraybuffer";
           self.connection.onclose = function(evt) {
             g.online = false;
-            failures++;
+            self.failures++;
+            self.connected = false;
+          }
+          self.connection.onerror = function(evt) {
+            g.online = false;
             self.connected = false;
           }
           self.connection.onopen = function(evt) {
             g.online = true;
-            failures = 0;
+            self.failures = 0;
             self.connected = true;
           }
           self.connection.onmessage = function(evt) {
@@ -63,16 +70,21 @@ Game.socket = (function (g) {
       wrapperfunc();
     };
 
+    var reconnecting = null;
     this.send = function(msg, retries) {
       if (retries > 10) {
         return
       }
-      try {
-        this.connection.send(msg);
-      } catch(e) {
-        console.log(e);
-        this.connected = false;
-        setTimeout(this.send, 200, msg, (retries ? parseInt(retries) : 0) + 1);
+      if (self.connection && self.connection.readyState == 1) {
+        self.connection.send(msg);
+        reconnecting == null;
+      } else {
+        if (reconnecting == null) {
+          console.log("reconnecting");
+          self.connected = false;
+          self.connection = null;
+        }
+        reconnecting = setTimeout(this.send, backoff(), msg, (retries ? parseInt(retries) : 0) + 1);
       }
     };
 

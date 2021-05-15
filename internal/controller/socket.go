@@ -74,6 +74,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn := sock.CreateConnection([]string{boardId}, ws)
 	frames, err := c.repoFrame.Since(uint16(tc))
 	for _, frame := range frames {
+		time.Sleep(16 * time.Millisecond)
 		conn.Write(sock.BinaryMsgFromBytes(boardId, frame.Data))
 	}
 	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{

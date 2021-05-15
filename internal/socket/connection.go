@@ -33,12 +33,10 @@ func (c *connection) Reader(hub Hub, handler MessageHandler) {
 		}
 		err = handler(t, b)
 		if err != nil {
-			log.Println(err.Error())
 			c.Write(JsonMessagePure("", map[string]interface{}{
 				"type": "err",
 				"msg":  err.Error(),
 			}))
-			break
 		}
 	}
 }

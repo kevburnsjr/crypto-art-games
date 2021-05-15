@@ -17,13 +17,13 @@ nav.world a { float: left; background: #ccc;
 }
 nav.world a span { float: left; line-height: 2em; padding: 0em 1.5em; color: #fff; font-weight: bold; text-shadow: 0 0 2px rgba(0,0,0,0.7); cursor: pointer; font-size: 1.5em; }
 nav.world a img { height: 3em; margin: 0 -1.5em 0 0; float: right; border-radius: 50%; padding: 0; }
-nav.world div.levels { width: 34em; height: 22em; background: rgba(255,255,255,0.9); margin-top: 3em; display: none; }
+nav.world div.levels { width: 18em; height: 18em; background: rgba(255,255,255,0.9); margin-top: 3em; display: none; }
 nav.world div.levels div { width: 2em; height: 2em; float: left; content: "a"; color: rgba(0,0,0,0.7);
     text-align: center; box-shadow: inset 0 0 1px rgba(0,0,0,0.5); font-size: 1em; line-height: 2em; font-family: monospace; }
 nav.world div.levels div:hover { box-shadow: inset 0 0 1px rgba(0,0,0,1); background: #fff; }
 nav.world.open div.levels { display: block; }
-nav.world div.levels div:nth-child(17n+1) { background: rgba(192,192,192,0.9); }
-nav.world div.levels div:nth-child(-n+17) { background: rgba(192,192,192,0.9); }
+nav.world div.levels div:nth-child(9n+1) { background: rgba(192,192,192,0.9); }
+nav.world div.levels div:nth-child(-n+9) { background: rgba(192,192,192,0.9); }
 
 nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
 

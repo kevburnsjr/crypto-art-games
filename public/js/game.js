@@ -33,13 +33,6 @@ var Game = (function(g){
       alpha: false,
       desynchronized: true
     });
-    if(window.location.hash) {
-      var parts = window.location.hash.substr(1).split(':');
-      setColor(parts[0]);
-      zoom = parseInt(parts[1]);
-    } else {
-      setColor(autumn[Math.floor(Math.random() * autumn.length)]);
-    }
     palette = new Game.Palette(paletteElem, autumn);
     board = new Game.Board(Game, "/palettes/autumn.gif", palette, 16, 16);
     reset();
@@ -54,6 +47,18 @@ var Game = (function(g){
     window.addEventListener('resize', resize);
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
+    if(window.location.hash) {
+      var parts = window.location.hash.substr(1).split(':');
+      zoom = parseInt(parts[1]);
+      board.setTile(parseInt(parts[2]));
+      setColor(parts[0]);
+    } else {
+      setColor(autumn[Math.floor(Math.random() * autumn.length)]);
+    }
+    var userID = null;
+    if (document.getElementById("user")) {
+      userID = parseInt(document.getElementById("user").dataset.userid);
+    }
     // initiate websocket
     socket = new Game.socket({
       url: function() {
@@ -77,12 +82,15 @@ var Game = (function(g){
       },
       lockTile: function(t) {
         return new Promise((resolve, reject) => {
+          if (userID == null) {
+            window.location.href = "/login";
+          }
           socket.on(['tile-locked', 'err'], function(e) {
-            if (e.type == 'error') {
+            if (e.type == 'err') {
               socket.off('tile-locked');
               socket.off('err');
-              reject();
-            } else {
+              reject(e.msg);
+            } else if (e.userID == userID){
               socket.off('tile-locked');
               socket.off('err');
               resolve();
@@ -95,10 +103,10 @@ var Game = (function(g){
       unlockTile: function(t) {
         return new Promise((resolve, reject) => {
           socket.on(['tile-lock-released', 'err'], function(e) {
-            if (e.type == 'error') {
+            if (e.type == 'err') {
               socket.off('tile-lock-released');
               socket.off('err');
-              reject();
+              reject(e.msg);
             } else {
               socket.off('tile-lock-released');
               socket.off('err');
@@ -203,7 +211,8 @@ var Game = (function(g){
         brushState = false;
       }
     } else {
-      board.handleClick(e, w/2, h/2, hoverX, hoverY, zoom)
+      board.handleClick(e, w/2, h/2, hoverX, hoverY, zoom);
+      sethash();
     }
     if (e.target.nodeName != "CANVAS") {
       return;
@@ -259,24 +268,28 @@ var Game = (function(g){
       e.preventDefault();
       // if ctrl move boards else move tiles
       board.moveTile(0, -1);
+      sethash();
       document.body.classList.remove("editing");
     }
     if (k == "a" || k == "arrowleft") {
       e.preventDefault();
       // if ctrl move boards else move tiles
       board.moveTile(-1, 0);
+      sethash();
       document.body.classList.remove("editing");
     }
     if (k == "s" || k == "arrowdown") {
       e.preventDefault();
       // if ctrl move boards else move tiles
       board.moveTile(0, 1);
+      sethash();
       document.body.classList.remove("editing");
     }
     if (k == "d" || k == "arrowright") {
       e.preventDefault();
       // if ctrl move boards else move tiles
       board.moveTile(1, 0);
+      sethash();
       document.body.classList.remove("editing");
     }
     if (k == "0" || k == "numpad0") {
@@ -416,7 +429,7 @@ var Game = (function(g){
   // ----------------- State Functions -------------------
 
   var sethash = function() {
-    window.location.hash = [color, zoom].join(':');
+    window.location.hash = [color, zoom, board.getTileID()].join(':');
   };
 
   window.onhashchange = function() {

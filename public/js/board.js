@@ -139,6 +139,18 @@ Game.Board = (function(g){
     this.prevy = -1;
   };
 
+  board.prototype.setTile = function(n) {
+    if (n <= 255 && n >= 0) {
+      this.i = Math.floor(n/16);
+      this.j = n % 16;
+      this.dirty = true;
+    }
+  }
+
+  board.prototype.getTileID = function() {
+    return this.i*16 + this.j;
+  };
+
   board.prototype.moveTile = function(dx, dy) {
     var self = this;
     (this.tile.active ? this.tile.commit() : Promise.resolve()).then(function(tile) {
@@ -159,8 +171,8 @@ Game.Board = (function(g){
       return this.tile.lock().then(function(e){
         self.dirty = true;
         return true;
-      }).catch(() => {
-        console.log("Unable to activate Tile");
+      }).catch((e) => {
+        g.log("Unable to activate Tile: ", e);
       });
     } else {
       return this.tile.commit().then(function(tile){
