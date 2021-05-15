@@ -44,7 +44,7 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger) *oauth {
 		oauth2Config: &oauth2.Config{
 			ClientID:     cfg.Twitch.ClientID,
 			ClientSecret: cfg.Twitch.ClientSecret,
-			Scopes:       []string{oidc.ScopeOpenID, "user:read:email"},
+			Scopes:       []string{oidc.ScopeOpenID},
 			Endpoint:     provider.Endpoint(),
 			RedirectURL:  cfg.Twitch.OAuthRedirect,
 		},
