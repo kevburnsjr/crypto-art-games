@@ -44,7 +44,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	socket := newSocket(logger, oauth, hub, rUser, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
-	debug := newDebug(logger, oauth, hub, rUser, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+	debug := newDebug(cfg, logger, oauth, hub, rUser, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
 	router.Handle("/", index{oauth, cfg, logger, rUser})
 	router.Handle("/login", newLogin(logger, oauth))

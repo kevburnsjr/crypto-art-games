@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"html/template"
@@ -10,13 +11,14 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/sirupsen/logrus"
 
-	// "github.com/kevburnsjr/crypto-art-games/internal/config"
+	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
 	"github.com/kevburnsjr/crypto-art-games/internal/repo"
 	sock "github.com/kevburnsjr/crypto-art-games/internal/socket"
 )
 
 func newDebug(
+	cfg *config.Api,
 	logger *logrus.Logger,
 	oauth *oauth,
 	hub sock.Hub,
@@ -27,6 +29,7 @@ func newDebug(
 	rUserFrameHistory repo.UserFrameHistory,
 ) *debug {
 	return &debug{
+		cfg:                  cfg,
 		log:                  logger,
 		oauth:                oauth,
 		hub:                  hub,
@@ -39,6 +42,7 @@ func newDebug(
 }
 
 type debug struct {
+	cfg                  *config.Api
 	log                  *logrus.Logger
 	oauth                *oauth
 	hub                  sock.Hub
@@ -50,6 +54,18 @@ type debug struct {
 }
 
 func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	{
+		username := "admin"
+		password := c.cfg.Secret
+		user, pass, ok := r.BasicAuth()
+		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(password)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Who goes there?"`)
+			w.WriteHeader(401)
+			w.Write([]byte("Unauthorised.\n"))
+			return
+		}
+	}
+
 	section := r.FormValue("section")
 	user, err := c.oauth.getUser(r, w)
 	if check(err, w, c.log) {
