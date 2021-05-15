@@ -1,0 +1,15 @@
+[Unit]
+Description=crypto-art-games
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/crypto-art-games
+WorkingDirectory=/var/www/crypto-art-games
+ExecStart=/var/www/crypto-art-games/dev/dist/crypto-art-games -c /var/www/crypto-art-games/dev/config.yml > /var/www/crypto-art-games/logs/error.log
+RemainAfterExit=no
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=262144
+
+[Install]
+WantedBy=multi-user.target
