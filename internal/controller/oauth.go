@@ -38,6 +38,7 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger) *oauth {
 		logger.Fatal(err)
 	}
 	return &oauth{
+		cfg:          cfg,
 		log:          logger,
 		cookieStore:  sessions.NewCookieStore([]byte(cfg.Secret)),
 		oidcVerifier: provider.Verifier(&oidc.Config{ClientID: cfg.Twitch.ClientID}),
@@ -52,6 +53,7 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger) *oauth {
 }
 
 type oauth struct {
+	cfg          *config.Api
 	log          *logrus.Logger
 	cookieStore  *sessions.CookieStore
 	oidcVerifier *oidc.IDTokenVerifier
@@ -178,7 +180,7 @@ func (c oauth) getUser(r *http.Request, w http.ResponseWriter) (*entity.User, er
 			return nil, err
 		}
 		if len(resp.Data.Users) > 0 {
-			user := entity.User(resp.Data.Users[0])
+			user := entity.UserFromHelix(resp.Data.Users[0], c.cfg.Secret)
 			session.Values[twitchUserDataKey] = user.ToJson()
 			session.Save(r, w)
 			return &user, nil

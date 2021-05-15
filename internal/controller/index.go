@@ -14,8 +14,8 @@ import (
 
 type index struct {
 	*oauth
-	cfg *config.Api
-	log *logrus.Logger
+	cfg      *config.Api
+	log      *logrus.Logger
 	repoUser repo.User
 }
 
