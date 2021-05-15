@@ -10,8 +10,28 @@ log:
 
 twitch:
   oidc_issuer: https://id.twitch.tv/oauth2
-  oauth_redirect: http://crypto-art-games/oauth
+  oauth_redirect: https://stage.cryptoart.games/oauth
   client_id: REDACTED
   client_secret: REDACTED
 
 secret: REDACTED
+
+repo:
+  global:
+    leveldb:
+      path: ./_data/project64
+  user:
+    leveldb:
+      path: ./_data/project64/user
+  frame:
+    leveldb:
+      path: ./_data/project64/frame
+  tileLock:
+    leveldb:
+      path: ./_data/project64/tileLock
+  tileHistory:
+    leveldb:
+      path: ./_data/project64/tileHistory
+  userFrameHistory:
+    leveldb:
+      path: ./_data/project64/userFrameHistory

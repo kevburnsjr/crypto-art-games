@@ -92,9 +92,15 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 	return func(t int, msg []byte) error {
-		userID, err := c.repoUser.FindOrInsert(ctx.Value("user").(*entity.User))
-		if err != nil {
-			return err
+		var userID uint16
+		var err error
+		if u, ok := ctx.Value("user").(*entity.User); ok && u != nil {
+			userID, err = c.repoUser.FindOrInsert(u)
+			if err != nil {
+				return err
+			}
+		} else {
+			return nil
 		}
 		// Handle all operations and persist frames before broadcast
 		if t == websocket.TextMessage {
