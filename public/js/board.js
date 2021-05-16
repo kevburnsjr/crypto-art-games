@@ -3,8 +3,9 @@ Game.Board = (function(g){
 
   var tilesize = 16;
 
-  var board = function(g, src, palette, xt, yt) {
+  var board = function(g, src, palette, xt, yt, callback) {
     this.game = g;
+    this.focused = false;
     this.xTiles = xt;
     this.yTiles = yt;
     this.prevx = -1;
@@ -26,6 +27,9 @@ Game.Board = (function(g){
       icanvas.height = img.height;
       ictx.drawImage(img, 0, 0);
       self.setData(ictx);
+      if (callback) {
+        callback();
+      }
     };
     img.src = src;
     // temporary variable collection to minimize garbage collection in render loop
@@ -47,10 +51,17 @@ Game.Board = (function(g){
       return;
     }
     this.scale = tilesize*zoom;
-    this.v.x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
-    this.v.y1 = parseInt(cy - (this.j+1)*this.scale + this.scale/2);
-    this.v.x2 = this.v.x1 + this.xTiles * this.scale;
-    this.v.y2 = this.v.y1 + this.yTiles * this.scale;
+    if (this.focused) {
+      this.v.x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
+      this.v.y1 = parseInt(cy - (this.j+1)*this.scale + this.scale/2);
+      this.v.x2 = this.v.x1 + this.xTiles * this.scale;
+      this.v.y2 = this.v.y1 + this.yTiles * this.scale;
+    } else {
+      this.v.x1 = parseInt(cx - (this.xTiles * this.scale)/2);
+      this.v.y1 = parseInt(cy - (this.yTiles * this.scale)/2);
+      this.v.x2 = this.v.x1 + this.xTiles * this.scale;
+      this.v.y2 = this.v.y1 + this.yTiles * this.scale;
+    }
     this.v.tileDirty = this.tile.dirty;
     for (var i = 0; i < this.xTiles; i++) {
       for (var j = 0; j < this.yTiles; j++) {
@@ -68,7 +79,7 @@ Game.Board = (function(g){
     } else if (this.tile.cursi > -1) {
       this.tile.clearCursor();
     }
-    if (this.dirty || dirty) {
+    if (this.focused && (this.dirty || dirty)) {
       this.tile.stroke(ctx);
     }
     this.dirty = false;
@@ -78,8 +89,13 @@ Game.Board = (function(g){
     if (this.tiles.length == 0) {
       return;
     }
-    var x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
-    var y1 = parseInt(cy - (this.j+1)*this.scale + this.scale/2);
+    if (this.focused) {
+      var x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
+      var y1 = parseInt(cy - (this.j+1)*this.scale + this.scale/2);
+    } else {
+      var x1 = parseInt(cx - (this.xTiles * this.scale)/2);
+      var y1 = parseInt(cy - (this.yTiles * this.scale)/2);
+    }
     var i = Math.floor((curx-x1) / this.scale);
     var j = Math.floor((cury-y1) / this.scale);
     if (e.altKey) {
@@ -94,7 +110,6 @@ Game.Board = (function(g){
           this.tile.commit().then(function(f){
             self.dirty = true;
           }).catch((e) => {
-            console.log("Tile commit failed");
             self.cancelActive();
           });
         } else {
@@ -114,10 +129,9 @@ Game.Board = (function(g){
         this.toggleActive();
       }
     } else if (!this.tile || (!this.tile.active && 0 <= i && i < this.xTiles && 0 <= j && j < this.yTiles)) {
-      this.i = i;
-      this.j = j;
-      this.tile = this.tiles[i][j];
-      this.dirty = true;
+      this.setFocus(i, j);
+    } else {
+      this.cancelFocus();
     }
   };
 
@@ -141,9 +155,7 @@ Game.Board = (function(g){
 
   board.prototype.setTile = function(n) {
     if (n <= 255 && n >= 0) {
-      this.i = Math.floor(n/16);
-      this.j = n % 16;
-      this.dirty = true;
+      this.setFocus(Math.floor(n/this.xTiles), n % this.xTiles);
     }
   }
 
@@ -158,23 +170,20 @@ Game.Board = (function(g){
          ( dy < 0 && self.j < 1) || (dy > 0 && self.j >= self.yTiles - 1)) {
          return;
       }
-      self.i += dx;
-      self.j += dy;
-      self.tile = self.tiles[self.i][self.j];
-      self.dirty = true;
+      self.setFocus(self.i + dx, self.j + dy);
     });
   };
 
   board.prototype.toggleActive = function() {
     var self = this;
-    if (!this.tile.active) {
+    if (this.focused && !this.tile.active) {
       return this.tile.lock().then(function(e){
         self.dirty = true;
         return true;
       }).catch((e) => {
         g.log("Unable to activate Tile: ", e);
       });
-    } else {
+    } else if (this.tile.active) {
       return this.tile.commit().then(function(tile){
         self.edits.push(tile);
         self.dirty = true;
@@ -200,6 +209,19 @@ Game.Board = (function(g){
     return (this.tile.active ? this.tile.rollback() : Promise.resolve()).then(function(){
       self.dirty = true;
     });
+  };
+
+  board.prototype.setFocus = function(i, j) {
+    this.i = i;
+    this.j = j;
+    this.tile = this.tiles[i][j];
+    this.dirty = true;
+    this.focused = true
+  };
+
+  board.prototype.cancelFocus = function() {
+    this.focused = false;
+    this.dirty = true;
   };
 
   return board

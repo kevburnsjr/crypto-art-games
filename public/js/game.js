@@ -1,7 +1,7 @@
 var Game = (function(g){
   "use strict";
 
-  var defaultZoom = 16;
+  var defaultZoom = 3;
   var animationFrame;
   var deg_to_rad = Math.PI / 180.0;
   var bgcolor = "#666";
@@ -34,7 +34,19 @@ var Game = (function(g){
       desynchronized: true
     });
     palette = new Game.Palette(paletteElem, autumn);
-    board = new Game.Board(Game, "/palettes/autumn.gif", palette, 16, 16);
+    board = new Game.Board(Game, "/palettes/autumn.gif", palette, 16, 16, function() {
+      if(window.location.hash) {
+        var parts = window.location.hash.substr(1).split(':');
+        zoom = parseInt(parts[1]);
+        board.setTile(parseInt(parts[3]));
+        if (parts[2] != "1") {
+            board.cancelFocus();
+        }
+        setColor(parts[0]);
+      } else {
+        setColor(autumn[Math.floor(Math.random() * autumn.length)]);
+      }
+    });
     reset();
     document.addEventListener('mousemove', mousemove);
     document.addEventListener('mousedown', mousedown);
@@ -47,14 +59,6 @@ var Game = (function(g){
     window.addEventListener('resize', resize);
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
-    if(window.location.hash) {
-      var parts = window.location.hash.substr(1).split(':');
-      zoom = parseInt(parts[1]);
-      board.setTile(parseInt(parts[2]));
-      setColor(parts[0]);
-    } else {
-      setColor(autumn[Math.floor(Math.random() * autumn.length)]);
-    }
     var userID = null;
     if (document.getElementById("user")) {
       userID = parseInt(document.getElementById("user").dataset.userid);
@@ -307,12 +311,18 @@ var Game = (function(g){
     }
     if (k == "escape") {
       e.preventDefault();
-      board.cancelActive().then(function() {
-        document.body.classList.remove("editing");
-      });
       if (brushState) {
         palette.hide();
         brushState = false;
+        return
+      }
+      if (board.tile && board.tile.active) {
+        board.cancelActive().then(function() {
+          document.body.classList.remove("editing");
+        });
+        return
+      } else if (board.focused) {
+        board.cancelFocus();
       }
     }
   };
@@ -429,7 +439,7 @@ var Game = (function(g){
   // ----------------- State Functions -------------------
 
   var sethash = function() {
-    window.location.hash = [color, zoom, board.getTileID()].join(':');
+    window.location.hash = [color, zoom, board.focused?1:0, board.getTileID()].join(':');
   };
 
   window.onhashchange = function() {
