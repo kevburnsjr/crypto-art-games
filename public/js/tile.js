@@ -63,10 +63,7 @@ Game.Tile = (function(g){
         for (this.v.j = 0; this.v.j < this.h; this.v.j++) {
           if (this.buffer[this.v.i][this.v.j] != "") {
             this.ctx.fillStyle = this.buffer[this.v.i][this.v.j];
-            this.ctx.fillRect(this.v.i * maxScale, this.v.j * maxScale, maxScale, maxScale);
-            continue
-          }
-          if (this.ctx.fillStyle != this.px[this.v.i][this.v.j]) {
+          } else {
             this.ctx.fillStyle = this.px[this.v.i][this.v.j];
           }
           this.ctx.fillRect(this.v.i * maxScale, this.v.j * maxScale, maxScale, maxScale);

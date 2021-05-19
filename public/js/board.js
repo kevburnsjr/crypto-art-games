@@ -118,7 +118,7 @@ Game.Board = (function(g){
       }
       return
     }
-    if (this.i == i && this.j == j) {
+    if (this.focused && this.i == i && this.j == j) {
       if (this.tile.active && !this.game.isKeyDown("tab")) {
         if (this.game.isKeyDown("e")) {
           this.tile.clearXY(curx, cury);
@@ -185,7 +185,6 @@ Game.Board = (function(g){
       });
     } else if (this.tile.active) {
       return this.tile.commit().then(function(tile){
-        self.edits.push(tile);
         self.dirty = true;
         return false;
       });
