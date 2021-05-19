@@ -51,7 +51,7 @@ Game.Board = (function(g){
     this.tile = this.tiles[this.i][this.j];
   };
 
-  board.prototype.render = function(ctx, cx, cy, curx, cury, zoom, dirty, mousedown, c, e) {
+  board.prototype.render = function(ctx, uiCtx, cx, cy, curx, cury, zoom, dirty, uiDirty, mousedown, c, e) {
     if (this.tiles.length == 0) {
       return;
     }
@@ -88,8 +88,11 @@ Game.Board = (function(g){
     } else if (this.tile.cursi > -1) {
       this.tile.clearCursor();
     }
-    if (this.focused && (this.dirty || dirty)) {
-      this.tile.stroke(ctx);
+    if (this.uiDirty || uiDirty) {
+      uiCtx.clearRect(0, 0, this.w, this.h);
+      if (this.focused) {
+        this.tile.stroke(uiCtx);
+      }
     }
     this.dirty = false;
   };
@@ -191,14 +194,14 @@ Game.Board = (function(g){
     if (this.focused && !this.tile.active) {
       return this.tile.lock().then(function(e){
         document.body.classList.add("editing");
-        self.dirty = true;
+        self.uiDirty = true;
         return true;
       }).catch((e) => {
         g.log("Unable to activate Tile: ", e);
       });
     } else if (this.tile.active) {
       return this.tile.commit().then(function(tile){
-        self.dirty = true;
+        self.uiDirty = true;
         return false;
       });
     }
@@ -219,7 +222,7 @@ Game.Board = (function(g){
   board.prototype.cancelActive = function() {
     var self = this;
     return (this.tile.active ? this.tile.rollback() : Promise.resolve()).then(function(){
-      self.dirty = true;
+      self.uiDirty = true;
     });
   };
 
@@ -228,6 +231,7 @@ Game.Board = (function(g){
     this.j = j;
     this.tile = this.tiles[i][j];
     this.dirty = true;
+    this.uiDirty = true;
     this.focused = true
   };
 
@@ -237,6 +241,7 @@ Game.Board = (function(g){
     }
     this.focused = false;
     this.dirty = true;
+    this.uiDirty = true;
   };
 
   board.prototype.getTimecode = async function(tc) {

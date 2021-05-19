@@ -8,7 +8,7 @@ Game.Nav = (function(g){
         e.preventDefault();
         el.classList.toggle('active');
         document.getElementById(id).classList.toggle('active');
-        localforage.setItem("ui-"+id, e.target.classList.contains('active'));
+        localforage.setItem("ui-"+id, el.classList.contains('active'));
       });
       localforage.getItem("ui-"+id).then(active => {
         if (active == null) {

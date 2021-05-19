@@ -8,7 +8,8 @@ var Game = (function(g){
   var color = "#000";
   var zoom = defaultZoom;
   var pzoom = defaultZoom;
-  var ctx, elem;
+  var bgCtx, bgElem;
+  var uiCtx, uiElem;
   var fps_tick = Date.now();
   var pause = false;
   var animate = true;
@@ -30,12 +31,11 @@ var Game = (function(g){
   var timecode;
   var socket;
 
-  var start = async function(canvasElem, paletteElem, leftNavElem) {
-    elem = canvasElem;
-    ctx = elem.getContext('2d', {
-      alpha: false,
-      desynchronized: true
-    });
+  var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem) {
+    bgElem = bgCanvasElem;
+    bgCtx = bgElem.getContext('2d', { alpha: false, desynchronized: true });
+    uiElem = uiCanvasElem;
+    uiCtx = uiElem.getContext('2d', { alpha: true, desynchronized: true });
     palette = new Game.Palette(paletteElem, autumn);
     board = new Game.Board(Game, localforage.createInstance({name: "board"}),
     "/palettes/autumn.gif", palette, 16, 16, function() {
@@ -162,18 +162,25 @@ var Game = (function(g){
     window.cancelAnimationFrame(animationFrame);
     animationFrame = window.requestAnimationFrame(draw);
     var dirty = false;
-    if (elem.width != w || elem.height != h || zoom != pzoom) {
-        elem.width = w;
-        elem.height = h;
+    var uiDirty = false;
+    if (bgElem.width != w || bgElem.height != h || zoom != pzoom) {
+        bgElem.width = w;
+        bgElem.height = h;
+        uiElem.width = w;
+        uiElem.height = h;
         pzoom = zoom;
         dirty = true;
+        uiDirty = true;
     }
     if (dirty || board.dirty) {
-      ctx.fillStyle = bgcolor;
-      ctx.fillRect(0, 0, w, h);
+      bgCtx.fillStyle = bgcolor;
+      bgCtx.fillRect(0, 0, w, h);
+    }
+    if (uiDirty || board.uiDirty) {
+      uiCtx.clearRect(0, 0, w, h);
     }
     try {
-      board.render(ctx, w/2, h/2, hoverX, hoverY, zoom, dirty, mousedown, color);
+      board.render(bgCtx, uiCtx, w/2, h/2, hoverX, hoverY, zoom, dirty, uiDirty, mousedown, color);
     } catch(e) {
       log(e);
       window.cancelAnimationFrame(animationFrame);
@@ -204,9 +211,9 @@ var Game = (function(g){
 
   // click
   var click = function(e){
-    if (e.target.id == "bgcanvas") {
+    if (e.target.id == "uicanvas") {
       board.handleClick(e, w/2, h/2, hoverX, hoverY, zoom);
-      sethash();
+      setHash();
     }
   };
 
@@ -292,34 +299,34 @@ var Game = (function(g){
     if (k == "w" || k == "arrowup") {
       e.preventDefault();
       // if ctrl move boards else move tiles
-      board.moveTile(0, -1).then(() => sethash());
+      board.moveTile(0, -1).then(setHash);
       document.body.classList.remove("editing");
     }
     if (k == "a" || k == "arrowleft") {
       e.preventDefault();
       // if ctrl move boards else move tiles
-      board.moveTile(-1, 0).then(() => sethash());
-      sethash();
+      board.moveTile(-1, 0).then(setHash);
+      setHash();
       document.body.classList.remove("editing");
     }
     if (k == "s" || k == "arrowdown") {
       e.preventDefault();
       // if ctrl move boards else move tiles
-      board.moveTile(0, 1).then(() => sethash());
-      sethash();
+      board.moveTile(0, 1).then(setHash);
       document.body.classList.remove("editing");
     }
     if (k == "d" || k == "arrowright") {
       e.preventDefault();
       // if ctrl move boards else move tiles
-      board.moveTile(1, 0).then(() => sethash());
-      sethash();
+      board.moveTile(1, 0).then(setHash);
       document.body.classList.remove("editing");
     }
     if (k == "0" || k == "numpad0") {
       e.preventDefault();
-      zoom = 2;
+      zoom = 3;
+      board.cancelFocus();
       setZoom();
+      setHash();
     }
     if (k == "pageup") {
       e.preventDefault();
@@ -407,7 +414,7 @@ var Game = (function(g){
       }
     }
     setZoom();
-    sethash();
+    setHash();
   };
 
   // ----------------- View Functions -------------------
@@ -463,7 +470,7 @@ var Game = (function(g){
 
   // ----------------- State Functions -------------------
 
-  var sethash = function() {
+  var setHash = function() {
     window.location.hash = [color, zoom, board.focused?1:0, board.getTileID()].join(':');
   };
 
@@ -489,7 +496,7 @@ var Game = (function(g){
       document.body.classList.remove('bg-light');
     }
     document.getElementById("brush-state").style.backgroundColor = color;
-    sethash();
+    setHash();
   };
 
   var log = function() {

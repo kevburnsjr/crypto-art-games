@@ -4,6 +4,7 @@
   document.addEventListener("DOMContentLoaded", function(e) {
     Game.start(
       document.getElementById("bgcanvas"),
+      document.getElementById("uicanvas"),
       document.getElementById("palette"),
       document.getElementById("left")
     );

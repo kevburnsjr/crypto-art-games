@@ -46,8 +46,7 @@ nav.user a { float: left; }
 nav.user a span { float: left; line-height: 3em; padding: 0em 1.5em; }
 nav.user a img { height: 3em; margin: 0 0 0 -1.5em; float: left; border-radius: 50%; padding: 0; }
 
-canvas#bgcanvas {
-    background: #666;
+canvas.full {
     position: absolute; top: 0; left: 0;
     z-index: 1;
     image-rendering: -moz-crisp-edges;
@@ -55,15 +54,20 @@ canvas#bgcanvas {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
 }
-body.editing canvas#bgcanvas {
-
+body.editing canvas.full {
     cursor: crosshair;
 }
+canvas#bgcanvas {
+    background: #666;
+}
+canvas#uicanvas {
+    z-index: 2;
+}
 
-body.color-picking canvas#bgcanvas {
+body.color-picking canvas.full {
     cursor: url(/i/cursor-eyedropper-light.png) 0 10, cell;
 }
 
-body.erasing canvas#bgcanvas {
+body.erasing canvas.full {
     cursor: url(/i/cursor-eraser.png) 5 5, cell;
 }

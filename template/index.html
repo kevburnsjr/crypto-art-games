@@ -44,18 +44,20 @@
         <em>S</em> <em>&darr;</em> to move down<br/>
         <em>D</em> <em>&rarr;</em> to move right<br/>
         <em>Space</em> to edit/commit tile<br/>
+        <em>Esc</em> to cancel/defocus<br/>
         <em>Tab</em> to open palette<br/>
         <em>Alt</em> to use eyedropper<br/>
         <em>E</em> to use eraser<br/>
-        <em>Esc</em> to defocus/cancel<br/>
-        Move to commit changes<br/>
+        Moving commits changes<br/>
         Tile lock duration 120 sec<br/>
         Tile cooldown 60 sec<br/>
+        <em>H</em> to toggle help<br/>
     </div>
 </div>
 <canvas id="palette"></canvas>
 <nav class="brush-state" id="brush-state"></nav>
-<canvas id="bgcanvas"></canvas>
+<canvas id="bgcanvas" class="full"></canvas>
+<canvas id="uicanvas" class="full"></canvas>
 <script src="/js/lib/jsuri-1.1.1.js"></script>
 <script src="/js/lib/base64.js"></script>
 <script src="/js/lib/bitset.min.js"></script>
