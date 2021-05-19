@@ -4,26 +4,9 @@
   document.addEventListener("DOMContentLoaded", function(e) {
     Game.start(
       document.getElementById("bgcanvas"),
-      document.getElementById("palette")
+      document.getElementById("palette"),
+      document.getElementById("left")
     );
-  });
-  document.querySelectorAll("#left nav a").forEach(el => {
-    var id = el.dataset.toggle;
-    el.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.target.classList.toggle('active');
-      document.getElementById(id).classList.toggle('active');
-      localforage.setItem("ui-"+id, e.target.classList.contains('active'));
-    });
-    localforage.getItem("ui-"+id).then(active => {
-      if (active == null) {
-        localforage.setItem("ui-"+id, true);
-        active = true
-      }
-      if (active) {
-        el.click();
-      }
-    });
   });
 
   var lto;

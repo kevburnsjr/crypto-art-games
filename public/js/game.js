@@ -16,6 +16,7 @@ var Game = (function(g){
   var w;
   var h;
   var board;
+  var nav;
   var palette;
   var hoverX;
   var hoverY;
@@ -27,7 +28,7 @@ var Game = (function(g){
   var last;
   var socket;
 
-  var start = function(canvasElem, paletteElem) {
+  var start = function(canvasElem, paletteElem, leftNavElem) {
     elem = canvasElem;
     ctx = elem.getContext('2d', {
       alpha: false,
@@ -47,6 +48,7 @@ var Game = (function(g){
         setColor(autumn[Math.floor(Math.random() * autumn.length)]);
       }
     });
+    nav = new Game.Nav(leftNavElem);
     reset();
     document.addEventListener('mousemove', mousemove);
     document.addEventListener('mousedown', mousedown);
@@ -349,6 +351,7 @@ var Game = (function(g){
 
   // keypress
   var keypress = function(e){
+    var k = e.key.toLowerCase();
     if (e.key == " ") {
       e.preventDefault();
       board.toggleActive().then(function(active){
@@ -358,6 +361,10 @@ var Game = (function(g){
           document.body.classList.remove("editing");
         }
       });
+    }
+    if (k == "h") {
+      e.preventDefault();
+      nav.toggleHelp();
     }
   };
 

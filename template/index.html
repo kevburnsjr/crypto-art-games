@@ -35,17 +35,21 @@
 </nav>
 <div id="left">
     <nav>
-        <a data-toggle="help">Help</a>
+        <a id="help-toggle" data-toggle="help"><em>H</em></a>
     </nav>
     <div id="help">
         <em>Click</em> to focus/edit tile<br/>
-        <em>W</em> <em>&uarr;</em> Up<br/>
-        <em>A</em> <em>&larr;</em> Left<br/>
-        <em>S</em> <em>&darr;</em> Down<br/>
-        <em>D</em> <em>&rarr;</em> Right<br/>
+        <em>W</em> <em>&uarr;</em> to move up<br/>
+        <em>A</em> <em>&larr;</em> to move left<br/>
+        <em>S</em> <em>&darr;</em> to move down<br/>
+        <em>D</em> <em>&rarr;</em> to move right<br/>
         <em>Space</em> to edit/commit tile<br/>
-        <em>Esc</em> to cancel changes<br/>
-        Tile lock duration 60 sec<br/>
+        <em>Tab</em> to open palette<br/>
+        <em>Alt</em> to use eyedropper<br/>
+        <em>E</em> to use eraser<br/>
+        <em>Esc</em> to defocus/cancel<br/>
+        Move to commit changes<br/>
+        Tile lock duration 120 sec<br/>
         Tile cooldown 60 sec<br/>
     </div>
 </div>
@@ -63,6 +67,7 @@
 <script src="/js/lib/object.js"></script>
 <script src="/js/lib/event.js"></script>
 <script src="/js/lib/socket.js"></script>
+<script src="/js/nav.js"></script>
 <script src="/js/board.js"></script>
 <script src="/js/palette.js"></script>
 <script src="/js/tile.js"></script>
