@@ -29,6 +29,7 @@ var Game = (function(g){
   var checkpoint;
   var generation;
   var timecode;
+  var userIdx;
   var socket;
   var policy;
 
@@ -75,6 +76,7 @@ var Game = (function(g){
     }
     checkpoint = await board.store.getItem("checkpoint");
     generation = await board.store.getItem("generation");
+    userIdx = await board.store.getItem("userIdx");
     timecode = await board.getTimecode();
     board.timecode = timecode;
     // initiate websocket
@@ -90,6 +92,7 @@ var Game = (function(g){
             socket.on('complete', function(h) {
               if (h == hash) {
                 socket.awaiting = null;
+                nav.resetScrubber();
                 resolve();
               }
             });
@@ -123,8 +126,10 @@ var Game = (function(g){
         return new Promise((resolve, reject) => {
           socket.on(['tile-lock-released', 'err'], function(e) {
             if (e.type == 'err') {
+              nav.resetScrubber();
               reject(e.msg);
             } else if (e.userID == userID) {
+              nav.resetScrubber();
               resolve();
             }
           });
@@ -150,7 +155,11 @@ var Game = (function(g){
       }
     });
     socket.on('sync-complete', function(e) {
-      board.enable(e.timecode, e.bucket);
+      board.enable(e.timecode, e.userIdx, e.bucket);
+    });
+    socket.on('new-user', function(e) {
+      const user = new Game.User(e);
+      user.save();
     });
     socket.start();
 

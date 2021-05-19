@@ -272,6 +272,10 @@ Game.Board = (function(g){
     return this.store.setItem("timecode", tc.toString(16).padStart(4, 0));
   };
 
+  board.prototype.setUserIdx = async function(userIdx) {
+    return this.store.setItem("userIdx", userIdx.toString(16).padStart(4, 0));
+  };
+
   board.prototype.saveFrame = async function(f) {
     var self = this;
     var timecode = self.timecode;
@@ -308,11 +312,15 @@ Game.Board = (function(g){
     }
   };
 
-  board.prototype.enable = function(timecode, bucket) {
+  board.prototype.enable = function(timecode, userIdx, bucket) {
     var self = this;
     return this.scanFrames(function(timecode, frameData) {
       self.frames.push(Game.Frame.fromBytes(frameData));
-    }).then(() => self.setTimecode(timecode)).then(() => {
+    }).then(() => {
+      self.setTimecode(timecode)
+    }).then(() => {
+      self.setUserIdx(userIdx)
+    }).then(() => {
       g.nav().updateScrubber(timecode);
       self.bucket = bucket;
       self.timecode = timecode;

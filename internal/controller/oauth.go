@@ -38,10 +38,14 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger, rUser repo.User) *oauth {
 	if err != nil {
 		logger.Fatal(err)
 	}
+	cs := sessions.NewCookieStore([]byte(cfg.Secret))
+	cs.Options.MaxAge = 0;
+	cs.Options.Secure = true;
+	cs.Options.HttpOnly = true;
 	return &oauth{
 		cfg:          cfg,
 		log:          logger,
-		cookieStore:  sessions.NewCookieStore([]byte(cfg.Secret)),
+		cookieStore:  cs,
 		oidcVerifier: provider.Verifier(&oidc.Config{ClientID: cfg.Twitch.ClientID}),
 		oauth2Config: &oauth2.Config{
 			ClientID:     cfg.Twitch.ClientID,
@@ -64,6 +68,7 @@ type oauth struct {
 }
 
 func (c oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stdHeaders(w)
 	session, err := c.cookieStore.Get(r, oauthSessionName)
 	if err != nil {
 		c.log.Warnf("corrupted session %s -- generated new", err)

@@ -1,0 +1,7 @@
+html { font-size: 100%; }
+body { margin: 0; font-size: 13px; line-height: 1.231; font-family: open sans, arial, sans-serif; color: rgba(0,0,0,0.75); position: relative; }
+html, body { min-height: 100vh; background: #ddd; }
+body { font-size: 1.2em; }
+pre { padding: 0.5em 1.5em; background: #bbb; }
+div.content, h1 { max-width: 800px; margin: 0 auto; }
+h1 { text-align: center; margin: 2em auto; }

@@ -10,8 +10,9 @@ import (
 )
 
 type User interface {
-	FindOrInsert(user *entity.User) (userID uint16, err error)
+	FindOrInsert(user *entity.User) (userID uint16, inserted bool, err error)
 	Update(user *entity.User) (u *entity.User, err error)
+	Since(userIdx, generation uint16) (users []*entity.User, userIds []uint16, err error)
 }
 
 // NewUser returns an User repo instance
@@ -33,10 +34,12 @@ type user struct {
 }
 
 // Find retrieves an user
-func (r *user) FindOrInsert(user *entity.User) (userID uint16, err error) {
+func (r *user) FindOrInsert(user *entity.User) (userID uint16, inserted bool, err error) {
 	_, bytes, err := r.db.Get([]byte("twitch-" + user.ID))
 	if err == errors.RepoItemNotFound {
-		return r.Insert(user)
+		userID, err = r.Insert(user)
+		inserted = true
+		return
 	} else if err != nil {
 		return
 	} else {
@@ -110,6 +113,24 @@ func (r *user) All() (all map[string]string, err error) {
 	}
 	for i, v := range vals {
 		all[string(keys[i])] = string(v)
+	}
+	return
+}
+
+// Since returns new users
+func (r *user) Since(userIdx, generation uint16) (users []*entity.User, userIds []uint16, err error) {
+	var start = make([]byte, 2)
+	binary.BigEndian.PutUint16(start, userIdx)
+	keys, vals, err := r.db.GetRanged(start, 0, false)
+	if err != nil {
+		return
+	}
+	for i, b := range vals {
+		if len(keys[i]) != 2 {
+			continue
+		}
+		userIds = append(userIds, binary.BigEndian.Uint16(keys[i]))
+		users = append(users, entity.UserFromJson(b))
 	}
 	return
 }

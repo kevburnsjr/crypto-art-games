@@ -1,4 +1,5 @@
 api:
+  host: localhost
   port: 4000
   ssl:
     enabled: false

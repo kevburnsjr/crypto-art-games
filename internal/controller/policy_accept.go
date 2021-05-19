@@ -27,6 +27,7 @@ type policyAccept struct {
 }
 
 func (c policyAccept) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stdHeaders(w)
 	agree := r.FormValue("agree")
 	if len(agree) < 1 {
 		http.Error(w, "User must agree to terms of service and privacy policy in order to participate.", 400)

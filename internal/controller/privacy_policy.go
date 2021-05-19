@@ -13,6 +13,7 @@ type privacyPolicy struct {
 }
 
 func (c privacyPolicy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stdHeaders(w)
 	t, err := template.ParseFiles("./template/privacyPolicy.html")
 	if check(err, w, c.log) {
 		return

@@ -11,6 +11,7 @@ type Api struct {
 type Http struct {
 	Port string `yaml:"port"`
 	Ssl  Ssl    `yaml:"ssl"`
+	Host string `yaml:"host"`
 }
 
 type Ssl struct {

@@ -14,6 +14,7 @@ type static struct {
 }
 
 func (c static) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stdHeaders(w)
 	path := c.prefix + r.URL.Path
 	modTime := time.Now().UTC()
 	stat, err := os.Stat(path)

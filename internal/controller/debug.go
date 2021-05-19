@@ -54,6 +54,7 @@ type debug struct {
 }
 
 func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stdHeaders(w)
 	{
 		username := "admin"
 		password := c.cfg.Secret

@@ -46,9 +46,9 @@ aside#right { top: 3em; right: 0; }
 aside#right nav { float: right; }
 aside#right nav { float: right; }
 aside#right ul { padding: 0 0 0 3em; margin: 0; }
-aside#right ul li { list-style: none; margin: 0 0 1em 0; clear: left; height: 3em; width: 8em; }
+aside#right ul li { list-style: none; margin: 0 0 1em 0; clear: left; height: 3em; width: 10em; }
 aside#right ul li:last-child { margin-bottom: 0; }
-aside#right ul li img,
+aside#right ul li img { width: 1.5em; height: 1.5em; float: left; margin-right: 0.5em; }
 aside#right ul li canvas { width: 3em; height: 3em; float: left; margin-left: -3em; background: rgba(255,255,255,0.1); }
 aside#right ul li a { display: block; padding: 0 0.5em; cursor: pointer; font-size: 0.9em; line-height: 1.5em; height: 1.5em; overflow: hidden; }
 

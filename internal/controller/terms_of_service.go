@@ -13,6 +13,7 @@ type termsOfService struct {
 }
 
 func (c termsOfService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stdHeaders(w)
 	t, err := template.ParseFiles("./template/termsOfService.html")
 	if check(err, w, c.log) {
 		return

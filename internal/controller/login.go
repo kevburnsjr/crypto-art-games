@@ -22,6 +22,7 @@ type login struct {
 }
 
 func (c login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stdHeaders(w)
 	session, err := c.oauth.getSession(r)
 
 	var tokenBytes [255]byte

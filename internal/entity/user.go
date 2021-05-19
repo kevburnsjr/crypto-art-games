@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"log"
-	"strconv"
+	// "strconv"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/nicklaw5/helix"
@@ -16,8 +16,28 @@ type User struct {
 	Policy bool `json:"policy"`
 }
 
+type UserDto struct {
+	Type string `json:"type"`
+	ID uint16 `json:"id"`
+	Login string `json:"login"`
+	DisplayName string `json:"display_name"`
+	ProfileImageURL string `json:"profile_image_url"`
+}
+
 func (u *User) ToJson() []byte {
 	b, _ := json.Marshal(u)
+	log.Println(string(b))
+	return b
+}
+
+func (u *User) ToDto(userID uint16) []byte {
+	b, _ := json.Marshal(UserDto{
+		"new-user",
+		userID,
+		u.Login,
+		u.DisplayName,
+		u.ProfileImageURL,
+	})
 	log.Println(string(b))
 	return b
 }
@@ -29,11 +49,6 @@ func UserFromJson(b []byte) *User {
 		return nil
 	}
 	return &u
-}
-
-func (u *User) GetID() uint16 {
-	i, _ := strconv.Atoi(u.ID)
-	return uint16(i)
 }
 
 func UserFromHelix(u helix.User, secret string) User {

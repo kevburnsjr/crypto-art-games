@@ -1,22 +1,14 @@
 <html><head>
 <title>Privacy Policy - Crypto Art Games</title>
-<style>
-html { font-size: 100%; }
-body { margin: 0; font-size: 13px; line-height: 1.231; font-family: open sans, arial, sans-serif; color: rgba(0,0,0,0.75); position: relative; }
-html, body { min-height: 100vh; background: #ddd; }
-body { font-size: 1.2em; }
-pre { padding: 0.5em 1.5em; background: #bbb; }
-div.content, h1 { max-width: 800px; margin: 0 auto; }
-h1 { text-align: center; margin: 2em auto; }
-</style>
+<link href="/css/ext.css" rel="stylesheet"></link>
 </head><body>
 <h1>Privacy Policy</h1>
 <div class="content">
 <p>We take privacy very seriously at Crypto Art Games.<br/>
 We will not sell your personal information to third parties.</p>
 <h2>Twitch Account Details</h2>
-<p>Upon authenticating to Twitch, Crypto Art Games will collect some Twitch profile information as part of the standard
-single sign on process. That information is used in the following ways:</p>
+<p>Crypto Art Games collects some Twitch profile information as part of the standard
+single sign on process.</p>
 <ul>
     <li>
         <strong>Account name, display name and profile image</strong><br/><br/>
@@ -29,15 +21,32 @@ single sign on process. That information is used in the following ways:</p>
     <li>
         <strong>Email Address</strong><br/><br/>
         We retrieve email addresses from Twitch as part of the single sign in process. We do not store email address.
-        We store a peppered hash of the normalized address to prevent abuse. Example:
+        We store a peppered hash of the normalized address to prevent users from creating duplicate accounts.
         <pre>
 
-hash = base64(sha256(pepper + normalize(email)))
+email_hash = base64(sha256(pepper + normalize(email)))
 
 </pre>
         We will never send you email because we don't store your email address.<br/>
         We will never share your email address with third parties because we don't store your email address.<br/><br/>
     </li>
 </ul>
+<h2>Security</h2>
+<p>Crypto Art Games is owned and operated by web application security experts. Here are a few of the security measures
+used to safeguard the application and your data within it:</p>
+<ul>
+    <li>SSH password authentication disabled</li>
+    <li>Restrictive Linux firewall configuration</li>
+    <li>Restrictive Network Configuration</li>
+    <li>Restrictive Content Security Policy</li>
+    <li>Restrictive X-Frame-Options</li>
+    <li>Restrictive Cross Domain Policies</li>
+    <li>OAuth 2.1 Single Sign On</li>
+    <li>Secure HttpOnly Session cookies</li>
+    <li>Mandatory two factor authentication on all privileged accounts</li>
+</ul>
+<p>If you think you've found a security problem, please contact us <a href="mailto:admin@cryptoart.games">admin@cryptoart.games</a></p>
+<p><br/></p>
+<p><br/></p>
 </div>
 </body></html>

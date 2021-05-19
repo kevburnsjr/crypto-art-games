@@ -51,8 +51,10 @@ type socket struct {
 }
 
 func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stdHeaders(w)
 	user, err := c.oauth.getUser(r, w)
 	// lsn := r.FormValue("lsn")
+	userIdx := r.FormValue("userIdx")
 	boardId := r.FormValue("boardId")
 	generation := r.FormValue("generation")
 	timecode := r.FormValue("timecode")
@@ -71,21 +73,28 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userIdxInt, _ := strconv.Atoi(userIdx)
 	boardIdInt, _ := strconv.Atoi(boardId)
 	generationInt, _ := strconv.Atoi(generation)
 	timecodeInt, _ := strconv.Atoi(timecode)
 
-	conn := sock.CreateConnection([]string{boardId}, ws)
+	conn := sock.CreateConnection([]string{"global", boardId}, ws)
 	frames, err := c.repoFrame.Since(uint16(boardIdInt), uint16(generationInt), uint16(timecodeInt))
 	for _, frame := range frames {
 		conn.Write(sock.BinaryMsgFromBytes(boardId, frame.Data))
 	}
+	users, userIds, err := c.repoUser.Since(uint16(userIdxInt), uint16(generationInt))
+	for i, user := range users {
+		conn.Write(sock.TextMsgFromBytes("global", user.ToDto(userIds[i])))
+	}
 	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
 		"type":     "sync-complete",
 		"timecode": timecodeInt + len(frames),
+		"userIdx":  userIdxInt + len(users),
 	}))
 
 	ctx := context.WithValue(context.Background(), "user", user)
+	ctx = context.WithValue(ctx, "userIdx", userIdx)
 	ctx = context.WithValue(ctx, "boardId", boardId)
 
 	c.hub.Register(conn)
@@ -98,10 +107,17 @@ func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 		var userID uint16
 		var user *entity.User
 		var err error
+		var inserted bool
 		if u, ok := ctx.Value("user").(*entity.User); ok && u != nil {
-			userID, err = c.repoUser.FindOrInsert(u)
+			userID, inserted, err = c.repoUser.FindOrInsert(u)
 			if err != nil {
 				return err
+			}
+			if inserted {
+				c.hub.Broadcast(sock.JsonMessagePure("global", map[string]interface{}{
+					"type": "new-user",
+					"user": u.ToDto(userID),
+				}))
 			}
 			user = u
 		} else {

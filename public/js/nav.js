@@ -58,6 +58,10 @@ Game.Nav = (function(g){
     this.scrubber.firstChild.style.width = this.scrubber.offsetWidth + timecode;
   };
 
+  nav.prototype.resetScrubber = function(timecode) {
+    this.scrubber.scrollLeft = 0;
+  };
+
   nav.prototype.toggleRecentFrames = function(){
     this.toggles["recent-frames"].click();
   };
@@ -65,18 +69,32 @@ Game.Nav = (function(g){
   nav.prototype.showRecent = function(board) {
     window.cancelAnimationFrame(this.showRecentAnimationFrame);
     this.showRecentAnimationFrame = window.requestAnimationFrame(() => {
-      var html = 'Recent Edits<br/><hr/><ul>';
-      var tiles = [];
-      board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 1)).reverse().forEach((f, i) => {
-        tiles[i] = new Game.Tile(null, board.palette, 0, 0);
-        tiles[i].renderFrameBuffer(f);
-        html += '<li><a>'+f.userid.toString(16).padStart(4,0)+'</a></li>';
+      var userIds = [];
+      const frames = board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 1)).reverse();
+      frames.forEach((f, i) => {
+        userIds.push(f.userid);
       });
-      this.recentFrames.innerHTML = html + '</ul>';
-      this.recentFrames.querySelectorAll("li").forEach((el, i) => {
-        el.prepend(tiles[i].canvas);
-      })
-      this.showRecentTimeout = null;
+      g.User.findAll(userIds).then(users => {
+        var html = 'Recent Board Edits<br/><hr/><ul>';
+        var tiles = [];
+        users.forEach((u, i) => {
+          tiles[i] = new Game.Tile(null, board.palette, 0, 0);
+          tiles[i].renderFrameBuffer(frames[i]);
+          if (!u) {
+            html += '<li><a>'+frames[i].userid.toString(16).padStart(4,0)+'</a></li>';
+          } else {
+            html += '<li><a>';
+            if (u.profile_image_url.length > 0) {
+              html += '<img src="'+u.profile_image_url+'"/>'
+            }
+            html += u.display_name+'</a></li>';
+          }
+        });
+        this.recentFrames.innerHTML = html + '</ul>';
+        this.recentFrames.querySelectorAll("li").forEach((el, i) => {
+          el.prepend(tiles[i].canvas);
+        })
+      });
     });
   };
 

@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
@@ -8,6 +10,8 @@ import (
 	"github.com/kevburnsjr/crypto-art-games/internal/repo"
 	sock "github.com/kevburnsjr/crypto-art-games/internal/socket"
 )
+
+var stdHeaders func(w http.ResponseWriter)
 
 func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 	router := mux.NewRouter()
@@ -37,6 +41,18 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		logger.Fatal(err)
 	}
 
+	imgUrl := "https://static-cdn.jtvnw.net"
+	wsUrl := "wss://" + cfg.Api.Host
+
+	stdHeaders = func(w http.ResponseWriter) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Permitted-Cross-Domain-Policies", "none")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: "+imgUrl+"; font-src 'self' data:; script-src 'self'; style-src 'self'; connect-src 'self' "+wsUrl)
+	}
+
 	hub := sock.NewHub()
 	go hub.Run()
 
@@ -46,7 +62,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	debug := newDebug(cfg, logger, oauth, hub, rUser, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
-	router.Handle("/", index{oauth, cfg, logger, rUser})
+	router.Handle("/", index{oauth, cfg, logger, hub, rUser})
 	router.Handle("/login", newLogin(logger, oauth))
 	router.Handle("/logout", newLogout(logger, oauth))
 	router.Handle("/policy-accept", newPolicyAccept(logger, oauth, rUser))
