@@ -11,6 +11,7 @@ import (
 
 type User interface {
 	FindOrInsert(user *entity.User) (userID uint16, err error)
+	Update(user *entity.User) (u *entity.User, err error)
 }
 
 // NewUser returns an User repo instance
@@ -68,6 +69,30 @@ func (r *user) Insert(user *entity.User) (userID uint16, err error) {
 	}
 
 	_, err = r.db.Put([]byte("twitch-"+user.ID), "", idBytes)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (r *user) Update(user *entity.User) (u *entity.User, err error) {
+	_, idBytes, err := r.db.Get([]byte("twitch-" + user.ID))
+	if err != nil {
+		return
+	}
+	userVers, userBytes, err := r.db.Get(idBytes)
+	if err != nil {
+		return
+	}
+
+	u = entity.UserFromJson(userBytes)
+	u.User = user.User
+	if user.Policy {
+		u.Policy = user.Policy
+	}
+
+	_, err = r.db.Put(idBytes, userVers, u.ToJson())
 	if err != nil {
 		return
 	}

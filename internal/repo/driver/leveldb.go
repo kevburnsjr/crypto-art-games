@@ -52,6 +52,7 @@ func (w *leveldbDriver) Put(key []byte, prev string, value []byte) (version stri
 		return
 	}
 	if prev != "" && v != prev {
+		println(v, prev)
 		err = errors.RepoItemVersionConflict
 		return
 	}

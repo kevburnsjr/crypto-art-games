@@ -77,7 +77,7 @@ func (r *tileLock) Release(userID, tileID uint16, t time.Time) (err error) {
 		// This is really obnoxious. Need a better solution.
 		//
 		// if len(b) == 6 && time.Unix(int64(binary.BigEndian.Uint32(b[2:6])), 0).Before(t) {
-			// return fmt.Errorf("Tile lock expired")
+		// return fmt.Errorf("Tile lock expired")
 		// }
 	}
 	if binary.BigEndian.Uint16(b[0:2]) != userID {

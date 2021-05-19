@@ -31,7 +31,7 @@ nav.world div.levels div:nth-child(9n+1) { background: rgba(192,192,192,0.9); }
 nav.world div.levels div:nth-child(-n+9) { background: rgba(192,192,192,0.9); }
 
 aside { z-index: 99; position: absolute; }
-aside div { padding: 1em 1em 1em; color: rgba(255,255,255,0.7); line-height: 2em; display: none; background: rgba(0,0,0,0.2); clear: both; }
+aside div { padding: 1em 1em 1em; color: rgba(255,255,255,0.7); line-height: 2em; display: none; background: rgba(0,0,0,0.3); clear: both; }
 aside nav a { cursor: pointer; padding: 0.5em; display: inline-block; }
 aside nav a.active { background: rgba(0,0,0,0.2); }
 aside div.active { display: block; }
@@ -48,7 +48,8 @@ aside#right nav { float: right; }
 aside#right ul { padding: 0 0 0 3em; margin: 0; }
 aside#right ul li { list-style: none; margin: 0 0 1em 0; clear: left; height: 3em; width: 8em; }
 aside#right ul li:last-child { margin-bottom: 0; }
-aside#right ul li img { width: 3em; height: 3em; float: left; margin-left: -3em; background: rgba(255,255,255,0.1); }
+aside#right ul li img,
+aside#right ul li canvas { width: 3em; height: 3em; float: left; margin-left: -3em; background: rgba(255,255,255,0.1); }
 aside#right ul li a { display: block; padding: 0 0.5em; cursor: pointer; font-size: 0.9em; line-height: 1.5em; height: 1.5em; overflow: hidden; }
 
 nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
@@ -82,3 +83,58 @@ body.erasing canvas.full { cursor: url(/i/cursor-eraser.png) 5 5, cell; }
     overflow-x: scroll;  transform:rotate(180deg);
 }
 #scrubber div { height: 1px; }
+
+#modal { position: absolute; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); display: none; z-index: 1000; }
+#modal.active { display: block; }
+#modal > div { display: none;  position: absolute; left: 50%; top: 50%; width: 32em; margin: -8em 0 0 -16em; background: #ccc; z-index: 1001; text-align: center; }
+#modal.login .login { display: block; }
+#modal form { margin: 0; }
+#modal form label { cursor: pointer; font-size: 1em; text-align: left; }
+#modal.policy .policy { display: block; }
+#modal.policy .policy a { color: #000; text-decoration: underline; }
+
+form.std { padding: 1em; box-shadow: 0 0 1em rgba(0,0,0,0.1); }
+form.std .field { padding: 0.5em 0.5em; }
+form.std .field.submit { padding-top: 1em; clear: both; }
+form.std .field.first { padding-top: 0; }
+form.std .field label { display: block; line-height: 1.2em; padding-bottom: 0.25em; }
+form.std .text { border: none; padding: 0.42em 0.5em; width: 20em; font-size: 1em; line-height: 1.2em; box-sizing: border-box; max-width: 100%; }
+form.std .large { width: 24em; }
+form.std .small { width: 12em; }
+form.std select.demo-icon { width: 4em; }
+form.std .date { width: 7em; }
+form.std .full { width: 100%; box-sizing: border-box; }
+form.std textarea.large { height: 8em; }
+form.std textarea.tall { height: 24em; }
+form.std textarea.med-tall { height: 12em; }
+form.std a.btn { border: none; background: rgba(0,0,0,0.5); color: #fff; padding: 0 0.8em; cursor:pointer; line-height: 2.2em; font-size: 1em; display: inline-block; text-decoration: none; }
+form.std input.submit { border: none; background: rgba(0,0,0,0.5); color: #fff; padding: 0 0.8em; cursor:pointer; line-height: 2.2em; font-size: 1em; }
+form.std input.submit[disabled] { background: rgba(0,0,0,0.2); }
+form.std a.btn:hover,
+form.std input.submit:hover { background: rgba(0,0,0,0.6); }
+form.std a.cancel { padding: 0 0.8em; cursor:pointer; line-height: 2.2em; font-size: 1em; }
+form.std a.cancel:hover { opacity: 1; }
+form.std p { margin: 0; font-size: 0.9em; }
+form.std.horizontal { padding: 0.6em; font-size: 0.9em; }
+form.std.horizontal .text { width: auto; padding: 0.2em 0.3em; }
+form.std label.chk { padding: 0.5em; font-size: 0.85em; }
+form.std label input.chk { float: left; margin-right: 0.8em; transform: scale(1.25); }
+
+.cta { position: relative; margin-bottom: 5.5em; height: 3.5em; }
+.cta .btn,
+form.std .cta input.submit { padding: 0.8em 0 0.8em; width: 10em; margin-left: -5em; left: 50%; position: absolute; text-align: center;
+    box-shadow: 0px 2px 4px rgba(0,0,0,0.3); border: none;
+    background-size: cover;
+    background-position: center;
+    font-size: 1.5em;
+}
+form.std .cta input.submit { border-radius: 10px; line-height: 1em; }
+form.std .cta { margin: 1em 0; }
+.cta .btn:hover { text-decoration: none; }
+.cta span { left: 50%; display: block; position: absolute; margin-left: 8em; line-height: 3.5em; width: 12em; font-size: 0.95em; text-align: left; }
+.cta.c span { top: 5em; margin-left: -6em; text-align: center; line-height: 1.5em; }
+form.std .cta.c { margin-bottom: 1.5em; }
+#page-index .cta .btn {
+    box-shadow: 0px 0px 1.5em rgba(255,0,64,0.3);
+    animation-duration: 0.5s; animation-name: cta-hover; animation-direction: alternate; animation-iteration-count: infinite;
+}

@@ -89,7 +89,7 @@ Game.Board = (function(g){
       this.applyFrame(this.frames[this.drawnTimecode]);
       this.drawnTimecode++;
     } else if (this.enabled && this.drawnTimecode > this.timecode) {
-      this.undoFrame(this.frames[this.drawnTimecode]);
+      this.undoFrame(this.frames[this.drawnTimecode-1]);
       this.drawnTimecode--;
     }
     if (this.drawnTimecode - this.timecode === 0 && drawn) {
@@ -206,9 +206,9 @@ Game.Board = (function(g){
     });
   };
 
-  board.prototype.toggleActive = function() {
+  board.prototype.toggleActive = async function() {
     if (!this.enabled) {
-      return
+      return Promise.resolve();
     }
     var self = this;
     if (this.focused && !this.tile.active) {
@@ -275,10 +275,11 @@ Game.Board = (function(g){
   board.prototype.saveFrame = async function(f) {
     var self = this;
     var timecode = self.timecode;
-    self.timecode++;
     if (this.enabled) {
       self.frames.push(f);
-      g.nav().updateScrubber(self.timecode);
+      g.nav().updateScrubber(self.frames.length);
+    } else {
+      self.timecode++;
     }
     return this.store.setItem(timecode.toString(16).padStart(4, 0), f.toBytes()).then(() => {
       if (!self.paused && self.enabled) {

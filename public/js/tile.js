@@ -290,6 +290,10 @@ Game.Tile = (function(g){
     ctx.strokeRect(this.x1, this.y1, this.scale * this.px.length, this.scale * this.px.length);
   }
 
+  tile.prototype.getID = function() {
+    return this.ti * 16 + this.tj
+  };
+
   return tile
 
 })(Game);

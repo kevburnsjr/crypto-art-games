@@ -6,13 +6,13 @@
 </head><body>
 <nav class="user">
 {{if .User}}
-    <a id="user" data-userid="{{.UserID}}">
+    <a id="user" href="/logout" data-userid="{{.UserID}}" data-policy="{{.User.Policy}}">
         <img src="{{.User.ProfileImageURL}}"/>
         <span>{{.User.DisplayName}}</span>
     </a>
 {{else}}
     <a href="/login" class="login">
-        <span>Login using Twitch</span>
+        <span>Log in with Twitch</span>
     </a>
 {{end}}
 </nav>
@@ -63,6 +63,30 @@
         Loading...
     </div>
 </aside>
+<div id="modal">
+    <div id="modal-login" class="login">
+        <form class="std" method="GET" action="/login">
+            <h2>Log in with Twitch to participate</h2>
+            <div class="field suibmit cta c">
+                <input class="submit" type="submit" value="Log in with Twitch">
+            </div>
+        </form>
+    </div>
+    <div id="modal-policy" class="policy">
+        <form class="std" method="POST" action="/policy-accept">
+            <h2>One last step ...</h2>
+            <div class="field">
+                <label for="agree" class="chk">
+                    <input type="checkbox" id="agree" name="agree" class="chk"/>
+                    I understand and agree to the Crypto Art Games<br/> <a href="/terms-of-service" target="_blank">Terms of Service</a> and <a href="/privacy-policy" target="_blank">Privacy Policy</a>
+                </label>
+            </div>
+            <div class="field suibmit cta c">
+                <input class="submit" type="submit" value="Continue">
+            </div>
+        </form>
+    </div>
+</div>
 <div id="scrubber"><div></div></div>
 <canvas id="palette"></canvas>
 <nav class="brush-state" id="brush-state"></nav>

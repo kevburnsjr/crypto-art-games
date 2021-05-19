@@ -8,7 +8,8 @@
       document.getElementById("palette"),
       document.getElementById("left"),
       document.getElementById("right"),
-      document.getElementById("scrubber")
+      document.getElementById("scrubber"),
+      document.getElementById("modal")
     );
   });
 

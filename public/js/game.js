@@ -30,8 +30,9 @@ var Game = (function(g){
   var generation;
   var timecode;
   var socket;
+  var policy;
 
-  var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, scrubberElem) {
+  var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, scrubberElem, modalElem) {
     bgElem = bgCanvasElem;
     bgCtx = bgElem.getContext('2d', { alpha: false, desynchronized: true });
     uiElem = uiCanvasElem;
@@ -51,7 +52,7 @@ var Game = (function(g){
         setColor(autumn[Math.floor(Math.random() * autumn.length)]);
       }
     });
-    nav = new Game.Nav(Game, leftNavElem, rightNavElem, scrubberElem);
+    nav = new Game.Nav(Game, leftNavElem, rightNavElem, scrubberElem, modalElem);
     reset();
     document.addEventListener('mousemove', mousemove);
     document.addEventListener('mousedown', mousedown);
@@ -68,7 +69,9 @@ var Game = (function(g){
     window.addEventListener('paste', paste);
     var userID = null;
     if (document.getElementById("user")) {
-      userID = parseInt(document.getElementById("user").dataset.userid);
+      const data = document.getElementById("user").dataset;
+      userID = parseInt(data.userid);
+      policy = data.policy === "true";
     }
     checkpoint = await board.store.getItem("checkpoint");
     generation = await board.store.getItem("generation");
@@ -88,49 +91,49 @@ var Game = (function(g){
               if (h == hash) {
                 socket.awaiting = null;
                 resolve();
-                socket.off('complete');
               }
             });
             socket.send(f.data);
           });
-        })
+        }).finally(() => {
+          socket.off('complete');
+        });
       },
       lockTile: function(t) {
         return new Promise((resolve, reject) => {
           if (userID == null) {
-            window.location.href = "/login";
+            nav.showLoginModal();
+            reject();
           }
           socket.on(['tile-locked', 'err'], function(e) {
             if (e.type == 'err') {
-              socket.off('tile-locked');
-              socket.off('err');
               reject(e.msg);
             } else if (e.userID == userID){
-              socket.off('tile-locked');
-              socket.off('err');
               resolve();
             }
           });
-          var tileID = t.ti * 16 + t.tj;
-          socket.send(JSON.stringify({type:'tile-lock', tileID: tileID}));
-        })
+          socket.send(JSON.stringify({type:'tile-lock', tileID: t.getID()}));
+        }).finally(msg => {
+          socket.off('tile-locked');
+          socket.off('err');
+          return msg;
+        });
       },
       unlockTile: function(t) {
         return new Promise((resolve, reject) => {
           socket.on(['tile-lock-released', 'err'], function(e) {
             if (e.type == 'err') {
-              socket.off('tile-lock-released');
-              socket.off('err');
               reject(e.msg);
-            } else {
-              socket.off('tile-lock-released');
-              socket.off('err');
+            } else if (e.userID == userID) {
               resolve();
             }
           });
-          var tileID = t.ti * 16 + t.tj;
-          socket.send(JSON.stringify({type:'tile-lock-release', tileID: tileID}));
-        })
+          socket.send(JSON.stringify({type:'tile-lock-release', tileID: t.getID()}));
+        }).finally(msg => {
+          socket.off('tile-lock-released');
+          socket.off('err');
+          return msg;
+        });
       }
     });
     socket.on('message', function(msg) {
@@ -150,6 +153,10 @@ var Game = (function(g){
       board.enable(e.timecode, e.bucket);
     });
     socket.start();
+
+    if (userID != null && !policy) {
+      nav.showPolicyModal();
+    }
   };
 
   var reset = function() {
@@ -346,6 +353,9 @@ var Game = (function(g){
     }
     if (k == "escape") {
       e.preventDefault();
+      if (nav.handleEscape()) {
+        return
+      }
       if (brushState) {
         palette.hide();
         brushState = false;
@@ -511,7 +521,7 @@ var Game = (function(g){
 
   var log = function() {
     if ("console" in window) {
-      console.log(...arguments);
+      console.trace(...arguments);
     }
   };
 

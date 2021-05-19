@@ -14,6 +14,7 @@ import (
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
+	"github.com/kevburnsjr/crypto-art-games/internal/repo"
 )
 
 type oauthError string
@@ -31,7 +32,7 @@ const (
 	ErrorTokenNotFound = oauthError("Token not found")
 )
 
-func newOAuth(cfg *config.Api, logger *logrus.Logger) *oauth {
+func newOAuth(cfg *config.Api, logger *logrus.Logger, rUser repo.User) *oauth {
 	gob.Register(&oauth2.Token{})
 	provider, err := oidc.NewProvider(context.Background(), cfg.Twitch.OidcIssuer)
 	if err != nil {
@@ -49,6 +50,7 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger) *oauth {
 			Endpoint:     provider.Endpoint(),
 			RedirectURL:  cfg.Twitch.OAuthRedirect,
 		},
+		repoUser: rUser,
 	}
 }
 
@@ -58,6 +60,7 @@ type oauth struct {
 	cookieStore  *sessions.CookieStore
 	oidcVerifier *oidc.IDTokenVerifier
 	oauth2Config *oauth2.Config
+	repoUser     repo.User
 }
 
 func (c oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -181,9 +184,13 @@ func (c oauth) getUser(r *http.Request, w http.ResponseWriter) (*entity.User, er
 		}
 		if len(resp.Data.Users) > 0 {
 			user := entity.UserFromHelix(resp.Data.Users[0], c.cfg.Secret)
-			session.Values[twitchUserDataKey] = user.ToJson()
+			u, err := c.repoUser.Update(&user)
+			if err != nil {
+				return nil, err
+			}
+			session.Values[twitchUserDataKey] = u.ToJson()
 			session.Save(r, w)
-			return &user, nil
+			return u, nil
 		}
 	}
 	return nil, nil
