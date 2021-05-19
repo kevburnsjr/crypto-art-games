@@ -80,7 +80,7 @@ Game.Nav = (function(g){
         users.forEach((u, i) => {
           tiles[i] = new Game.Tile(null, board.palette, 0, 0);
           tiles[i].renderFrameBuffer(frames[i]);
-          if (!u) {
+          if (u === null) {
             html += '<li><a>'+frames[i].userid.toString(16).padStart(4,0)+'</a></li>';
           } else {
             html += '<li><a>';

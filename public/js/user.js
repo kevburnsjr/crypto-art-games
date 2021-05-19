@@ -16,7 +16,7 @@ Game.User = (function(g){
 
   user.find = async function(userID) {
     return store.getItem(userID.toString(16).padStart(4, 0)).then(data => {
-      return new user(JSON.parse(data));
+      return data == null ? null : new user(JSON.parse(data));
     });
   };
 
