@@ -31,7 +31,7 @@ var Game = (function(g){
   var timecode;
   var socket;
 
-  var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem) {
+  var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, scrubberElem) {
     bgElem = bgCanvasElem;
     bgCtx = bgElem.getContext('2d', { alpha: false, desynchronized: true });
     uiElem = uiCanvasElem;
@@ -51,7 +51,7 @@ var Game = (function(g){
         setColor(autumn[Math.floor(Math.random() * autumn.length)]);
       }
     });
-    nav = new Game.Nav(leftNavElem);
+    nav = new Game.Nav(Game, leftNavElem, rightNavElem, scrubberElem);
     reset();
     document.addEventListener('mousemove', mousemove);
     document.addEventListener('mousedown', mousedown);
@@ -62,6 +62,7 @@ var Game = (function(g){
     document.addEventListener('keypress', keypress);
     document.addEventListener('wheel', wheel);
     document.addEventListener('visibilitychange', visibilitychange);
+    window.addEventListener('blur', visibilitychange);
     window.addEventListener('resize', resize);
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
@@ -135,11 +136,11 @@ var Game = (function(g){
     socket.on('message', function(msg) {
       if (msg instanceof ArrayBuffer) {
         const f = Game.Frame.fromBytes(msg);
-        board.applyFrame(f);
-        board.saveFrame(f);
-        if (socket.awaiting) {
-          f.getHash().then(h => h == socket.awaiting ? socket.emit('complete', h) : null);
-        }
+        return board.saveFrame(f).then(() => {
+          if (socket.awaiting) {
+            f.getHash().then(h => h == socket.awaiting ? socket.emit('complete', h) : null);
+          }
+        });
       } else {
         var e = JSON.parse(msg);
         socket.emit(e.type, e);
@@ -160,7 +161,6 @@ var Game = (function(g){
 
   var draw = function() {
     window.cancelAnimationFrame(animationFrame);
-    animationFrame = window.requestAnimationFrame(draw);
     var dirty = false;
     var uiDirty = false;
     if (bgElem.width != w || bgElem.height != h || zoom != pzoom) {
@@ -183,19 +183,24 @@ var Game = (function(g){
       board.render(bgCtx, uiCtx, w/2, h/2, hoverX, hoverY, zoom, dirty, uiDirty, mousedown, color);
     } catch(e) {
       log(e);
-      window.cancelAnimationFrame(animationFrame);
       bgtimeout = setTimeout(function(){
-        window.cancelAnimationFrame(animationFrame);
         draw();
       }, 1000);
+      return;
     }
 
     var now = Date.now();
     if(fps_tick + 1000 < now) {
-      // $('#fps').text(Math.round(1000/(now - last)) + " fps");
+      // $('#fps').text();
+      // console.log(Math.round(1000/(now - last)) + " fps");
       fps_tick = now;
     }
     last = now;
+    animationFrame = window.requestAnimationFrame(draw);
+  };
+
+  var setTimecode = function(tc) {
+    board.timecode = tc;
   };
 
   // ----------------- Input Functions -------------------
@@ -211,6 +216,9 @@ var Game = (function(g){
 
   // click
   var click = function(e){
+    if (!e.altKey) {
+
+    }
     if (e.target.id == "uicanvas") {
       board.handleClick(e, w/2, h/2, hoverX, hoverY, zoom);
       setHash();
@@ -429,9 +437,7 @@ var Game = (function(g){
 
   var visibilitychange = function(e){
     document.getElementById("world-nav").classList.remove("open");
-    document.body.classList.remove("color-picking");
-    document.body.classList.remove("erasing");
-    document.body.classList.remove("editing");
+    document.body.classList.remove("color-picking", "erasing", "editing");
     keyDownMap = {};
     board.cancelActive();
   };
@@ -521,7 +527,10 @@ var Game = (function(g){
     isKeyDown: isKeyDown,
     online: false,
     log: log,
-    getSocket: getSocket
+    nav: () => nav,
+    setTimecode: setTimecode,
+    getSocket: getSocket,
+    board: () => board
   };
 
 })({});

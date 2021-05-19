@@ -18,9 +18,11 @@ Game.Board = (function(g){
     this.palette = palette;
     this.tiles = [];
     this.frames = [];
+    this.newFrames = [];
     this.tile = null;
     this.edits = [];
     this.enabled = false;
+    this.paused = false;
     this.timecode = 0;
     this.drawnTimecode = 0;
     var icanvas = document.createElement('canvas');
@@ -55,6 +57,9 @@ Game.Board = (function(g){
     if (this.tiles.length == 0) {
       return;
     }
+    if (window.bugOut) {
+      throw window.Error;
+    }
     this.scale = tilesize*zoom;
     if (this.focused) {
       this.v.x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
@@ -80,8 +85,15 @@ Game.Board = (function(g){
       }
     }
     if (this.enabled && this.drawnTimecode < this.timecode) {
-      this.drawnTimecode += 1;
-      this.applyFrame(this.frames[this.drawnTimecode-1]);
+      this.applyFrame(this.frames[this.drawnTimecode]);
+      this.drawnTimecode++;
+    } else if (this.enabled && this.drawnTimecode > this.timecode) {
+      this.undoFrame(this.frames[this.drawnTimecode]);
+      this.drawnTimecode--;
+    }
+    if (this.drawnTimecode - this.timecode === 0) {
+      g.nav().showRecent(this, this.timecode);
+      this.paused = this.timecode != this.frames.length;
     }
     if (this.tile.active && (this.tile.dirty || this.tile.inBounds(curx, cury)) && !this.game.isKeyDown("alt") && !this.game.isKeyDown("tab") && !this.game.isKeyDown("e")) {
       this.tile.cursor(ctx, curx, cury, c, this.v.tileDirty);
@@ -94,6 +106,7 @@ Game.Board = (function(g){
         this.tile.stroke(uiCtx);
       }
     }
+    this.uiDirty = false;
     this.dirty = false;
   };
 
@@ -111,7 +124,9 @@ Game.Board = (function(g){
     var i = Math.floor((curx-x1) / this.scale);
     var j = Math.floor((cury-y1) / this.scale);
     if (e.altKey) {
-      this.game.setColor(this.tiles[i][j].getXY(curx, cury));
+      if (i >= 0 && i < this.xTiles && j >= 0 && j < this.yTiles) {
+        this.game.setColor(this.tiles[i][j].getXY(curx, cury));
+      }
       return
     }
     if (e.button == 2) {
@@ -130,7 +145,11 @@ Game.Board = (function(g){
       }
       return
     }
-    if (this.focused && this.i == i && this.j == j) {
+    if (this.focused && this.enabled && this.i == i && this.j == j) {
+      if (this.paused) {
+        this.timecode = this.frames.length;
+        this.paused = false;
+      }
       if (this.tile.active && !this.game.isKeyDown("tab")) {
         if (this.game.isKeyDown("e")) {
           this.tile.clearXY(curx, cury);
@@ -253,8 +272,18 @@ Game.Board = (function(g){
   };
 
   board.prototype.saveFrame = async function(f) {
-    this.timecode++;
-    return this.store.setItem((this.timecode-1).toString(16).padStart(4, 0), f.toBytes());
+    var self = this;
+    var timecode = self.timecode;
+    self.timecode++;
+    if (this.enabled) {
+      self.frames.push(f);
+      g.nav().updateScrubber(self.timecode);
+    }
+    return this.store.setItem(timecode.toString(16).padStart(4, 0), f.toBytes()).then(() => {
+      if (!self.paused && self.enabled) {
+        self.timecode = self.frames.length;
+      }
+    });
   };
 
   board.prototype.scanFrames = async function(fn) {
@@ -271,16 +300,22 @@ Game.Board = (function(g){
     }
   };
 
+  board.prototype.undoFrame = function(f) {
+    if (this.enabled && f) {
+      this.tiles[f.ti][f.tj].undoFrame(f);
+    }
+  };
+
   board.prototype.enable = function(timecode, bucket) {
     var self = this;
     return this.scanFrames(function(timecode, frameData) {
       self.frames.push(Game.Frame.fromBytes(frameData));
     }).then(() => self.setTimecode(timecode)).then(() => {
+      g.nav().updateScrubber(timecode);
       self.bucket = bucket;
       self.timecode = timecode;
       self.enabled = true;
     });
-
   };
 
   return board

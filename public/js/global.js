@@ -6,7 +6,9 @@
       document.getElementById("bgcanvas"),
       document.getElementById("uicanvas"),
       document.getElementById("palette"),
-      document.getElementById("left")
+      document.getElementById("left"),
+      document.getElementById("right"),
+      document.getElementById("scrubber")
     );
   });
 

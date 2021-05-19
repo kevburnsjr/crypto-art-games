@@ -25,11 +25,11 @@ func (f *Frame) Validate() error {
 }
 
 func (f *Frame) SetUserID(userID uint16) {
-	binary.BigEndian.PutUint16(f.Data[0:2], bits.Reverse16(userID))
+	binary.LittleEndian.PutUint16(f.Data[0:2], bits.Reverse16(userID))
 }
 
 func (f *Frame) GetUserID() uint16 {
-	return bits.Reverse16(binary.BigEndian.Uint16(f.Data[0:2]))
+	return bits.Reverse16(binary.LittleEndian.Uint16(f.Data[0:2]))
 }
 
 func (f *Frame) TileID() uint16 {

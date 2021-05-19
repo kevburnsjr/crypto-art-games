@@ -165,6 +165,21 @@ Game.Tile = (function(g){
     this.dirty = true;
   };
 
+  tile.prototype.undoFrame = function(f) {
+    if (!f) {
+      return
+    }
+    var i;
+    var j;
+    const a = f.mask.toArray();
+    for (var n in a) {
+      i = Math.floor(a[n]/16);
+      j = a[n]%16;
+      this.px[i][j] = "#" + this.palette.colors[f.prev[n]];
+    }
+    this.dirty = true;
+  };
+
   tile.prototype.setXY = function(x, y, prevx, prevy, c) {
     var i = Math.floor((x-this.x1) / this.scale);
     var j = Math.floor((y-this.y1) / this.scale);

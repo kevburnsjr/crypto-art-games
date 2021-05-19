@@ -33,7 +33,7 @@
         <div>8</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
     </div>
 </nav>
-<div id="left">
+<aside id="left">
     <nav>
         <a id="help-toggle" data-toggle="help"><em>H</em></a>
     </nav>
@@ -51,9 +51,19 @@
         Moving commits changes<br/>
         Tile lock duration 120 sec<br/>
         Tile cooldown 60 sec<br/>
-        <em>H</em> to toggle help<br/>
+        <hr/>
+        <em>H</em> to toggle this menu<br/>
     </div>
-</div>
+</aside>
+<aside id="right">
+    <nav>
+        <a id="recent-frames-toggle" data-toggle="recent-frames"><em>R</em></a>
+    </nav>
+    <div id="recent-frames">
+        Loading...
+    </div>
+</aside>
+<div id="scrubber"><div></div></div>
 <canvas id="palette"></canvas>
 <nav class="brush-state" id="brush-state"></nav>
 <canvas id="bgcanvas" class="full"></canvas>
@@ -75,3 +85,4 @@
 <script src="/js/tile.js"></script>
 <script src="/js/frame.js"></script>
 </body></html>
+
