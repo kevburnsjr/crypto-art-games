@@ -399,6 +399,10 @@ var Game = (function(g){
       e.preventDefault();
       nav.toggleHelp();
     }
+    if (k == "r") {
+      e.preventDefault();
+      nav.toggleRecentFrames();
+    }
   };
 
   // wheel

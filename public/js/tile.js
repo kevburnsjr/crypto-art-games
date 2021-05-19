@@ -15,16 +15,17 @@ Game.Tile = (function(g){
     this.cursj = -1;
     this.scale = 1;
     this.px = [];
+    this.maxScale = maxScale;
     this.canvas = document.createElement('canvas');
-    if ("OffscreenCanvas" in window) {
-      this.canvas = this.canvas.transferControlToOffscreen();
-    }
+    // if ("OffscreenCanvas" in window) {
+      // this.canvas = this.canvas.transferControlToOffscreen();
+    // }
     this.ctx = this.canvas.getContext("2d");
     this.buffer = [];
     this.bufferCount = 0;
     this.palette = palette;
-    this.w = imgData.width;
-    this.h = imgData.height;
+    this.w = imgData ? imgData.width : tilesize;
+    this.h = imgData ? imgData.height : tilesize;
     this.canvas.width = this.w * maxScale;
     this.canvas.height = this.h * maxScale;
     this.active = false;
@@ -33,7 +34,7 @@ Game.Tile = (function(g){
       this.buffer[i] = [];
       for (var j = 0; j < this.h; j++) {
         var n = j*this.w*4 + i*4;
-        this.px[i][j] = "#" + this.palette.nearestColor(imgData.data[n], imgData.data[n+1], imgData.data[n+2]);
+        this.px[i][j] = imgData ? "#" + this.palette.nearestColor(imgData.data[n], imgData.data[n+1], imgData.data[n+2]) : "rgba(0,0,0,0)";
         this.buffer[i][j] = "";
       }
     }
@@ -66,7 +67,7 @@ Game.Tile = (function(g){
           } else {
             this.ctx.fillStyle = this.px[this.v.i][this.v.j];
           }
-          this.ctx.fillRect(this.v.i * maxScale, this.v.j * maxScale, maxScale, maxScale);
+          this.ctx.fillRect(this.v.i * this.maxScale, this.v.j * this.maxScale, this.maxScale, this.maxScale);
         }
       }
     }
@@ -124,6 +125,17 @@ Game.Tile = (function(g){
       }
     }
     this.bufferCount = 0;
+  };
+
+  tile.prototype.renderFrameBuffer = function(f) {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width);
+    const a = f.mask.toArray();
+    for (var n in a) {
+      const i = Math.floor(a[n]/16);
+      const j = a[n]%16;
+      this.ctx.fillStyle = "#" + this.palette.colors[f.colors[n]];
+      this.ctx.fillRect(i * this.maxScale, j * this.maxScale, this.maxScale, this.maxScale);
+    }
   };
 
   tile.prototype.get = function(i, j) {

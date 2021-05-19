@@ -47,15 +47,27 @@ Game.Nav = (function(g){
     this.scrubber.firstChild.style.width = this.scrubber.offsetWidth + timecode;
   };
 
-  nav.prototype.showRecent = function(board, timecode) {
-    clearTimeout(this.showRecentTimeout);
+  nav.prototype.toggleRecentFrames = function(){
+    this.toggles["recent-frames"].click();
+  };
+
+  nav.prototype.showRecent = function(board) {
+    if (this.showRecentTimeout != null) {
+      return;
+    }
     this.showRecentTimeout = setTimeout(() => {
-      var html = '<ul>';
-      board.frames.slice(Math.max(timecode - 10, 0), timecode).reverse().forEach(f => {
-        html += '<li>'+f.userid+'</li>';
+      var tile = new Game.Tile(null, board.palette, 0, 0);
+      // tile.maxScale = 4;
+      // tile.canvas.w = 64;
+      // tile.canvas.h = 64;
+      var html = 'Recent Edits<br/><hr/><ul>';
+      board.frames.slice(Math.max(board.timecode - 10, 0), board.timecode).reverse().forEach(f => {
+        tile.renderFrameBuffer(f);
+        html += '<li><img src="'+tile.canvas.toDataURL()+'"/><a>'+f.userid.toString(16).padStart(4,0)+'</a></li>';
       });
       this.recentFrames.innerHTML = html + '</ul>';
-    }, 200);
+      this.showRecentTimeout = null;
+    }, 250);
   };
 
   return nav

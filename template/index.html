@@ -6,7 +6,7 @@
 </head><body>
 <nav class="user">
 {{if .User}}
-    <a href="#{{.User.Login}}" id="user" data-userid="{{.UserID}}">
+    <a id="user" data-userid="{{.UserID}}">
         <img src="{{.User.ProfileImageURL}}"/>
         <span>{{.User.DisplayName}}</span>
     </a>

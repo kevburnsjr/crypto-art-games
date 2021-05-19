@@ -84,6 +84,7 @@ Game.Board = (function(g){
         this.tiles[i][j].render(ctx, this.v.tx, this.v.ty, this.scale/tilesize, dirty || this.dirty);
       }
     }
+    var drawn = this.drawnTimecode - this.timecode != 0;
     if (this.enabled && this.drawnTimecode < this.timecode) {
       this.applyFrame(this.frames[this.drawnTimecode]);
       this.drawnTimecode++;
@@ -91,8 +92,8 @@ Game.Board = (function(g){
       this.undoFrame(this.frames[this.drawnTimecode]);
       this.drawnTimecode--;
     }
-    if (this.drawnTimecode - this.timecode === 0) {
-      g.nav().showRecent(this, this.timecode);
+    if (this.drawnTimecode - this.timecode === 0 && drawn) {
+      g.nav().showRecent(this);
       this.paused = this.timecode != this.frames.length;
     }
     if (this.tile.active && (this.tile.dirty || this.tile.inBounds(curx, cury)) && !this.game.isKeyDown("alt") && !this.game.isKeyDown("tab") && !this.game.isKeyDown("e")) {
