@@ -3,8 +3,9 @@ Game.Board = (function(g){
 
   var tilesize = 16;
 
-  var board = function(g, src, palette, xt, yt, callback) {
+  var board = function(g, store, src, palette, xt, yt, callback) {
     this.game = g;
+    this.store = store;
     this.focused = false;
     this.xTiles = xt;
     this.yTiles = yt;
@@ -16,8 +17,12 @@ Game.Board = (function(g){
     this.scale = tilesize;
     this.palette = palette;
     this.tiles = [];
+    this.frames = [];
     this.tile = null;
     this.edits = [];
+    this.enabled = false;
+    this.timecode = 0;
+    this.drawnTimecode = 0;
     var icanvas = document.createElement('canvas');
     var ictx = icanvas.getContext("2d");
     var img = new Image();
@@ -73,6 +78,10 @@ Game.Board = (function(g){
         }
         this.tiles[i][j].render(ctx, this.v.tx, this.v.ty, this.scale/tilesize, dirty || this.dirty);
       }
+    }
+    if (this.enabled && this.drawnTimecode < this.timecode) {
+      this.drawnTimecode += 1;
+      this.applyFrame(this.frames[this.drawnTimecode-1]);
     }
     if (this.tile.active && (this.tile.dirty || this.tile.inBounds(curx, cury)) && !this.game.isKeyDown("alt") && !this.game.isKeyDown("tab") && !this.game.isKeyDown("e")) {
       this.tile.cursor(ctx, curx, cury, c, this.v.tileDirty);
@@ -157,7 +166,7 @@ Game.Board = (function(g){
     if (n <= 255 && n >= 0) {
       this.setFocus(Math.floor(n/this.xTiles), n % this.xTiles);
     }
-  }
+  };
 
   board.prototype.getTileID = function() {
     return this.i*16 + this.j;
@@ -165,7 +174,7 @@ Game.Board = (function(g){
 
   board.prototype.moveTile = function(dx, dy) {
     var self = this;
-    (this.tile.active ? this.tile.commit() : Promise.resolve()).then(function(tile) {
+    return (this.tile.active ? this.tile.commit() : Promise.resolve()).then(function(tile) {
       if ((dx < 0 && self.i < 1) || (dx > 0 && self.i >= self.xTiles - 1) ||
          ( dy < 0 && self.j < 1) || (dy > 0 && self.j >= self.yTiles - 1)) {
          return;
@@ -175,9 +184,13 @@ Game.Board = (function(g){
   };
 
   board.prototype.toggleActive = function() {
+    if (!this.enabled) {
+      return
+    }
     var self = this;
     if (this.focused && !this.tile.active) {
       return this.tile.lock().then(function(e){
+        document.body.classList.add("editing");
         self.dirty = true;
         return true;
       }).catch((e) => {
@@ -219,8 +232,49 @@ Game.Board = (function(g){
   };
 
   board.prototype.cancelFocus = function() {
+    if (this.tile && this.tile.active) {
+      return;
+    }
     this.focused = false;
     this.dirty = true;
+  };
+
+  board.prototype.getTimecode = async function(tc) {
+    return this.store.getItem("timecode").then(t => t ? parseInt(t, 16) : 0);
+  };
+
+  board.prototype.setTimecode = async function(tc) {
+    return this.store.setItem("timecode", tc.toString(16).padStart(4, 0));
+  };
+
+  board.prototype.saveFrame = async function(f) {
+    this.timecode++;
+    return this.store.setItem((this.timecode-1).toString(16).padStart(4, 0), f.toBytes());
+  };
+
+  board.prototype.scanFrames = async function(fn) {
+    return this.store.iterate(function(v, k, i) {
+      if (k.length == 4) {
+        fn(k, v)
+      }
+    });
+  };
+
+  board.prototype.applyFrame = function(f) {
+    if (this.enabled && f) {
+      this.tiles[f.ti][f.tj].applyFrame(f);
+    }
+  };
+
+  board.prototype.enable = function(timecode, bucket) {
+    var self = this;
+    return this.scanFrames(function(timecode, frameData) {
+      self.frames.push(Game.Frame.fromBytes(frameData));
+    }).then(() => {
+      self.bucket = bucket;
+      self.enabled = true;
+    });
+
   };
 
   return board

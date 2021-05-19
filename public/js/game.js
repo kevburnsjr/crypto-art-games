@@ -9,7 +9,6 @@ var Game = (function(g){
   var zoom = defaultZoom;
   var pzoom = defaultZoom;
   var ctx, elem;
-  var last = Date.now();
   var fps_tick = Date.now();
   var pause = false;
   var animate = true;
@@ -26,16 +25,20 @@ var Game = (function(g){
     "49d866", "408761", "2d4647", "345452", "3a878b", "3da4db", "95c5f2", "cacff9"
   ];
   var last;
+  var checkpoint;
+  var generation;
+  var timecode;
   var socket;
 
-  var start = function(canvasElem, paletteElem, leftNavElem) {
+  var start = async function(canvasElem, paletteElem, leftNavElem) {
     elem = canvasElem;
     ctx = elem.getContext('2d', {
       alpha: false,
       desynchronized: true
     });
     palette = new Game.Palette(paletteElem, autumn);
-    board = new Game.Board(Game, "/palettes/autumn.gif", palette, 16, 16, function() {
+    board = new Game.Board(Game, localforage.createInstance({name: "board"}),
+    "/palettes/autumn.gif", palette, 16, 16, function() {
       if(window.location.hash) {
         var parts = window.location.hash.substr(1).split(':');
         zoom = parseInt(parts[1]);
@@ -53,6 +56,7 @@ var Game = (function(g){
     document.addEventListener('mousemove', mousemove);
     document.addEventListener('mousedown', mousedown);
     document.addEventListener('mouseup', mouseup);
+    document.addEventListener('click', click);
     document.addEventListener('keydown', keydown);
     document.addEventListener('keyup', keyup);
     document.addEventListener('keypress', keypress);
@@ -65,10 +69,14 @@ var Game = (function(g){
     if (document.getElementById("user")) {
       userID = parseInt(document.getElementById("user").dataset.userid);
     }
+    checkpoint = await board.store.getItem("checkpoint");
+    generation = await board.store.getItem("generation");
+    timecode = await board.getTimecode();
+    board.timecode = timecode;
     // initiate websocket
     socket = new Game.socket({
       url: function() {
-        return "/socket?ts="+(last || 0);
+        return "/socket?generation="+(generation || 0)+"&timecode="+(timecode || 0);
       },
       awaiting: null,
       sendFrame: function(f) {
@@ -127,8 +135,8 @@ var Game = (function(g){
     socket.on('message', function(msg) {
       if (msg instanceof ArrayBuffer) {
         const f = Game.Frame.fromBytes(msg);
-        board.tiles[f.ti][f.tj].applyFrame(f);
-        board.dirty = true;
+        board.applyFrame(f);
+        board.saveFrame(f);
         if (socket.awaiting) {
           f.getHash().then(h => h == socket.awaiting ? socket.emit('complete', h) : null);
         }
@@ -136,6 +144,9 @@ var Game = (function(g){
         var e = JSON.parse(msg);
         socket.emit(e.type, e);
       }
+    });
+    socket.on('sync-complete', function(e) {
+      board.enable(e.timecode, e.bucket);
     });
     socket.start();
   };
@@ -164,6 +175,7 @@ var Game = (function(g){
     try {
       board.render(ctx, w/2, h/2, hoverX, hoverY, zoom, dirty, mousedown, color);
     } catch(e) {
+      log(e);
       window.cancelAnimationFrame(animationFrame);
       bgtimeout = setTimeout(function(){
         window.cancelAnimationFrame(animationFrame);
@@ -189,6 +201,14 @@ var Game = (function(g){
   var isKeyDown = function(k) {
     return keyDownMap[k];
   }
+
+  // click
+  var click = function(e){
+    if (e.target.id == "bgcanvas") {
+      board.handleClick(e, w/2, h/2, hoverX, hoverY, zoom);
+      sethash();
+    }
+  };
 
   // mousedown
   var mousedown = function(e){
@@ -216,11 +236,10 @@ var Game = (function(g){
         palette.hide();
         brushState = false;
       }
-    } else {
-      board.handleClick(e, w/2, h/2, hoverX, hoverY, zoom);
-      sethash();
-    }
-    if (e.target.nodeName != "CANVAS") {
+    } else if (palette.active) {
+      e.preventDefault();
+      palette.hide();
+      brushState = false;
       return;
     }
   };
@@ -273,28 +292,27 @@ var Game = (function(g){
     if (k == "w" || k == "arrowup") {
       e.preventDefault();
       // if ctrl move boards else move tiles
-      board.moveTile(0, -1);
-      sethash();
+      board.moveTile(0, -1).then(() => sethash());
       document.body.classList.remove("editing");
     }
     if (k == "a" || k == "arrowleft") {
       e.preventDefault();
       // if ctrl move boards else move tiles
-      board.moveTile(-1, 0);
+      board.moveTile(-1, 0).then(() => sethash());
       sethash();
       document.body.classList.remove("editing");
     }
     if (k == "s" || k == "arrowdown") {
       e.preventDefault();
       // if ctrl move boards else move tiles
-      board.moveTile(0, 1);
+      board.moveTile(0, 1).then(() => sethash());
       sethash();
       document.body.classList.remove("editing");
     }
     if (k == "d" || k == "arrowright") {
       e.preventDefault();
       // if ctrl move boards else move tiles
-      board.moveTile(1, 0);
+      board.moveTile(1, 0).then(() => sethash());
       sethash();
       document.body.classList.remove("editing");
     }

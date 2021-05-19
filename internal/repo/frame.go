@@ -11,7 +11,7 @@ import (
 
 type Frame interface {
 	Insert(frame *entity.Frame) (timecode uint16, err error)
-	Since(timecode uint16) (frames []*entity.Frame, err error)
+	Since(boardId, generation, timecode uint16) (frames []*entity.Frame, err error)
 }
 
 // NewFrame returns an Frame repo instance
@@ -58,7 +58,7 @@ func (r *frame) Insert(frame *entity.Frame) (timecode uint16, err error) {
 }
 
 // Since inserts all frames since timecode
-func (r *frame) Since(timecode uint16) (frames []*entity.Frame, err error) {
+func (r *frame) Since(boardId, generation, timecode uint16) (frames []*entity.Frame, err error) {
 	var start = make([]byte, 2)
 	binary.BigEndian.PutUint16(start, timecode)
 	keys, vals, err := r.db.GetRanged(start, 0, false)

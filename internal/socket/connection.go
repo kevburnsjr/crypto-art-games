@@ -1,7 +1,6 @@
 package socket
 
 import (
-	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -28,7 +27,6 @@ func (c *connection) Reader(hub Hub, handler MessageHandler) {
 	for {
 		t, b, err := c.ws.ReadMessage()
 		if err != nil {
-			log.Println(err.Error())
 			break
 		}
 		err = handler(t, b)

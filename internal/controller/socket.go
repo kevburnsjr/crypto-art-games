@@ -52,8 +52,9 @@ type socket struct {
 func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, err := c.oauth.getUser(r, w)
 	// lsn := r.FormValue("lsn")
-	timecode := r.FormValue("timecode")
 	boardId := r.FormValue("boardId")
+	generation := r.FormValue("generation")
+	timecode := r.FormValue("timecode")
 
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
@@ -69,17 +70,18 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tc, _ := strconv.Atoi(timecode)
+	boardIdInt, _ := strconv.Atoi(boardId)
+	generationInt, _ := strconv.Atoi(generation)
+	timecodeInt, _ := strconv.Atoi(timecode)
 
 	conn := sock.CreateConnection([]string{boardId}, ws)
-	frames, err := c.repoFrame.Since(uint16(tc))
+	frames, err := c.repoFrame.Since(uint16(boardIdInt), uint16(generationInt), uint16(timecodeInt))
 	for _, frame := range frames {
-		time.Sleep(16 * time.Millisecond)
 		conn.Write(sock.BinaryMsgFromBytes(boardId, frame.Data))
 	}
 	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
-		"type":     "timecode-update",
-		"timecode": tc + len(frames),
+		"type":     "sync-complete",
+		"timecode": timecodeInt + len(frames),
 	}))
 
 	ctx := context.WithValue(context.Background(), "user", user)

@@ -34,7 +34,7 @@ Val: {{pjson $v}}</pre>
     {{end}}
 {{end}}
 {{if eq .Section "frame"}}
-    {{range $i, $f := .RepoFrame.Since 0}}
+    {{range $i, $f := .RepoFrame.Since 0 0 0}}
         <pre>Key: {{$f.TimecodeHex}} ({{len $f.Data}} Bytes)
 Val: {{$f.DataHex}}</pre>
     {{end}}

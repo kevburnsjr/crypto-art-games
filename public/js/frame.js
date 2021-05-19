@@ -1,10 +1,10 @@
 Game.Frame = (function(g){
   "use strict";
 
-  const headerflag_useMask = 28;
-  const headerflag_deleted = 29;
-  const headerflag_runLengthEncodedMask = 30;
-  const headerflag_runLengthEncodedColorTable = 31;
+  const headerflag_useMask = 28; // 60;
+  const headerflag_deleted = 29; // 61;
+  const headerflag_runLengthEncodedMask = 30; // 62;
+  const headerflag_runLengthEncodedColorTable = 31; // 63;
 
   var frame = function(tile){
     this.mask = new BitSet();
@@ -12,6 +12,7 @@ Game.Frame = (function(g){
     this.colors = [];
     this.colorsUniq = {};
     this.colorCount = 0;
+    this.timecode = 0;
     this.userid = 0;
     this.deleted = false;
     this.data = null;
@@ -50,6 +51,8 @@ Game.Frame = (function(g){
     var b = new BitSet();
     var bs = n => b.set(o++, parseInt(n));
     var append = (bits, a) => [...a.toString(2).padStart(bits, 0)].forEach(bs);
+    // append(16, this.timecode);
+    // append(32, this.userid);
     append(16, this.userid);
     append(8, this.ti*16 + this.tj);
     append(4, 0 + (this.colorCount-1));
@@ -183,18 +186,30 @@ Game.Frame = (function(g){
 
   frame.fromBytes = function(bytes) {
     var b = new BitSet(new Uint8Array(bytes));
-    var i = 0;
-    var h = b.slice(0, 31);
+    var i;
+    var j;
+    var o = 0;
+    var intAt = function(b, bits, pos) {
+      var n = 0;
+      for (j = 0; j < bits; j++) {
+        n = n << 1;
+        n += b.get(pos + j);
+      }
+      o += bits;
+      return n;
+    }
     var f = new Game.Frame();
     f.data = bytes;
-    f.userid = intAt(b, 16, 0);
-    var tileID = intAt(b, 8, 16);
+    // f.timecode = intAt(b, 16, o);
+    // f.userid = intAt(b, 32, o);
+    f.userid = intAt(b, 16, o);
+    var tileID = intAt(b, 8, o);
     f.ti = Math.floor(tileID/16);
     f.tj = tileID % 16;
-    f.colorCount = intAt(b, 4, 24)+1;
+    f.colorCount = intAt(b, 4, o)+1;
     f.deleted = !!b.get(headerflag_deleted);
     var useMask = b.get(headerflag_useMask);
-    var o = 32;
+    o += 4
     var bits = Math.ceil(Math.log2(f.colorCount));
     var numpx = 0;
     if (b.get(headerflag_runLengthEncodedMask)) {
@@ -202,10 +217,8 @@ Game.Frame = (function(g){
       var quad = initial;
       for (i = 0; i < 16; i++) {
         if (intAt(b, 1, o)) {
-          quad = intAt(b, 16, o+1).toString(2).padStart(16, 0);
-          o += 16;
+          quad = intAt(b, 16, o).toString(2).padStart(16, 0);
         }
-        o++;
         for (var j = 0; j < 16; j++) {
           f.mask.set((i%4)*4 + Math.floor(i/4)*64 + Math.floor(j/4)*16 + j%4, parseInt(quad[j]));
           numpx += parseInt(quad[j]);
@@ -217,10 +230,8 @@ Game.Frame = (function(g){
       o += 256;
     } else {
       numpx = intAt(b, 8, o);
-      o += 8;
       for (i = 0; i < numpx; i++) {
         f.mask.set(intAt(b, 8, o), 1);
-        o += 8;
       }
     }
 
@@ -229,7 +240,6 @@ Game.Frame = (function(g){
     if (bits < 4) {
       for (i = 0; i < f.colorCount; i++) {
         cm[i] = intAt(b, 4, o);
-        o += 4;
       }
     }
     // Decode color table
@@ -238,31 +248,19 @@ Game.Frame = (function(g){
       var n;
       for (i = 0; i < numpx; i++) {
         n = intAt(b, 4, o);
-        c = intAt(b, bits, o + 4);
+        c = intAt(b, bits, o);
         f.colors.push(...Array(n+1).fill(bits < 4 ? cm[c] : c));
-        o += bits + 4;
         i += n;
       }
     } else {
       for (i = 0; i < numpx; i++) {
         c = bits > 0 ? intAt(b, bits, o) : 0;
         f.colors.push(bits < 4 ? cm[c] : c);
-        o += bits;
       }
     }
     f.mask = f.mask.slice(0,255);
     return f;
   };
-
-  var j;
-  var intAt = function(b, bits, pos) {
-    var n = 0;
-    for (j = 0; j < bits; j++) {
-      n = n << 1;
-      n += b.get(pos + j);
-    }
-    return n;
-  }
 
   return frame;
 
