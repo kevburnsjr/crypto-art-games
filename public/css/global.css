@@ -61,7 +61,7 @@ body.editing canvas#bgcanvas {
 }
 
 body.color-picking canvas#bgcanvas {
-    cursor: url(/i/cursor-eyedropper-light.png) 5 5, cell;
+    cursor: url(/i/cursor-eyedropper-light.png) 0 10, cell;
 }
 
 body.erasing canvas#bgcanvas {
