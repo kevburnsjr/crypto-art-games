@@ -270,8 +270,9 @@ Game.Board = (function(g){
     var self = this;
     return this.scanFrames(function(timecode, frameData) {
       self.frames.push(Game.Frame.fromBytes(frameData));
-    }).then(() => {
+    }).then(() => self.setTimecode(timecode)).then(() => {
       self.bucket = bucket;
+      self.timecode = timecode;
       self.enabled = true;
     });
 
