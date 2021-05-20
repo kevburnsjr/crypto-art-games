@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -55,7 +54,16 @@ type socket struct {
 func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stdHeaders(w)
 	user, err := c.oauth.getUser(r, w)
-	// lsn := r.FormValue("lsn")
+	if err != nil && err != ErrorTokenNotFound {
+		c.log.Errorf("%w", err)
+		http.Error(w, "Unable to read session", 400)
+		session, err := c.oauth.getSession(r)
+		if err == nil {
+			session.Options.MaxAge = -1
+			session.Save(r, w)
+		}
+		return
+	}
 	userIdx := r.FormValue("userIdx")
 	userBanIdx := r.FormValue("userBanIdx")
 	boardId := r.FormValue("boardId")
@@ -82,6 +90,25 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	generationInt, _ := strconv.Atoi(generation)
 	timecodeInt, _ := strconv.Atoi(timecode)
 
+	if user != nil {
+		var found bool
+		_, found, err = c.repoUser.Find(user)
+		if err != nil {
+			c.log.Errorf("%w", err)
+			http.Error(w, "Error finding user", 400)
+			return
+		}
+		if !found {
+			session, err := c.oauth.getSession(r)
+			if err == nil {
+				session.Options.MaxAge = -1
+				session.Save(r, w)
+			}
+			http.Error(w, "User not found", 400)
+			return
+		}
+	}
+
 	channels := []string{"global", "board-" + boardId}
 	if user != nil && user.Policy {
 		channels = append(channels, "user-"+strconv.Itoa(int(user.UserID)))
@@ -103,8 +130,8 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Sync new bans
 	bans, err := c.repoUserBan.Since(uint16(userBanIdxInt))
-	for i, user := range users {
-		conn.Write(sock.TextMsgFromBytes("global", user.ToDto(userIds[i])))
+	for _, ban := range bans {
+		conn.Write(sock.TextMsgFromBytes("global", ban.ToDto()))
 	}
 
 	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
@@ -114,41 +141,27 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"userBanIdx": userBanIdxInt + len(bans),
 	}))
 
-	ctx := context.WithValue(context.Background(), "user", user)
-	ctx = context.WithValue(ctx, "userIdx", userIdx)
-	ctx = context.WithValue(ctx, "boardId", "board-"+boardId)
-
 	c.hub.Register(conn)
 	go conn.Writer()
-	conn.Reader(c.hub, c.MsgHandler(ctx))
+	conn.Reader(c.hub, c.MsgHandler(user, "board-"+boardId))
 }
 
-func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
+func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageHandler {
 	return func(t int, msg []byte) error {
-		var userID uint16
-		var user *entity.User
+		var userID = user.UserID
 		var err error
-		var found bool
-		if u, ok := ctx.Value("user").(*entity.User); ok && u != nil {
-			userID, found, err = c.repoUser.Find(u)
-			if err != nil {
-				return err
-			}
-			if !found {
-				return fmt.Errorf("User authentication required")
-			}
-			user = u
-		} else {
+		if user == nil {
 			return fmt.Errorf("User authentication required")
 		}
 		if !user.Policy {
 			return fmt.Errorf("Must accept terms of service before participating")
 		}
 		if user.Timeout.After(time.Now()) {
+			return fmt.Errorf("User timed out")
+		}
+		if user.Banned {
 			return fmt.Errorf("User banned")
 		}
-
-		boardId := ctx.Value("boardId").(string)
 
 		// Handle all operations and persist frames before broadcast
 		if t == websocket.TextMessage {
@@ -166,7 +179,7 @@ func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 				if err := c.repoTileLock.Acquire(userID, tileID, time.Now()); err != nil {
 					return err
 				}
-				c.hub.Broadcast(sock.JsonMessagePure(boardId, map[string]interface{}{
+				c.hub.Broadcast(sock.JsonMessagePure(boardChannel, map[string]interface{}{
 					"type":   "tile-locked",
 					"tileID": tileID,
 					"userID": userID,
@@ -176,7 +189,7 @@ func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 				if err := c.repoTileLock.Release(userID, tileID, time.Now()); err != nil {
 					return err
 				}
-				c.hub.Broadcast(sock.JsonMessagePure(boardId, map[string]interface{}{
+				c.hub.Broadcast(sock.JsonMessagePure(boardChannel, map[string]interface{}{
 					"type":   "tile-lock-released",
 					"tileID": tileID,
 					"userID": userID,
@@ -203,8 +216,9 @@ func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 			case "board-open":
 				// unregister connection from previous board channel(s?)
 				// register connection on new board channel(s?)
+				// Could avoid this by just breaking the socket and reconnecting.
 			}
-			c.hub.Broadcast(sock.TextMsgFromBytes(boardId, msg))
+			c.hub.Broadcast(sock.TextMsgFromBytes(boardChannel, msg))
 		} else if t == websocket.BinaryMessage {
 			frame := &entity.Frame{
 				Data: msg,
@@ -226,12 +240,12 @@ func (c socket) MsgHandler(ctx context.Context) sock.MessageHandler {
 			if err != nil {
 				return err
 			}
-			c.hub.Broadcast(sock.JsonMessagePure(boardId, map[string]interface{}{
+			c.hub.Broadcast(sock.JsonMessagePure(boardChannel, map[string]interface{}{
 				"type":   "tile-lock-release",
 				"tileID": frame.TileID(),
 				"userID": userID,
 			}))
-			c.hub.Broadcast(sock.BinaryMsgFromBytes(boardId, frame.Data))
+			c.hub.Broadcast(sock.BinaryMsgFromBytes(boardChannel, frame.Data))
 		} else {
 			c.log.Debugf("Uknown: %d, %s", t, string(msg))
 		}

@@ -17,6 +17,7 @@ type User struct {
 	Policy  bool      `json:"policy"`
 	Timeout time.Time `json:"timeout"`
 	Banned  bool      `json:"banned"`
+	Mod     bool      `json:"mod"`
 }
 
 type UserDto struct {
@@ -54,14 +55,14 @@ func UserFromJson(b []byte) *User {
 	return &u
 }
 
-func UserFromHelix(u helix.User, secret string) User {
+func UserFromHelix(u helix.User, secret string) *User {
 	normalized, err := govalidator.NormalizeEmail(u.Email)
 	if err != nil {
 		log.Println("Error normalizing email address:", u.Email)
 		normalized = u.Email
 	}
 	hash := sha256.Sum256([]byte(secret + normalized))
-	user := User{User: u}
+	user := &User{User: u}
 	user.Email = base64.StdEncoding.EncodeToString(hash[:])
 	return user
 }

@@ -77,7 +77,7 @@ Game.Nav = (function(g){
     window.cancelAnimationFrame(this.showRecentAnimationFrame);
     this.showRecentAnimationFrame = window.requestAnimationFrame(() => {
       var userIds = [];
-      const frames = board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 1)).reverse();
+      const frames = board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 0)).reverse();
       frames.forEach((f, i) => {
         userIds.push(f.userid);
       });

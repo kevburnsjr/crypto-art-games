@@ -46,7 +46,7 @@ aside#right nav { float: left; }
 aside#right { top: 3em; right: 0; }
 aside#right nav { float: right; }
 aside#right nav { float: right; }
-aside#right ul { padding: 0 0 0 3em; margin: 0; height: 39em; }
+aside#right ul { padding: 0 0 0 3em; margin: 0; height: 39em; width: 10em; }
 aside#right ul li { list-style: none; margin: 0 0 1em 0; clear: left; height: 3em; width: 10em; }
 aside#right ul li.loading { margin: 0 2.5em 0 -2.5em; }
 aside#right ul li:last-child { margin-bottom: 0; }

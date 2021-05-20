@@ -213,7 +213,7 @@ Game.Board = (function(g){
         self.uiDirty = true;
         return true;
       }).catch((e) => {
-        g.log("Unable to activate Tile: ", e);
+        return false;
       });
     } else if (this.tile.active) {
       return this.tile.commit().then(function(tile){
@@ -312,6 +312,7 @@ Game.Board = (function(g){
   };
 
   board.prototype.enable = function(timecode, userIdx, bucket) {
+    var self = this;
     if (this.enabled) {
       g.nav().updateScrubber(timecode);
       if (!this.paused) {
@@ -319,7 +320,6 @@ Game.Board = (function(g){
       }
       return;
     }
-    var self = this;
     return this.scanFrames(function(timecode, frameData) {
       self.frames.push(Game.Frame.fromBytes(frameData));
     }).then(() => {

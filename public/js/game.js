@@ -107,6 +107,7 @@ var Game = (function(g){
           if (userID == null) {
             nav.showLoginModal();
             reject();
+            return
           }
           socket.on(['tile-locked', 'err'], function(e) {
             if (e.type == 'err') {

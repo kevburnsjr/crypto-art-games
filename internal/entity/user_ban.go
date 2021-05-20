@@ -23,7 +23,7 @@ func (u *UserBan) ToJson() []byte {
 	return b
 }
 
-func (u *UserBan) ToDto(userID uint16) []byte {
+func (u *UserBan) ToDto() []byte {
 	b, _ := json.Marshal(UserBanDto{*u, "user-ban"})
 	return b
 }

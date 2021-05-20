@@ -2,6 +2,7 @@ package repo
 
 import (
 	"encoding/binary"
+	"encoding/json"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
@@ -36,16 +37,23 @@ type user struct {
 
 // Find retrieves a user
 func (r *user) Find(user *entity.User) (userID uint16, found bool, err error) {
-	_, bytes, err := r.db.Get([]byte("twitch-" + user.ID))
+	_, idBytes, err := r.db.Get([]byte("twitch-" + user.ID))
 	if err == errors.RepoItemNotFound {
 		err = nil
 		return
 	} else if err != nil {
 		return
 	} else {
-		userID = binary.BigEndian.Uint16(bytes)
+		userID = binary.BigEndian.Uint16(idBytes)
 		found = true
 	}
+
+	_, userBytes, err := r.db.Get(idBytes)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(userBytes, user)
+
 	return
 }
 
@@ -55,6 +63,7 @@ func (r *user) FindOrInsert(user *entity.User) (userID uint16, inserted bool, er
 	if err == errors.RepoItemNotFound {
 		userID, err = r.Insert(user)
 		inserted = true
+		err = nil
 		return
 	} else if err != nil {
 		return
@@ -68,6 +77,7 @@ func (r *user) Insert(user *entity.User) (userID uint16, err error) {
 	idVers, idBytes, err := r.db.Get([]byte("_id"))
 	if err == errors.RepoItemNotFound {
 		userID = uint16(0)
+		err = nil
 	} else if err != nil {
 		return
 	} else {

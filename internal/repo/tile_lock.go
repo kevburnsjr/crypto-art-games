@@ -64,7 +64,6 @@ func (r *tileLock) acquire(key []byte, userID uint16, t time.Time) (err error) {
 // Release deletes a tileLock
 func (r *tileLock) Release(userID, tileID uint16, t time.Time) (err error) {
 	var key = make([]byte, 2)
-	println(tileID)
 	binary.BigEndian.PutUint16(key, tileID)
 
 	vers, b, err := r.db.Get(key)

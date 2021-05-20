@@ -1,4 +1,4 @@
 vendor
 *.yml
 !*.example.yml
-_data
+_data*

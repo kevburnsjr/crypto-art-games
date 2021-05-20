@@ -27,18 +27,11 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != ErrorTokenNotFound && check(err, w, c.log) {
 		return
 	}
-	var inserted = false
 	var userID uint16
 	if user != nil {
-		userID, inserted, err = c.repoUser.FindOrInsert(user)
+		userID, _, err = c.repoUser.Find(user)
 		if check(err, w, c.log) {
 			return
-		}
-		if inserted {
-			c.hub.Broadcast(sock.JsonMessagePure("global", map[string]interface{}{
-				"type": "new-user",
-				"user": user.ToDto(userID),
-			}))
 		}
 	}
 	t, err := template.ParseFiles("./template/index.html")
@@ -63,7 +56,7 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func check(err error, w http.ResponseWriter, log *logrus.Logger) bool {
 	if err != nil {
-		log.Println(err.Error())
+		log.Errorf("%v", err)
 		http.Error(w, err.Error(), 500)
 		return true
 	}

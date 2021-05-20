@@ -189,13 +189,15 @@ func (c oauth) getUser(r *http.Request, w http.ResponseWriter) (*entity.User, er
 		}
 		if len(resp.Data.Users) > 0 {
 			user := entity.UserFromHelix(resp.Data.Users[0], c.cfg.Secret)
-			u, err := c.repoUser.Update(&user)
-			if err != nil {
-				return nil, err
+			if user.Policy {
+				user, err = c.repoUser.Update(user)
+				if err != nil {
+					return nil, err
+				}
 			}
-			session.Values[twitchUserDataKey] = u.ToJson()
+			session.Values[twitchUserDataKey] = user.ToJson()
 			session.Save(r, w)
-			return u, nil
+			return user, nil
 		}
 	}
 	return nil, nil

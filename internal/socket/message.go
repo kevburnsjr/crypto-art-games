@@ -22,7 +22,7 @@ func JsonMessage(channel_id string, data map[string]interface{}) wsmessage {
 	return wsmessage{websocket.TextMessage, channel_id, json_bytes}
 }
 
-func JsonMessagePure(channel_id string, data map[string]interface{}) wsmessage {
+func JsonMessagePure(channel_id string, data interface{}) wsmessage {
 	json_bytes, _ := json.Marshal(data)
 	return wsmessage{websocket.TextMessage, channel_id, json_bytes}
 }
