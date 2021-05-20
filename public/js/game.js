@@ -153,17 +153,19 @@ var Game = (function(g){
       }
     });
     socket.on('sync-complete', function(e) {
-      board.enable(e.timecode, e.userIdx, e.bucket);
+      board.enable(e.timecode, e.userIdx);
     });
     socket.on('new-user', function(e) {
       const user = new Game.User(e);
       user.save();
     });
     socket.on('init', function(e) {
-      userID = e.user.userID;
-      policy = e.user.policy;
+      if (e.user) {
+        userID = e.user.userID;
+        policy = e.user.policy;
+      }
       nav.init(e.user);
-      if (e.user.id != null) {
+      if (e.user && e.user.id != null) {
         if(!policy) {
           nav.showPolicyModal();
         } else {

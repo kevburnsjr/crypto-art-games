@@ -80,7 +80,7 @@ func NewUserBucket() *UserBucket {
 	return &UserBucket{ Size: 8, Level: 32, Rate: 4 }
 }
 
-func (b *UserBucket) adjustLevel() {
+func (b *UserBucket) AdjustLevel() {
 	var t = uint32(time.Now().Unix())
 	b.Level = b.Level + uint8(math.Floor(float64((t - b.Timestamp) / (60 / uint32(b.Rate)))))
 	if b.Level > b.Size*4 {
@@ -90,7 +90,7 @@ func (b *UserBucket) adjustLevel() {
 }
 
 func (b *UserBucket) Consume(n uint8) bool {
-	b.adjustLevel()
+	b.AdjustLevel()
 	if b.Level < n * 4 {
 		return false
 	}
@@ -99,7 +99,7 @@ func (b *UserBucket) Consume(n uint8) bool {
 }
 
 func (b *UserBucket) Credit(n uint8) {
-	b.adjustLevel()
+	b.AdjustLevel()
 	b.Level = b.Level + n * 4
 	if b.Level > b.Size*4 {
 		b.Level = b.Size*4

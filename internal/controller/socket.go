@@ -116,8 +116,12 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn := sock.CreateConnection(channels, ws)
 
-	if user.Bucket == nil {
-		user.Bucket = entity.NewUserBucket()
+	if user != nil {
+		if user.Bucket == nil {
+			user.Bucket = entity.NewUserBucket()
+		} else {
+			user.Bucket.AdjustLevel()
+		}
 	}
 	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
 		"type": "init",
