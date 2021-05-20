@@ -45,6 +45,13 @@ Game.Nav = (function(g){
       }
       scrubber.scrollLeft += e.deltaY/Math.abs(e.deltaY);
     }, { passive: true });
+    this.recentFrames.addEventListener('click', e => {
+      e.preventDefault();
+      if (e.target.nodeName == "CANVAS") {
+        console.log(e.target.dataset.i, e.target.dataset.j);
+        game.board().setFocus(parseInt(e.target.dataset.i), parseInt(e.target.dataset.j));
+      }
+    });
     modal.querySelector("#modal-policy form").addEventListener('submit', e => {
       this.submitPolicyModal(e);
     });
@@ -92,6 +99,8 @@ Game.Nav = (function(g){
         });
         this.recentFrames.innerHTML = html + '</ul>';
         this.recentFrames.querySelectorAll("li").forEach((el, i) => {
+          tiles[i].canvas.dataset.i = frames[i].ti;
+          tiles[i].canvas.dataset.j = frames[i].tj;
           el.prepend(tiles[i].canvas);
         })
       });

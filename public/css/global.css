@@ -13,8 +13,8 @@ a {
 }
 
 ::-webkit-scrollbar { width: 6px; height: 1em; }
-::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-track { background: rgba(80,80,80,0.95); }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.5); }
 
 #palette { position: absolute; display: none; z-index: 200; box-shadow: 0px 0px 10px rgba(0,0,0,0.5); }
 
@@ -31,9 +31,9 @@ nav.world div.levels div:nth-child(9n+1) { background: rgba(192,192,192,0.9); }
 nav.world div.levels div:nth-child(-n+9) { background: rgba(192,192,192,0.9); }
 
 aside { z-index: 99; position: absolute; }
-aside div { padding: 1em 1em 1em; color: rgba(255,255,255,0.7); line-height: 2em; display: none; background: rgba(0,0,0,0.3); clear: both; }
+aside div { padding: 1em 1em 1em; color: rgba(255,255,255,0.7); line-height: 2em; display: none; background: rgba(80,80,80,0.95); clear: both; }
 aside nav a { cursor: pointer; padding: 0.5em; display: inline-block; }
-aside nav a.active { background: rgba(0,0,0,0.2); }
+aside nav a.active { background: rgba(80,80,80,0.95); }
 aside div.active { display: block; }
 aside hr { border: none; border-top: 1px dashed rgba(255,255,255,0.1); margin: 0.8em -1em; }
 aside em { display: inline-block; padding: 0 0.4em; font-style: normal; min-width: 1em; text-align: center;
@@ -45,11 +45,12 @@ aside#right nav { float: left; }
 aside#right { top: 3em; right: 0; }
 aside#right nav { float: right; }
 aside#right nav { float: right; }
-aside#right ul { padding: 0 0 0 3em; margin: 0; }
+aside#right ul { padding: 0 0 0 3em; margin: 0; height: 39em; }
 aside#right ul li { list-style: none; margin: 0 0 1em 0; clear: left; height: 3em; width: 10em; }
+aside#right ul li.loading { margin: 0 2.5em 0 -2.5em; }
 aside#right ul li:last-child { margin-bottom: 0; }
 aside#right ul li img { width: 1.5em; height: 1.5em; float: left; margin-right: 0.5em; }
-aside#right ul li canvas { width: 3em; height: 3em; float: left; margin-left: -3em; background: rgba(255,255,255,0.1); }
+aside#right ul li canvas { width: 3em; height: 3em; float: left; margin-left: -3em; background: rgba(255,255,255,0.1); cursor: pointer; }
 aside#right ul li a { display: block; padding: 0 0.5em; cursor: pointer; font-size: 0.9em; line-height: 1.5em; height: 1.5em; overflow: hidden; }
 
 nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
@@ -82,7 +83,7 @@ body.erasing canvas.full { cursor: url(/i/cursor-eraser.png) 5 5, cell; }
     position: absolute; bottom: 0; left: 50%; width: 800px; margin-left: -400px;  z-index: 99;
     overflow-x: scroll;  transform:rotate(180deg);
 }
-#scrubber div { height: 1px; }
+#scrubber div { height: 1em; }
 
 #modal { position: absolute; bottom: 0; left: 0; right: 0; top: 0; background: rgba(0,0,0,0.5); display: none; z-index: 1000; }
 #modal.active { display: block; }

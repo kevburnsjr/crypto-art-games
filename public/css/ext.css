@@ -5,3 +5,4 @@ body { font-size: 1.2em; }
 pre { padding: 0.5em 1.5em; background: #bbb; }
 div.content, h1 { max-width: 800px; margin: 0 auto; }
 h1 { text-align: center; margin: 2em auto; }
+p.c { text-align: center; }

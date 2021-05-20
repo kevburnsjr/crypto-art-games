@@ -198,10 +198,6 @@ Game.Board = (function(g){
   board.prototype.moveTile = function(dx, dy) {
     var self = this;
     return (this.tile.active ? this.tile.commit() : Promise.resolve()).then(function(tile) {
-      if ((dx < 0 && self.i < 1) || (dx > 0 && self.i >= self.xTiles - 1) ||
-         ( dy < 0 && self.j < 1) || (dy > 0 && self.j >= self.yTiles - 1)) {
-         return;
-      }
       self.setFocus(self.i + dx, self.j + dy);
     });
   };
@@ -247,6 +243,9 @@ Game.Board = (function(g){
   };
 
   board.prototype.setFocus = function(i, j) {
+    if (i < 0 || i > this.xTiles - 1 || j < 0 || j > this.yTiles - 1) {
+       return;
+    }
     this.i = i;
     this.j = j;
     this.tile = this.tiles[i][j];
@@ -313,6 +312,13 @@ Game.Board = (function(g){
   };
 
   board.prototype.enable = function(timecode, userIdx, bucket) {
+    if (this.enabled) {
+      g.nav().updateScrubber(timecode);
+      if (!this.paused) {
+        self.timecode = timecode;
+      }
+      return;
+    }
     var self = this;
     return this.scanFrames(function(timecode, frameData) {
       self.frames.push(Game.Frame.fromBytes(frameData));
