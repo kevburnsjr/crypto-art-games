@@ -10,6 +10,7 @@ import (
 )
 
 type User interface {
+	Find(user *entity.User) (userID uint16, found bool, err error)
 	FindOrInsert(user *entity.User) (userID uint16, inserted bool, err error)
 	Update(user *entity.User) (u *entity.User, err error)
 	Since(userIdx, generation uint16) (users []*entity.User, userIds []uint16, err error)
@@ -33,7 +34,22 @@ type user struct {
 	db driver.DB
 }
 
-// Find retrieves an user
+// Find retrieves a user
+func (r *user) Find(user *entity.User) (userID uint16, found bool, err error) {
+	_, bytes, err := r.db.Get([]byte("twitch-" + user.ID))
+	if err == errors.RepoItemNotFound {
+		err = nil
+		return
+	} else if err != nil {
+		return
+	} else {
+		userID = binary.BigEndian.Uint16(bytes)
+		found = true
+	}
+	return
+}
+
+// FindOrInsert inserts a user or returns the user's existing ID
 func (r *user) FindOrInsert(user *entity.User) (userID uint16, inserted bool, err error) {
 	_, bytes, err := r.db.Get([]byte("twitch-" + user.ID))
 	if err == errors.RepoItemNotFound {
@@ -65,6 +81,8 @@ func (r *user) Insert(user *entity.User) (userID uint16, err error) {
 	if err != nil {
 		return
 	}
+
+	user.UserID = userID
 
 	_, err = r.db.Put(idBytes, "", user.ToJson())
 	if err != nil {

@@ -21,6 +21,11 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		logger.Fatal(err)
 	}
 
+	rUserBan, err := repo.NewUserBan(cfg.Repo.UserBan)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	rFrame, err := repo.NewFrame(cfg.Repo.Frame)
 	if err != nil {
 		logger.Fatal(err)
@@ -58,14 +63,14 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	oauth := newOAuth(cfg, logger, rUser)
 
-	socket := newSocket(logger, oauth, hub, rUser, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+	socket := newSocket(logger, oauth, hub, rUser, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
-	debug := newDebug(cfg, logger, oauth, hub, rUser, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+	debug := newDebug(cfg, logger, oauth, hub, rUser, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
 	router.Handle("/", index{oauth, cfg, logger, hub, rUser})
 	router.Handle("/login", newLogin(logger, oauth))
 	router.Handle("/logout", newLogout(logger, oauth))
-	router.Handle("/policy-accept", newPolicyAccept(logger, oauth, rUser))
+	router.Handle("/policy-accept", newPolicyAccept(logger, oauth, hub, rUser))
 	router.Handle("/privacy-policy", privacyPolicy{logger})
 	router.Handle("/terms-of-service", termsOfService{logger})
 	router.Handle("/oauth", oauth)

@@ -6,16 +6,19 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/repo"
+	sock "github.com/kevburnsjr/crypto-art-games/internal/socket"
 )
 
 func newPolicyAccept(
 	logger *logrus.Logger,
 	oauth *oauth,
+	hub sock.Hub,
 	rUser repo.User,
 ) *policyAccept {
 	return &policyAccept{
 		log:      logger,
 		oauth:    oauth,
+		hub:      hub,
 		repoUser: rUser,
 	}
 }
@@ -23,6 +26,7 @@ func newPolicyAccept(
 type policyAccept struct {
 	log      *logrus.Logger
 	oauth    *oauth
+	hub      sock.Hub
 	repoUser repo.User
 }
 
@@ -43,7 +47,13 @@ func (c policyAccept) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user.Policy = true
-	user, err = c.repoUser.Update(user)
+	userID, inserted, err := c.repoUser.FindOrInsert(user)
+	if inserted {
+		c.hub.Broadcast(sock.JsonMessagePure("global", map[string]interface{}{
+			"type": "new-user",
+			"user": user.ToDto(userID),
+		}))
+	}
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

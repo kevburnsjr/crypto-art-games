@@ -4,6 +4,7 @@ type Repos struct {
 	Global *KeyValueStore `yaml:"global"`
 
 	User             KeyValueStore `yaml:"user"`
+	UserBan          KeyValueStore `yaml:"userBan"`
 	Frame            KeyValueStore `yaml:"frame"`
 	TileLock         KeyValueStore `yaml:"tileLock"`
 	TileHistory      KeyValueStore `yaml:"tileHistory"`

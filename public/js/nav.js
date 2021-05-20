@@ -82,22 +82,23 @@ Game.Nav = (function(g){
         userIds.push(f.userid);
       });
       g.User.findAll(userIds).then(users => {
-        var html = 'Recent Board Edits<br/><hr/><ul>';
+        var html = '';
         var tiles = [];
         users.forEach((u, i) => {
           tiles[i] = new Game.Tile(null, board.palette, 0, 0);
           tiles[i].renderFrameBuffer(frames[i]);
+          html += '<li><a>';
           if (u === null) {
-            html += '<li><a>'+frames[i].userid.toString(16).padStart(4,0)+'</a></li>';
+            html += frames[i].userid.toString(16).padStart(4,0);
           } else {
-            html += '<li><a>';
             if (u.profile_image_url.length > 0) {
               html += '<img src="'+u.profile_image_url+'"/>'
             }
-            html += u.display_name+'</a></li>';
+            html += u.display_name;
           }
+          html += '</a></li>';
         });
-        this.recentFrames.innerHTML = html + '</ul>';
+        this.recentFrames.querySelector("ul").innerHTML = html;
         this.recentFrames.querySelectorAll("li").forEach((el, i) => {
           tiles[i].canvas.dataset.i = frames[i].ti;
           tiles[i].canvas.dataset.j = frames[i].tj;

@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"log"
-	// "strconv"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/nicklaw5/helix"
@@ -13,20 +13,23 @@ import (
 
 type User struct {
 	helix.User
-	Policy bool `json:"policy"`
+	UserID  uint16    `json:"userID"`
+	Policy  bool      `json:"policy"`
+	Timeout time.Time `json:"timeout"`
+	Banned  bool      `json:"banned"`
 }
 
 type UserDto struct {
-	Type string `json:"type"`
-	ID uint16 `json:"id"`
-	Login string `json:"login"`
-	DisplayName string `json:"display_name"`
+	Type            string `json:"type"`
+	ID              uint16 `json:"id"`
+	Login           string `json:"login"`
+	DisplayName     string `json:"display_name"`
 	ProfileImageURL string `json:"profile_image_url"`
+	OfflineImageURL string `json:"offline_image_url"`
 }
 
 func (u *User) ToJson() []byte {
 	b, _ := json.Marshal(u)
-	log.Println(string(b))
 	return b
 }
 
@@ -37,6 +40,7 @@ func (u *User) ToDto(userID uint16) []byte {
 		u.Login,
 		u.DisplayName,
 		u.ProfileImageURL,
+		u.OfflineImageURL,
 	})
 	return b
 }

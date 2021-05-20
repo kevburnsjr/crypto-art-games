@@ -39,9 +39,9 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger, rUser repo.User) *oauth {
 		logger.Fatal(err)
 	}
 	cs := sessions.NewCookieStore([]byte(cfg.Secret))
-	cs.Options.MaxAge = 0;
-	cs.Options.Secure = true;
-	cs.Options.HttpOnly = true;
+	cs.Options.MaxAge = 0
+	cs.Options.Secure = true
+	cs.Options.HttpOnly = true
 	return &oauth{
 		cfg:          cfg,
 		log:          logger,

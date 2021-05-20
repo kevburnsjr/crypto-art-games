@@ -23,6 +23,7 @@ func newDebug(
 	oauth *oauth,
 	hub sock.Hub,
 	rUser repo.User,
+	rUserBan repo.UserBan,
 	rFrame repo.Frame,
 	rTileLock repo.TileLock,
 	rTileHistory repo.TileHistory,
@@ -34,6 +35,7 @@ func newDebug(
 		oauth:                oauth,
 		hub:                  hub,
 		repoUser:             rUser,
+		repoUserBan:          rUserBan,
 		repoFrame:            rFrame,
 		repoTileLock:         rTileLock,
 		repoTileHistory:      rTileHistory,
@@ -47,6 +49,7 @@ type debug struct {
 	oauth                *oauth
 	hub                  sock.Hub
 	repoUser             repo.User
+	repoUserBan          repo.UserBan
 	repoFrame            repo.Frame
 	repoTileLock         repo.TileLock
 	repoTileHistory      repo.TileHistory
