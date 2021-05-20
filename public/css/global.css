@@ -13,8 +13,8 @@ a {
 }
 
 ::-webkit-scrollbar { width: 6px; height: 1em; }
-::-webkit-scrollbar-track { background: rgba(80,80,80,0.95); }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.5); }
+::-webkit-scrollbar-track { background: rgba(80,80,80,0.95); border-radius: 1em; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.5); border-radius: 1em; }
 
 #palette { position: absolute; display: none; z-index: 200; box-shadow: 0px 0px 10px rgba(0,0,0,0.5); }
 
@@ -37,7 +37,7 @@ aside nav a.active { background: rgba(80,80,80,0.95); }
 aside div.active { display: block; }
 aside hr { border: none; border-top: 1px dashed rgba(255,255,255,0.1); margin: 0.8em -1em; }
 aside em { display: inline-block; padding: 0 0.4em; font-style: normal; min-width: 1em; text-align: center;
-    font-size: 1em; line-height: 1.7em; background: rgba(0,0,0,0.2); color: rgba(255,255,255,0.8); }
+    font-size: 1em; line-height: 1.7em; background: rgba(0,0,0,0.2); color: rgba(255,255,255,0.8); border-radius: 0.25em; }
 
 aside#left { top: 3em; left: 0;  }
 aside#right nav { float: left; }
