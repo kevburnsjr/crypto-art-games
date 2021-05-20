@@ -26,6 +26,7 @@ func (c static) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 304
 	modHdr := r.Header.Get("If-Modified-Since")
 	w.Header().Set("Last-Modified", modTime.UTC().Format(time.RFC1123))
+	w.Header().Set("Cache-Control", "max-age=0, must-revalidate")
 	hdrModTime, err := time.Parse(time.RFC1123, modHdr)
 	if err == nil && modHdr != "" && modTime.Unix() <= hdrModTime.Unix() {
 		w.WriteHeader(304)

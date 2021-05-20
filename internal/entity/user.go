@@ -38,7 +38,6 @@ func (u *User) ToDto(userID uint16) []byte {
 		u.DisplayName,
 		u.ProfileImageURL,
 	})
-	log.Println(string(b))
 	return b
 }
 
