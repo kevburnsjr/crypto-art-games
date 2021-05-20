@@ -77,7 +77,7 @@ type UserBucket struct {
 }
 
 func NewUserBucket() *UserBucket {
-	return &UserBucket{ Size: 8, Level: 32, Rate: 4 }
+	return &UserBucket{ Size: 8, Level: 32, Rate: 2 }
 }
 
 func (b *UserBucket) AdjustLevel() {
