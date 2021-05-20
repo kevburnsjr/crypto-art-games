@@ -69,11 +69,6 @@ var Game = (function(g){
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
     var userID = null;
-    if (document.getElementById("user")) {
-      const data = document.getElementById("user").dataset;
-      userID = parseInt(data.userid);
-      policy = data.policy === "true";
-    }
     checkpoint = await board.store.getItem("checkpoint");
     generation = await board.store.getItem("generation");
     userIdx = await board.store.getItem("userIdx");
@@ -113,6 +108,7 @@ var Game = (function(g){
             if (e.type == 'err') {
               reject(e.msg);
             } else if (e.userID == userID){
+              nav.showHeart(e.bucket);
               resolve();
             }
           });
@@ -130,6 +126,7 @@ var Game = (function(g){
               nav.resetScrubber();
               reject(e.msg);
             } else if (e.userID == userID) {
+              nav.showHeart(e.bucket);
               nav.resetScrubber();
               resolve();
             }
@@ -162,11 +159,19 @@ var Game = (function(g){
       const user = new Game.User(e);
       user.save();
     });
+    socket.on('init', function(e) {
+      userID = e.user.userID;
+      policy = e.user.policy;
+      nav.init(e.user);
+      if (e.user.id != null) {
+        if(!policy) {
+          nav.showPolicyModal();
+        } else {
+          nav.showHeart(e.user.bucket);
+        }
+      }
+    });
     socket.start();
-
-    if (userID != null && !policy) {
-      nav.showPolicyModal();
-    }
   };
 
   var reset = function() {

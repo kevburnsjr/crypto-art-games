@@ -2,6 +2,7 @@ Game.Nav = (function(g){
   "use strict";
 
   var nav = function(game, left, right, scrubber, modal){
+    this.initialized = false;
     this.game = game;
     this.toggles = {};
     const toggleFunc = el => {
@@ -55,6 +56,7 @@ Game.Nav = (function(g){
     modal.querySelector("#modal-policy form").addEventListener('submit', e => {
       this.submitPolicyModal(e);
     });
+    this.heartInterval = null;
   };
 
   nav.prototype.toggleHelp = function(){
@@ -139,6 +141,43 @@ Game.Nav = (function(g){
     if (this.modal.classList.contains("policy")) {
       window.location.href = "/logout";
       return true;
+    }
+  };
+
+  nav.prototype.init = function(user) {
+    if (this.initialized) {
+      return;
+    }
+    var el = document.createElement("div");
+    if (user) {
+      el.innerHTML = `
+        <a id="user" href="/logout" data-userid="${user.ID}" data-policy="${user.policy}">
+            <img src="${user.profile_image_url}"/>
+            <span>${user.display_name}</span>
+        </a>`
+    } else {
+      el.innerHTML = `
+        <a href="/login" class="login">
+            <span>Log in with Twitch</span>
+        </a>`
+    }
+    document.querySelector("nav.user").appendChild(el.firstElementChild);
+    this.initialized = true;
+  };
+
+  nav.prototype.showHeart = function(bucket) {
+    clearTimeout(this.heartInterval);
+    var html = ""
+    for (var i = 0; i < bucket.size; i++) {
+      html += ` <span class="heart f`+Math.max(Math.min(bucket.level-i*4, 4), 0)+`-4"></span> `;
+    }
+    document.getElementById("healthbar").innerHTML = html;
+    var self = this;
+    if (bucket.level < bucket.size * 4) {
+      this.heartInterval = setTimeout(() => {
+        bucket.level++
+        self.showHeart(bucket);
+      }, 60000 / bucket.rate);
     }
   };
 

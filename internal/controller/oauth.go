@@ -106,8 +106,6 @@ func (c oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// add the oauth token to session
 	session.Values[oauthTokenKey] = token
 
-	c.log.Debugf("Access token: %#v", token)
-
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
 		session.Save(r, w)

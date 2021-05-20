@@ -116,6 +116,14 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn := sock.CreateConnection(channels, ws)
 
+	if user.Bucket == nil {
+		user.Bucket = entity.NewUserBucket()
+	}
+	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
+		"type": "init",
+		"user": user,
+	}))
+
 	// Sync new frames
 	frames, err := c.repoFrame.Since(uint16(boardIdInt), uint16(generationInt), uint16(timecodeInt))
 	for _, frame := range frames {
@@ -176,6 +184,9 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 			switch m["type"].(string) {
 			case "tile-lock":
 				var tileID = uint16(m["tileID"].(float64))
+				if err = c.repoUser.Consume(user); err != nil {
+					return err
+				}
 				if err := c.repoTileLock.Acquire(userID, tileID, time.Now()); err != nil {
 					return err
 				}
@@ -183,9 +194,13 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 					"type":   "tile-locked",
 					"tileID": tileID,
 					"userID": userID,
+					"bucket": user.Bucket,
 				}))
 			case "tile-lock-release":
 				var tileID = uint16(m["tileID"].(float64))
+				if err = c.repoUser.Credit(user); err != nil {
+					return err
+				}
 				if err := c.repoTileLock.Release(userID, tileID, time.Now()); err != nil {
 					return err
 				}
@@ -193,6 +208,7 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 					"type":   "tile-lock-released",
 					"tileID": tileID,
 					"userID": userID,
+					"bucket": user.Bucket,
 				}))
 			case "report-create":
 				// Insert report

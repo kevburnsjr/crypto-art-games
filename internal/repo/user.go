@@ -3,6 +3,7 @@ package repo
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
@@ -15,6 +16,8 @@ type User interface {
 	FindOrInsert(user *entity.User) (userID uint16, inserted bool, err error)
 	Update(user *entity.User) (u *entity.User, err error)
 	Since(userIdx, generation uint16) (users []*entity.User, userIds []uint16, err error)
+	Consume(user *entity.User) (err error)
+	Credit(user *entity.User) (err error)
 }
 
 // NewUser returns an User repo instance
@@ -124,6 +127,46 @@ func (r *user) Update(user *entity.User) (u *entity.User, err error) {
 	}
 
 	_, err = r.db.Put(idBytes, userVers, u.ToJson())
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (r *user) Consume(user *entity.User) (err error) {
+	if user.Bucket == nil {
+		user.Bucket = entity.NewUserBucket()
+	}
+	if !user.Bucket.Consume(1) {
+		return fmt.Errorf("Bucket empty")
+	}
+	idBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(idBytes, user.UserID)
+	userVers, _, err := r.db.Get(idBytes)
+	if err != nil {
+		return
+	}
+	_, err = r.db.Put(idBytes, userVers, user.ToJson())
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (r *user) Credit(user *entity.User) (err error) {
+	if user.Bucket == nil {
+		user.Bucket = entity.NewUserBucket()
+	}
+	user.Bucket.Credit(1)
+	idBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(idBytes, user.UserID)
+	userVers, _, err := r.db.Get(idBytes)
+	if err != nil {
+		return
+	}
+	_, err = r.db.Put(idBytes, userVers, user.ToJson())
 	if err != nil {
 		return
 	}

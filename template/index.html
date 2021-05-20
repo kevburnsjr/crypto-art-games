@@ -1,20 +1,10 @@
 <html><head>
-
 <link href="/css/font.css" rel="stylesheet"></link>
 <link href="/css/global.css" rel="stylesheet"></link>
 <title>Project 64 - Crypto Art Games</title>
 </head><body>
 <nav class="user">
-{{if .User}}
-    <a id="user" href="/logout" data-userid="{{.UserID}}" data-policy="{{.User.Policy}}">
-        <img src="{{.User.ProfileImageURL}}"/>
-        <span>{{.User.DisplayName}}</span>
-    </a>
-{{else}}
-    <a href="/login" class="login">
-        <span>Log in with Twitch</span>
-    </a>
-{{end}}
+    <div class="healthbar ltr" id="healthbar"></div>
 </nav>
 <nav class="world" id="world-nav">
     <a href="/" id="logo" draggable="false">
@@ -110,4 +100,3 @@
 <script src="/js/tile.js"></script>
 <script src="/js/frame.js"></script>
 </body></html>
-

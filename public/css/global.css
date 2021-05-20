@@ -56,12 +56,29 @@ aside#right ul li a { display: block; padding: 0 0.5em; cursor: pointer; font-si
 
 nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
 
+span.heart { width: 15px; height: 14px; overflow: hidden; display: inline-block; opacity: 0.75; }
+
+span.heart { background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAABGCAMAAAAkXz7cAAAAFVBMVEUAAAD/AAD///8AAAD/r68AAAD/AACoETV5AAAABXRSTlMAAABTU6GfCGgAAACZSURBVDjLxY9JEoAwCARZJP9/soQt6MEqc1AuYw9VhgYi1iGwgJmHDkcAWOpXRPKxy5eCEXrBiHoBckOgKnxLWRgaW+HoPAtCX5Wf6DQ/GTqy/MbwIh/f5c/86JWf3O4duxxFYPkFll9i+tU2dALLL7D85De/+NPyk4bmJw3NT9qWsrj4yYPfFGt+LlZ+KZb39fN2+Cs/RzoBVakPCgS1RbAAAAAASUVORK5CYII='); }
+span.heart.f0-4 { background-position: left top; }
+span.heart.f1-4 { background-position: left -14px; }
+span.heart.f2-4 { background-position: left -28px; }
+span.heart.f3-4 { background-position: left -42px; }
+span.heart.f4-4 { background-position: left -56px; }
+
 nav.user {
-    background: #000;
     position: absolute; top: 0; right: 0;
     z-index: 100;
 }
-nav.user a { float: left; }
+nav.user .healthbar { float: left; margin: 0 -1em 0 0; line-height: 2.55em; padding: 0.45em 3.5em 0 1.25em; background: rgba(0,0,0,0.15); border-radius: 1.5em; }
+nav.user .healthbar.ltr .heart {
+    -moz-transform: scaleX(-1);
+    -o-transform: scaleX(-1);
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+    filter: FlipH;
+    -ms-filter: "FlipH";
+}
+nav.user a { background: #000; float: left; }
 nav.user a span { float: left; line-height: 3em; padding: 0em 1.5em; }
 nav.user a img { height: 3em; margin: 0 0 0 -1.5em; float: left; border-radius: 50%; padding: 0; }
 
