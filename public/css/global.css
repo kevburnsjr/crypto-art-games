@@ -58,7 +58,7 @@ nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6e
 
 span.heart { width: 15px; height: 14px; overflow: hidden; display: inline-block; opacity: 0.75; }
 
-span.heart { background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAABGCAMAAAAkXz7cAAAAFVBMVEUAAAD/AAD///8AAAD/r68AAAD/AACoETV5AAAABXRSTlMAAABTU6GfCGgAAACZSURBVDjLxY9JEoAwCARZJP9/soQt6MEqc1AuYw9VhgYi1iGwgJmHDkcAWOpXRPKxy5eCEXrBiHoBckOgKnxLWRgaW+HoPAtCX5Wf6DQ/GTqy/MbwIh/f5c/86JWf3O4duxxFYPkFll9i+tU2dALLL7D85De/+NPyk4bmJw3NT9qWsrj4yYPfFGt+LlZ+KZb39fN2+Cs/RzoBVakPCgS1RbAAAAAASUVORK5CYII='); }
+span.heart { background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAABGCAMAAAAkXz7cAAAAGFBMVEUAAAD/AAD///8AAAD/yckAAAD/AAD///8IxmZ/AAAABXRSTlMAAAA9PfDrAh4AAAChSURBVDjLxY9LEoQwCAUJCN7/xkP4SWZhlVkom5d+VCkNiKSDYAEzDx2KALDUV0TysctLQQN6QWPoBYMaAlbhW8zC0NgKR+dZ4PBV+bFO82PR4ctPxIv8+S6/5oeP/PjvXtnlKALLL7D8EtOvtqETWH6B5cef+cWXLj9uaH7c0Py4bTGLxY9v/KZY83Ox8tM8T33lfWxYF02WleWW3/JzxB9ZFg8PNx8suQAAAABJRU5ErkJggg=='); }
 span.heart.f0-4 { background-position: left top; }
 span.heart.f1-4 { background-position: left -14px; }
 span.heart.f2-4 { background-position: left -28px; }
