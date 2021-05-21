@@ -102,7 +102,7 @@ Game.Board = (function(g){
       this.tile.clearCursor();
     }
     if (this.uiDirty || uiDirty) {
-      uiCtx.clearRect(0, 0, this.w, this.h);
+      uiCtx.clearRect(0, 0, uiCtx.canvas.width, uiCtx.canvas.height);
       if (this.focused) {
         this.tile.stroke(uiCtx);
       }
