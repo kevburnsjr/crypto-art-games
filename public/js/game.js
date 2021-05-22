@@ -35,10 +35,11 @@ var Game = (function(g){
 
   var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, scrubberElem, modalElem) {
     bgElem = bgCanvasElem;
-    bgCtx = bgElem.getContext('2d', { alpha: false, desynchronized: true });
+    bgCtx = bgElem.getContext('2d', { alpha: false });
     uiElem = uiCanvasElem;
-    uiCtx = uiElem.getContext('2d', { alpha: true, desynchronized: true });
+    uiCtx = uiElem.getContext('2d', { alpha: true });
     palette = new Game.Palette(paletteElem, autumn);
+
     board = new Game.Board(Game, localforage.createInstance({name: "board"}),
     "/palettes/autumn.gif", palette, 16, 16, function() {
       if(window.location.hash) {

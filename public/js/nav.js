@@ -4,7 +4,13 @@ Game.Nav = (function(g){
   var nav = function(game, left, right, scrubber, modal){
     this.initialized = false;
     this.game = game;
+    this.timeagoInterval = null;
     this.toggles = {};
+    this.scrubber = scrubber;
+    this.modal = modal;
+    this.showRecentAnimationFrame = null;
+    this.recentFrames = right.querySelector("#recent-frames");
+    this.heartTimeout = null;
     const toggleFunc = el => {
       var id = el.dataset.toggle;
       this.toggles[id] = el;
@@ -26,7 +32,6 @@ Game.Nav = (function(g){
     };
     left.querySelectorAll("nav a").forEach(toggleFunc);
     right.querySelectorAll("nav a").forEach(toggleFunc);
-    var interval;
     scrubber.addEventListener('scroll', e => {
       e.stopPropagation();
       if (game.board().tile.active) {
@@ -35,10 +40,6 @@ Game.Nav = (function(g){
       }
       this.game.setTimecode(scrubber.scrollWidth - scrubber.offsetWidth - scrubber.scrollLeft);
     });
-    this.scrubber = scrubber;
-    this.modal = modal;
-    this.showRecentAnimationFrame = null;
-    this.recentFrames = right.querySelector("#recent-frames");
     this.recentFrames.addEventListener('wheel', e => {
       e.stopPropagation();
       if (game.board().tile.active) {
@@ -56,7 +57,6 @@ Game.Nav = (function(g){
     modal.querySelector("#modal-policy form").addEventListener('submit', e => {
       this.submitPolicyModal(e);
     });
-    this.heartInterval = null;
   };
 
   nav.prototype.toggleHelp = function(){
@@ -98,14 +98,20 @@ Game.Nav = (function(g){
             }
             html += u.display_name;
           }
-          html += '</a></li>';
+          html += '</a>';
+          html += '<span class="timeago" datetime="'+frames[i].date.toISOString()+'"/>';
+          html += '</li>';
         });
         this.recentFrames.querySelector("ul").innerHTML = html;
         this.recentFrames.querySelectorAll("li").forEach((el, i) => {
           tiles[i].canvas.dataset.i = frames[i].ti;
           tiles[i].canvas.dataset.j = frames[i].tj;
           el.prepend(tiles[i].canvas);
-        })
+        });
+        const ta = this.recentFrames.querySelectorAll('.timeago');
+        if (ta.length > 0) {
+          timeago.render(ta, 'en_US', {minInterval: 60});
+        }
       });
     });
   };
@@ -166,7 +172,7 @@ Game.Nav = (function(g){
   };
 
   nav.prototype.showHeart = function(bucket) {
-    clearTimeout(this.heartInterval);
+    clearTimeout(this.heartTimeout);
     var html = ""
     for (var i = 0; i < bucket.size; i++) {
       html += ` <span class="heart f`+Math.max(Math.min(bucket.level-i*4, 4), 0)+`-4"></span> `;
@@ -174,7 +180,7 @@ Game.Nav = (function(g){
     document.getElementById("healthbar").innerHTML = html;
     var self = this;
     if (bucket.level < bucket.size * 4) {
-      this.heartInterval = setTimeout(() => {
+      this.heartTimeout = setTimeout(() => {
         bucket.level++
         self.showHeart(bucket);
       }, 60000 / bucket.rate);

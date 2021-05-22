@@ -266,7 +266,7 @@ Game.Tile = (function(g){
     this.cursi = -1;
     this.cursj = -1;
     this.dirty = true;
-  }
+  };
 
   tile.prototype.drawPixel = function(ctx, x, y, c) {
     var i = Math.floor((x-this.x1) / this.scale);
@@ -278,7 +278,7 @@ Game.Tile = (function(g){
       this.scale,
       this.scale,
     );
-  }
+  };
 
   tile.prototype.stroke = function(ctx) {
     ctx.lineWidth = 1;

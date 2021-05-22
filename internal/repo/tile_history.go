@@ -35,7 +35,7 @@ type tileHistory struct {
 func (r *tileHistory) Insert(frame *entity.Frame) (err error) {
 	key := make([]byte, 4)
 	binary.BigEndian.PutUint16(key[0:2], frame.TileID())
-	binary.BigEndian.PutUint16(key[2:4], frame.Timecode)
+	binary.BigEndian.PutUint16(key[2:4], frame.Timecode())
 	val := make([]byte, 4)
 	binary.BigEndian.PutUint32(val, uint32(time.Now().Unix()))
 	_, err = r.db.Put(key, "", val)

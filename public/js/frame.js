@@ -1,10 +1,10 @@
 Game.Frame = (function(g){
   "use strict";
 
-  const headerflag_useMask = 28; // 60;
-  const headerflag_deleted = 29; // 61;
-  const headerflag_runLengthEncodedMask = 30; // 62;
-  const headerflag_runLengthEncodedColorTable = 31; // 63;
+  const headerflag_useMask = 44; // 60;
+  const headerflag_deleted = 45; // 61;
+  const headerflag_runLengthEncodedMask = 46; // 62;
+  const headerflag_runLengthEncodedColorTable = 47; // 63;
 
   var frame = function(tile){
     this.mask = new BitSet();
@@ -13,7 +13,10 @@ Game.Frame = (function(g){
     this.colorsUniq = {};
     this.colorCount = 0;
     this.timecode = 0;
+    this.timestamp = 0;
+    this.timecheck = 0;
     this.userid = 0;
+    this.date = new Date(0);
     this.deleted = false;
     this.data = null;
     this.hash = null;
@@ -51,8 +54,7 @@ Game.Frame = (function(g){
     var b = new BitSet();
     var bs = n => b.set(o++, parseInt(n));
     var append = (bits, a) => [...a.toString(2).padStart(bits, 0)].forEach(bs);
-    // append(16, this.timecode);
-    // append(32, this.userid);
+    append(16, this.timecode);
     append(16, this.userid);
     append(8, this.ti*16 + this.tj);
     append(4, 0 + (this.colorCount-1));
@@ -60,6 +62,10 @@ Game.Frame = (function(g){
     append(1, 0 + (this.deleted)); // headerflag_deleted
     append(1, 0); // headerflag_runLengthEncodedMask
     append(1, 0); // headerflag_runLengthEncodedColorTable
+    append(16, this.timestamp);
+    if (this.timestamp == 0 && this.timecheck > 0) {
+      append(32, this.timecheck);
+    }
 
     var bits = Math.ceil(Math.log2(this.colorCount));
 
@@ -178,7 +184,8 @@ Game.Frame = (function(g){
       return Promise.resolve(this.hash);
     }
     var self = this;
-    return crypto.subtle.digest('SHA-256', this.toBytes().slice(2)).then(h => {
+    var offset = this.timecheck ? 12 : 8;
+    return crypto.subtle.digest('SHA-256', this.toBytes().slice(offset)).then(h => {
       self.hash = hex2b64((new Uint8Array(h)).reduce((a, c) => a += c.toString(16).padStart(2, '0'), ''));
       return self.hash;
     });
@@ -189,35 +196,38 @@ Game.Frame = (function(g){
     var i;
     var j;
     var o = 0;
-    var intAt = function(b, bits, pos) {
+    var readInt = function(bits) {
       var n = 0;
       for (j = 0; j < bits; j++) {
         n = n << 1;
-        n += b.get(pos + j);
+        n += b.get(o + j);
       }
       o += bits;
       return n;
     }
     var f = new Game.Frame();
     f.data = bytes;
-    // f.timecode = intAt(b, 16, o);
-    // f.userid = intAt(b, 32, o);
-    f.userid = intAt(b, 16, o);
-    var tileID = intAt(b, 8, o);
-    f.ti = Math.floor(tileID/16);
-    f.tj = tileID % 16;
-    f.colorCount = intAt(b, 4, o)+1;
+    f.timecode = readInt(16);
+    f.userid = readInt(16);
+    var tileID = readInt(8);
+    f.colorCount = readInt(4)+1;
     f.deleted = !!b.get(headerflag_deleted);
     var useMask = b.get(headerflag_useMask);
     o += 4
+    f.timestamp = readInt(16);
+    if (f.timestamp == 0) {
+      f.timecheck = readInt(32);
+    }
+    f.ti = Math.floor(tileID/16);
+    f.tj = tileID % 16;
     var bits = Math.ceil(Math.log2(f.colorCount));
     var numpx = 0;
     if (b.get(headerflag_runLengthEncodedMask)) {
       var initial = "1".repeat(16);
       var quad = initial;
       for (i = 0; i < 16; i++) {
-        if (intAt(b, 1, o)) {
-          quad = intAt(b, 16, o).toString(2).padStart(16, 0);
+        if (readInt(1)) {
+          quad = readInt(16).toString(2).padStart(16, 0);
         }
         for (var j = 0; j < 16; j++) {
           f.mask.set((i%4)*4 + Math.floor(i/4)*64 + Math.floor(j/4)*16 + j%4, parseInt(quad[j]));
@@ -229,9 +239,9 @@ Game.Frame = (function(g){
       numpx = f.mask.cardinality();
       o += 256;
     } else {
-      numpx = intAt(b, 8, o);
+      numpx = readInt(8);
       for (i = 0; i < numpx; i++) {
-        f.mask.set(intAt(b, 8, o), 1);
+        f.mask.set(readInt(8), 1);
       }
     }
 
@@ -239,7 +249,7 @@ Game.Frame = (function(g){
     var cm = {};
     if (bits < 4) {
       for (i = 0; i < f.colorCount; i++) {
-        cm[i] = intAt(b, 4, o);
+        cm[i] = readInt(4);
       }
     }
     // Decode color table
@@ -247,14 +257,14 @@ Game.Frame = (function(g){
     if (b.get(headerflag_runLengthEncodedColorTable)) {
       var n;
       for (i = 0; i < numpx; i++) {
-        n = intAt(b, 4, o);
-        c = intAt(b, bits, o);
+        n = readInt(4);
+        c = readInt(bits);
         f.colors.push(...Array(n+1).fill(bits < 4 ? cm[c] : c));
         i += n;
       }
     } else {
       for (i = 0; i < numpx; i++) {
-        c = bits > 0 ? intAt(b, bits, o) : 0;
+        c = bits > 0 ? readInt(bits) : 0;
         f.colors.push(bits < 4 ? cm[c] : c);
       }
     }

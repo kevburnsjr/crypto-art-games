@@ -64,6 +64,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	userIdx := r.FormValue("userIdx")
 	userBanIdx := r.FormValue("userBanIdx")
 	boardId := r.FormValue("boardId")
@@ -72,15 +73,6 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
-		return
-	}
-
-	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
-	if _, ok := err.(websocket.HandshakeError); ok {
-		http.Error(w, "Not a websocket handshake", 400)
-		return
-	} else if err != nil {
-		c.log.Errorf("%w", err)
 		return
 	}
 
@@ -98,7 +90,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error finding user", 400)
 			return
 		}
-		if !found {
+		if user.Policy && !found {
 			session, err := c.oauth.getSession(r)
 			if err == nil {
 				session.Options.MaxAge = -1
@@ -109,27 +101,41 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	ws, err := websocket.Upgrade(w, r, nil, 1024, 1024)
+	if _, ok := err.(websocket.HandshakeError); ok {
+		http.Error(w, "Not a websocket handshake", 400)
+		return
+	} else if err != nil {
+		c.log.Errorf("%w", err)
+		return
+	}
+
 	channels := []string{"global", "board-" + boardId}
 	if user != nil && user.Policy {
 		channels = append(channels, "user-"+strconv.Itoa(int(user.UserID)))
-	}
-
-	conn := sock.CreateConnection(channels, ws)
-
-	if user != nil {
 		if user.Bucket == nil {
 			user.Bucket = entity.NewUserBucket()
 		} else {
 			user.Bucket.AdjustLevel()
 		}
 	}
-	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
-		"type": "init",
-		"user": user,
-	}))
 
 	// Sync new frames
 	frames, err := c.repoFrame.Since(uint16(boardIdInt), uint16(generationInt), uint16(timecodeInt))
+	var first *uint16
+	if len(frames) > 0 {
+		a := frames[0].Timecode()
+		first = &a
+	}
+
+	conn := sock.CreateConnection(channels, ws)
+
+	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
+		"type":     "init",
+		"user":     user,
+		"timecode": first,
+	}))
+
 	for _, frame := range frames {
 		conn.Write(sock.BinaryMsgFromBytes("board-"+boardId, frame.Data))
 	}
@@ -248,7 +254,7 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 				// User does not have lock
 				return err
 			}
-			_, err = c.repoFrame.Insert(frame)
+			_, err = c.repoFrame.Insert(frame, time.Now())
 			if err != nil {
 				return err
 			}

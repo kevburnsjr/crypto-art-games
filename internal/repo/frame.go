@@ -2,6 +2,8 @@ package repo
 
 import (
 	"encoding/binary"
+	"math"
+	"time"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
@@ -10,7 +12,7 @@ import (
 )
 
 type Frame interface {
-	Insert(frame *entity.Frame) (timecode uint16, err error)
+	Insert(frame *entity.Frame, t time.Time) (timecode uint16, err error)
 	Since(boardId, generation, timecode uint16) (frames []*entity.Frame, err error)
 }
 
@@ -33,7 +35,7 @@ type frame struct {
 }
 
 // Insert inserts a frame
-func (r *frame) Insert(frame *entity.Frame) (timecode uint16, err error) {
+func (r *frame) Insert(frame *entity.Frame, t time.Time) (timecode uint16, err error) {
 	tcVers, tcBytes, err := r.db.Get([]byte("_timecode"))
 	if err == errors.RepoItemNotFound {
 		timecode = uint16(0)
@@ -43,17 +45,49 @@ func (r *frame) Insert(frame *entity.Frame) (timecode uint16, err error) {
 		timecode = binary.BigEndian.Uint16(tcBytes)
 		timecode++
 	}
+	frame.SetTimecode(timecode)
+
 	tcBytes = make([]byte, 2)
 	binary.BigEndian.PutUint16(tcBytes, timecode)
 
-	_, err = r.db.Put(tcBytes, "", frame.Data)
+	err = r.timeCheck(frame, t)
 	if err != nil {
 		return
 	}
 
-	frame.Timecode = timecode
+	_, err = r.db.Put(tcBytes, "", frame.ToBytes())
+	if err != nil {
+		return
+	}
 
 	_, err = r.db.Put([]byte("_timecode"), tcVers, tcBytes)
+	return
+}
+
+// Checkpoint encoded timestamps
+func (r *frame) timeCheck(frame *entity.Frame, t time.Time) (err error) {
+	var timecheck uint32
+	chkVers, chkBytes, err := r.db.Get([]byte("_timecheck"))
+	if err == errors.RepoItemNotFound {
+		timecheck = 0
+		err = nil
+	} else if err != nil {
+		return
+	} else {
+		timecheck = binary.BigEndian.Uint32(chkBytes)
+	}
+	var timestamp = t.Truncate(60 * time.Second).Unix() - int64(timecheck)
+	if timecheck == 0 || timestamp > math.MaxUint16 - 1 {
+		timecheck = uint32(t.Truncate(60 * time.Second).Unix()) - 60
+		chkBytes = make([]byte, 4)
+		binary.BigEndian.PutUint32(chkBytes, timecheck)
+		_, err = r.db.Put([]byte("_timecheck"), chkVers, chkBytes)
+		frame.SetTimestamp(0)
+		frame.SetTimecheck(timecheck)
+	} else {
+		frame.SetTimestamp(uint16(timestamp/60))
+	}
+
 	return
 }
 
@@ -70,8 +104,7 @@ func (r *frame) Since(boardId, generation, timecode uint16) (frames []*entity.Fr
 			continue
 		}
 		frame := &entity.Frame{
-			Timecode: binary.BigEndian.Uint16(keys[i]),
-			Data:     b,
+			Data: b,
 		}
 		frames = append(frames, frame)
 	}

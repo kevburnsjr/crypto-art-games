@@ -25,6 +25,7 @@ Game.Board = (function(g){
     this.paused = false;
     this.timecode = 0;
     this.drawnTimecode = 0;
+    this.timecheck = 0;
     var icanvas = document.createElement('canvas');
     var ictx = icanvas.getContext("2d");
     var img = new Image();
@@ -276,25 +277,24 @@ Game.Board = (function(g){
   };
 
   board.prototype.saveFrame = async function(f) {
-    var self = this;
-    var timecode = self.timecode;
     if (this.enabled) {
-      self.frames.push(f);
-      g.nav().updateScrubber(self.frames.length);
-    } else {
-      self.timecode++;
-    }
-    return this.store.setItem(timecode.toString(16).padStart(4, 0), f.toBytes()).then(() => {
-      if (!self.paused && self.enabled) {
-        self.timecode = self.frames.length;
+      if (f.timecheck > 0) {
+        this.timecheck = f.timecheck*1000;
       }
-    });
+      f.date = new Date(); //this.timecheck + f.timestamp * 60 * 1000);
+      this.frames[f.timecode] = f;
+      g.nav().updateScrubber(f.timecode+1);
+      if (!this.paused) {
+        this.timecode = f.timecode+1;
+      }
+    }
+    return this.store.setItem(f.timecode.toString(16).padStart(4, 0), f.toBytes());
   };
 
   board.prototype.scanFrames = async function(fn) {
     return this.store.iterate(function(v, k, i) {
       if (k.length == 4) {
-        fn(k, v)
+        fn(parseInt(k, 16), v)
       }
     });
   };
@@ -314,18 +314,19 @@ Game.Board = (function(g){
   board.prototype.enable = function(timecode, userIdx, bucket) {
     var self = this;
     if (this.enabled) {
-      g.nav().updateScrubber(timecode);
-      if (!this.paused) {
-        self.timecode = timecode;
-      }
       return;
     }
     return this.scanFrames(function(timecode, frameData) {
-      self.frames.push(Game.Frame.fromBytes(frameData));
+      const f = Game.Frame.fromBytes(frameData);
+      if (f.timecheck > 0) {
+        self.timecheck = f.timecheck*1000;
+      }
+      f.date = new Date(self.timecheck + f.timestamp * 60 * 1000);
+      self.frames[timecode] = f;
     }).then(() => {
-      self.setTimecode(timecode)
+      self.setTimecode(timecode);
     }).then(() => {
-      self.setUserIdx(userIdx)
+      self.setUserIdx(userIdx);
     }).then(() => {
       g.nav().updateScrubber(timecode);
       self.bucket = bucket;

@@ -34,8 +34,8 @@ type userFrameHistory struct {
 // Insert inserts a frame into the userFrame history
 func (r *userFrameHistory) Insert(frame *entity.Frame) (err error) {
 	key := make([]byte, 4)
-	binary.BigEndian.PutUint16(key[0:2], frame.GetUserID())
-	binary.BigEndian.PutUint16(key[2:4], frame.Timecode)
+	binary.BigEndian.PutUint16(key[0:2], frame.UserID())
+	binary.BigEndian.PutUint16(key[2:4], frame.Timecode())
 	val := make([]byte, 4)
 	binary.BigEndian.PutUint32(val, uint32(time.Now().Unix()))
 	_, err = r.db.Put(key, "", val)
