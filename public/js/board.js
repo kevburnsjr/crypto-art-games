@@ -329,7 +329,6 @@ Game.Board = (function(g){
       self.setUserIdx(userIdx);
     }).then(() => {
       g.nav().updateScrubber(timecode);
-      self.bucket = bucket;
       self.timecode = timecode;
       self.enabled = true;
     });

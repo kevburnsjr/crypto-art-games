@@ -6,6 +6,8 @@ Game.event = (function (t) {
     var events = {};
     var once = {};
     var key = Math.random();
+    var sq = [];
+    var processing = false;
     target.on = function(types, fn) {
       types = typeof types === "string" ? [types] : types;
       if(Array.isArray(types)) {
@@ -37,13 +39,32 @@ Game.event = (function (t) {
         if(k != key) {
           return;
         }
-        p.push(fn(arg));
+        const ret = fn(arg);
+        if (ret instanceof Promise) {
+          p.push(ret);
+        }
       });
       once[type] = [];
       return p;
     };
     target.all = function(type, arg) {
       return Promise.all(target.emit(type, arg));
+    };
+    target.serial = function(type, msg) {
+      sq.push([type, msg]);
+      target.process();
+    };
+    target.process = function(loop) {
+      if (processing && !loop) {
+        return;
+      }
+      if (sq.length == 0) {
+        processing = false;
+        return;
+      }
+      processing = true;
+      const e = sq.shift();
+      Promise.all(target.emit(e[0], e[1])).then(() => target.process(true));
     };
     return target;
   };

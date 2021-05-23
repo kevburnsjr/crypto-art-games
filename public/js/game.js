@@ -32,15 +32,17 @@ var Game = (function(g){
   var userIdx;
   var socket;
   var policy;
+  var store = {};
+  const stores = ["global", "board", "user", "ui"];
 
   var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, scrubberElem, modalElem) {
     bgElem = bgCanvasElem;
     bgCtx = bgElem.getContext('2d', { alpha: false });
     uiElem = uiCanvasElem;
     uiCtx = uiElem.getContext('2d', { alpha: true });
+    stores.map((name) => store[name] = localforage.createInstance({name: "project-64", storeName: name}));
     palette = new Game.Palette(paletteElem, autumn);
-
-    board = new Game.Board(Game, localforage.createInstance({name: "board"}),
+    board = new Game.Board(Game, store.board,
     "/palettes/autumn.gif", palette, 16, 16, function() {
       if(window.location.hash) {
         var parts = window.location.hash.substr(1).split(':');
@@ -54,7 +56,7 @@ var Game = (function(g){
         setColor(autumn[Math.floor(Math.random() * autumn.length)]);
       }
     });
-    nav = new Game.Nav(Game, leftNavElem, rightNavElem, scrubberElem, modalElem);
+    nav = new Game.Nav(Game, store.ui, leftNavElem, rightNavElem, scrubberElem, modalElem);
     reset();
     document.addEventListener('mousemove', mousemove);
     document.addEventListener('mousedown', mousedown);
@@ -150,7 +152,7 @@ var Game = (function(g){
         });
       } else {
         var e = JSON.parse(msg);
-        socket.emit(e.type, e);
+        return socket.emit(e.type, e);
       }
     });
     socket.on('sync-complete', function(e) {
@@ -161,21 +163,44 @@ var Game = (function(g){
       user.save();
     });
     socket.on('init', function(e) {
-      if (e.user) {
-        userID = e.user.userID;
-        policy = e.user.policy;
-      }
-      nav.init(e.user);
-      if (e.user && e.user.id != null) {
-        if(!policy) {
-          nav.showPolicyModal();
-        } else {
-          nav.showHeart(e.user.bucket);
+      return checkVersion(e.v).then(() => {
+        if (e.user) {
+          userID = e.user.userID;
+          policy = e.user.policy;
         }
-      }
+        nav.init(e.user);
+        if (e.user && e.user.id != null) {
+          if(!policy) {
+            nav.showPolicyModal();
+          } else {
+            nav.showHeart(e.user.bucket);
+          }
+        }
+      }).catch((e) => window.location.reload());
     });
     socket.start();
   };
+
+  var checkVersion = async function (v) {
+    return new Promise((res, rej) => {
+      store.global.getItem("_v").then((_v) => {
+        if (v === undefined || v === null) {
+          res();
+          return
+        }
+        if (_v === null) {
+          store.global.setItem("_v", v).then(res);
+        } else if (_v !== v) {
+          socket.stop();
+          Promise.all(stores.map((s) => store[s].clear()))
+            .then(() => store.global.setItem("_v", v))
+            .then(rej);
+        } else {
+          res();
+        }
+      });
+    });
+  }
 
   var reset = function() {
     setZoom();
@@ -562,7 +587,8 @@ var Game = (function(g){
     nav: () => nav,
     setTimecode: setTimecode,
     getSocket: getSocket,
-    board: () => board
+    board: () => board,
+    store: () => store
   };
 
 })({});

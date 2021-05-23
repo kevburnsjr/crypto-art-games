@@ -1,8 +1,6 @@
 Game.User = (function(g){
   "use strict";
 
-  var store = localforage.createInstance({name: "user"});
-
   var user = function(dto){
     this.id = dto.id;
     this.login = dto.login;
@@ -11,11 +9,11 @@ Game.User = (function(g){
   };
 
   user.prototype.save = async function() {
-    return store.setItem(this.id.toString(16).padStart(4, 0), JSON.stringify(this));
+    return g.store().user.setItem(this.id.toString(16).padStart(4, 0), JSON.stringify(this));
   };
 
   user.find = async function(userID) {
-    return store.getItem(userID.toString(16).padStart(4, 0)).then(data => {
+    return g.store().user.getItem(userID.toString(16).padStart(4, 0)).then(data => {
       return data == null ? null : new user(JSON.parse(data));
     });
   };

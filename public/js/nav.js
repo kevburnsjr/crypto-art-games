@@ -1,7 +1,7 @@
 Game.Nav = (function(g){
   "use strict";
 
-  var nav = function(game, left, right, scrubber, modal){
+  var nav = function(game, uiStore, left, right, scrubber, modal){
     this.initialized = false;
     this.game = game;
     this.timeagoInterval = null;
@@ -18,11 +18,11 @@ Game.Nav = (function(g){
         e.preventDefault();
         el.classList.toggle('active');
         document.getElementById(id).classList.toggle('active');
-        localforage.setItem("ui-"+id, el.classList.contains('active'));
+        uiStore.setItem("ui-"+id, el.classList.contains('active'));
       });
-      localforage.getItem("ui-"+id).then(active => {
+      uiStore.getItem("ui-"+id).then(active => {
         if (active == null) {
-          localforage.setItem("ui-"+id, true);
+          uiStore.setItem("ui-"+id, true);
           active = true
         }
         if (active) {

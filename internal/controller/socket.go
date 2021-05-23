@@ -134,6 +134,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"type":     "init",
 		"user":     user,
 		"timecode": first,
+		"v":        0,
 	}))
 
 	for _, frame := range frames {
