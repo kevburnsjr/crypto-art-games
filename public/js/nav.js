@@ -21,7 +21,6 @@ Game.Nav = (function(g){
       el.addEventListener("click", (e) => {
         e.preventDefault();
         el.classList.toggle('active');
-        console.log(document.getElementById(id).classList.contains('active'));
         document.getElementById(id).classList.toggle('active');
         uiStore.setItem("ui-"+id, el.classList.contains('active'));
       });
@@ -56,7 +55,6 @@ Game.Nav = (function(g){
     this.recentFrames.addEventListener('click', e => {
       e.preventDefault();
       if (e.target.nodeName == "CANVAS") {
-        console.log(e.target.dataset.i, e.target.dataset.j);
         game.board().setFocus(parseInt(e.target.dataset.i), parseInt(e.target.dataset.j));
       }
     });
@@ -116,7 +114,6 @@ Game.Nav = (function(g){
   };
 
   nav.prototype.toggleChat = function(){
-    console.log(this.toggles);
     this.toggles["chat"].click();
   };
 
