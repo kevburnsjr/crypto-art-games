@@ -81,12 +81,13 @@ func NewUserBucket() *UserBucket {
 
 func (b *UserBucket) AdjustLevel() {
 	var delta = time.Now().Sub(time.Unix(int64(b.Timestamp), 0))
-	var levelDelta = uint8(delta/time.Second) / (60 / b.Rate)
-	b.Level += levelDelta
-	if b.Level > b.Size*4 {
+	var levelDelta = int(delta/time.Second) / int(60 / b.Rate)
+	if levelDelta + int(b.Level) > int(b.Size * 4) {
 		b.Level = b.Size * 4
+	} else {
+		b.Level += uint8(levelDelta)
 	}
-	b.Timestamp += uint32(levelDelta * (60 / b.Rate))
+	b.Timestamp += uint32(levelDelta * int(60 / b.Rate))
 }
 
 func (b *UserBucket) Consume(n uint8) bool {
