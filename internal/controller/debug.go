@@ -23,6 +23,7 @@ func newDebug(
 	oauth *oauth,
 	hub sock.Hub,
 	rUser repo.User,
+	rReport repo.Report,
 	rUserBan repo.UserBan,
 	rFrame repo.Frame,
 	rTileLock repo.TileLock,
@@ -35,6 +36,7 @@ func newDebug(
 		oauth:                oauth,
 		hub:                  hub,
 		repoUser:             rUser,
+		repoReport:           rReport,
 		repoUserBan:          rUserBan,
 		repoFrame:            rFrame,
 		repoTileLock:         rTileLock,
@@ -49,6 +51,7 @@ type debug struct {
 	oauth                *oauth
 	hub                  sock.Hub
 	repoUser             repo.User
+	repoReport           repo.Report
 	repoUserBan          repo.UserBan
 	repoFrame            repo.Frame
 	repoTileLock         repo.TileLock
@@ -100,12 +103,14 @@ func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		User         *entity.User
 		Section      string
 		RepoUser     repo.User
+		RepoReport   repo.Report
 		RepoFrame    repo.Frame
 		RepoTileLock repo.TileLock
 	}{
 		user,
 		section,
 		c.repoUser,
+		c.repoReport,
 		c.repoFrame,
 		c.repoTileLock,
 	})

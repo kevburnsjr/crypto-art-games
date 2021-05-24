@@ -76,16 +76,16 @@ func (r *frame) timeCheck(frame *entity.Frame, t time.Time) (err error) {
 	} else {
 		timecheck = binary.BigEndian.Uint32(chkBytes)
 	}
-	var timestamp = t.Truncate(60 * time.Second).Unix() - int64(timecheck)
-	if timecheck == 0 || timestamp > math.MaxUint16 - 1 {
-		timecheck = uint32(t.Truncate(60 * time.Second).Unix()) - 60
+	var timestamp = t.Truncate(60*time.Second).Unix() - int64(timecheck)
+	if timecheck == 0 || timestamp > math.MaxUint16-1 {
+		timecheck = uint32(t.Truncate(60*time.Second).Unix()) - 60
 		chkBytes = make([]byte, 4)
 		binary.BigEndian.PutUint32(chkBytes, timecheck)
 		_, err = r.db.Put([]byte("_timecheck"), chkVers, chkBytes)
 		frame.SetTimestamp(0)
 		frame.SetTimecheck(timecheck)
 	} else {
-		frame.SetTimestamp(uint16(timestamp/60))
+		frame.SetTimestamp(uint16(timestamp / 60))
 	}
 
 	return

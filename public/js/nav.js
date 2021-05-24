@@ -9,7 +9,10 @@ Game.Nav = (function(g){
     this.scrubber = scrubber;
     this.modal = modal;
     this.showRecentAnimationFrame = null;
-    this.recentFrames = right.querySelector("#recent-frames");
+    this.recentFrames = document.getElementById("recent-frames");
+    this.reportEl = document.getElementById("report");
+    this.flashEl = document.getElementById("flash");
+    this.flashTimeout = null;
     this.heartTimeout = null;
     const toggleFunc = el => {
       var id = el.dataset.toggle;
@@ -54,6 +57,34 @@ Game.Nav = (function(g){
         game.board().setFocus(parseInt(e.target.dataset.i), parseInt(e.target.dataset.j));
       }
     });
+    var self = this;
+    this.recentFrames.addEventListener('mousedown', e => {
+      e.preventDefault();
+      if (e.target.nodeName == "A" && e.target.classList.contains("report")) {
+        self.reportEl.style.right = 0;
+        self.reportEl.style.top = e.target.getBoundingClientRect().bottom;
+        self.reportEl.dataset.timecode = e.target.dataset.timecode;
+        document.querySelectorAll('.reporting').forEach((el) => el.classList.remove('reporting'));
+        document.body.classList.add('reporting');
+        e.target.parentNode.parentNode.classList.add('reporting');
+      }
+    });
+    this.reportEl.addEventListener('mouseup', e => {
+      if (document.body.classList.contains('reporting')) {
+        game.getSocket().report(
+          e.target.parentNode.dataset.timecode,
+          e.target.dataset.reason
+        );
+      }
+    });
+    this.reportEl.addEventListener('mouseover', e => {
+      if (e.target.dataset.reason != undefined) {
+        self.reportEl.querySelector('.reason').innerHTML = e.target.title;
+      }
+    });
+    this.reportEl.addEventListener('mouseout', e => {
+      self.reportEl.querySelector('.reason').innerHTML = "";
+    });
     modal.querySelector("#modal-policy form").addEventListener('submit', e => {
       this.submitPolicyModal(e);
     });
@@ -67,7 +98,7 @@ Game.Nav = (function(g){
     this.scrubber.firstChild.style.width = this.scrubber.offsetWidth + timecode;
   };
 
-  nav.prototype.resetScrubber = function(timecode) {
+  nav.prototype.resetScrubber = function() {
     this.scrubber.scrollLeft = 0;
   };
 
@@ -89,14 +120,19 @@ Game.Nav = (function(g){
         users.forEach((u, i) => {
           tiles[i] = new Game.Tile(null, board.palette, 0, 0);
           tiles[i].renderFrameBuffer(frames[i]);
-          html += '<li><a>';
+          html += '<li>';
+          html += '<nav class="mod">';
+          html += '<a class="love" data-timecode="'+frames[i].timecode+'" title="Love"><span class="heart f4-4"/></a>';
+          html += '<a class="report" data-timecode="'+frames[i].timecode+'" title="Report"></a>';
+          html += '</nav>';
+          html += '<a class="user" title="'+sanitizeHTML(u.display_name)+'">';
           if (u === null) {
             html += frames[i].userid.toString(16).padStart(4,0);
           } else {
             if (u.profile_image_url.length > 0) {
               html += '<img src="'+u.profile_image_url+'"/>'
             }
-            html += u.display_name;
+            html += sanitizeHTML(u.display_name);
           }
           html += '</a>';
           html += '<span class="timeago" datetime="'+frames[i].date.toISOString()+'"/>';
@@ -137,6 +173,15 @@ Game.Nav = (function(g){
       e.preventDefault();
       return;
     }
+  };
+
+  nav.prototype.flash = function(type, msg, timeout) {
+    this.flashEl.classList.add('active');
+    this.flashEl.innerHTML = `<span class="${type}">${msg}</span>`;
+    window.clearTimeout(this.flashTimeout);
+    this.flashTimeout = setTimeout(() => {
+      this.flashEl.classList.remove('active');
+    }, timeout)
   };
 
   nav.prototype.handleEscape = function() {

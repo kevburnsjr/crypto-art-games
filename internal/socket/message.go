@@ -6,6 +6,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type Msg wsmessage
+
+func (m *Msg) Raw(channel_id string) wsmessage {
+	return wsmessage{m.msgType, channel_id, m.data}
+}
+
 type wsmessage struct {
 	msgType    int
 	channel_id string
@@ -33,4 +39,10 @@ func TextMsgFromBytes(channel_id string, b []byte) wsmessage {
 
 func BinaryMsgFromBytes(channel_id string, b []byte) wsmessage {
 	return wsmessage{websocket.BinaryMessage, channel_id, b}
+}
+
+func NewJsonRes(data interface{}) *Msg {
+	json_bytes, _ := json.Marshal(data)
+	msg := Msg(wsmessage{websocket.TextMessage, "", json_bytes})
+	return &msg
 }

@@ -11,6 +11,8 @@ Game.Board = (function(g){
     this.yTiles = yt;
     this.prevx = -1;
     this.prevy = -1;
+    this.undo = [];
+    this.redo = [];
     this.i = 0;
     this.j = 0;
     this.dirty = true;
@@ -198,7 +200,7 @@ Game.Board = (function(g){
 
   board.prototype.moveTile = function(dx, dy) {
     var self = this;
-    return (this.tile.active ? this.tile.commit() : Promise.resolve()).then(function(tile) {
+    return this.commitActive().then(function(tile) {
       self.setFocus(self.i + dx, self.j + dy);
     });
   };
@@ -217,8 +219,7 @@ Game.Board = (function(g){
         return false;
       });
     } else if (this.tile.active) {
-      return this.tile.commit().then(function(tile){
-        self.uiDirty = true;
+      return this.commitActive().then(function(){
         return false;
       });
     }
@@ -236,7 +237,40 @@ Game.Board = (function(g){
     this.tile.dirty = true;
   };
 
-  board.prototype.cancelActive = function() {
+  board.prototype.undo = async function() {
+    var self = this;
+    return new Promise((res, rej) => {
+      if (this.tile.active) {
+        rej();
+        return;
+      }
+      const timecode = self.undo.shift();
+      if (timecode === undefined) {
+        rej();
+        return;
+      }
+      const f = self.frames[timecode];
+      if (f === undefined) {
+        rej();
+        return;
+      }
+      game.socket().undoFrame(self, f).then((e) => {
+        f.deleted = true;
+        g.nav().updateScrubber(f.timecode);
+      });
+    });
+  };
+
+  board.prototype.commitActive = async function() {
+    var self = this;
+    return this.tile.active ? this.tile.commit().then((frame) => {
+      self.redo = [];
+      self.undo.push(frame.timecode);
+      self.uiDirty = true;
+    }) : Promise.resolve();
+  };
+
+  board.prototype.cancelActive = async function() {
     var self = this;
     return (this.tile.active ? this.tile.rollback() : Promise.resolve()).then(function(){
       self.uiDirty = true;

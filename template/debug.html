@@ -5,6 +5,7 @@
 <nav class="section">
     <a href="?section=auth">Auth</a>
     <a href="?section=user">User</a>
+    <a href="?section=report">Report</a>
     <a href="?section=frame">Frame</a>
     <a href="?section=tileLock">TileLock</a>
 </nav>
@@ -27,6 +28,11 @@ Val: 0x{{hex $v}}</pre>
             <pre>Key: 0x{{hex $k}}
 Val: {{pjson $v}}</pre>
         {{end}}
+    {{end}}
+{{end}}
+{{if eq .Section "report"}}
+    {{range $v := .RepoReport.All}}
+        <pre>{{pjson $v}}</pre>
     {{end}}
 {{end}}
 {{if eq .Section "frame"}}

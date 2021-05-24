@@ -21,6 +21,11 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		logger.Fatal(err)
 	}
 
+	rReport, err := repo.NewReport(cfg.Repo.Report)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	rUserBan, err := repo.NewUserBan(cfg.Repo.UserBan)
 	if err != nil {
 		logger.Fatal(err)
@@ -63,9 +68,9 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	oauth := newOAuth(cfg, logger, rUser)
 
-	socket := newSocket(logger, oauth, hub, rUser, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+	socket := newSocket(logger, oauth, hub, rUser, rReport, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
-	debug := newDebug(cfg, logger, oauth, hub, rUser, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+	debug := newDebug(cfg, logger, oauth, hub, rUser, rReport, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
 	router.Handle("/", index{oauth, cfg, logger, hub, rUser})
 	router.Handle("/login", newLogin(logger, oauth))

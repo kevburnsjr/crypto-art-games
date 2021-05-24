@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"log"
-	"math"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -77,16 +76,17 @@ type UserBucket struct {
 }
 
 func NewUserBucket() *UserBucket {
-	return &UserBucket{Size: 8, Level: 32, Rate: 2, Timestamp: uint32(time.Now().Unix())}
+	return &UserBucket{Size: 8, Level: 32, Rate: 4, Timestamp: uint32(time.Now().Unix())}
 }
 
 func (b *UserBucket) AdjustLevel() {
-	var t = uint32(time.Now().Unix())
-	b.Level = b.Level + uint8(math.Floor(float64((t-b.Timestamp)/(60/uint32(b.Rate)))))
+	var delta = time.Now().Sub(time.Unix(int64(b.Timestamp), 0))
+	var levelDelta = uint8(delta/time.Second) / (60 / b.Rate)
+	b.Level += levelDelta
 	if b.Level > b.Size*4 {
 		b.Level = b.Size * 4
 	}
-	b.Timestamp = t
+	b.Timestamp += uint32(levelDelta * (60 / b.Rate))
 }
 
 func (b *UserBucket) Consume(n uint8) bool {

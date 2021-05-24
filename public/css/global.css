@@ -46,14 +46,36 @@ aside#right nav { float: left; }
 aside#right { top: 3em; right: 0; }
 aside#right nav { float: right; }
 aside#right nav { float: right; }
-aside#right ul { padding: 0 0 0 3em; margin: 0; height: 39em; width: 10em; }
-aside#right ul li { list-style: none; margin: 0 0 1em 0; clear: left; height: 3em; width: 10em; }
-aside#right ul li.loading { margin: 0 2.5em 0 -2.5em; }
+aside#right hr { margin-bottom: 0.5em; }
+aside#right ul { padding: 0; margin: 0; height: 39em; width: 16em; }
+aside#right ul li { list-style: none; margin: 0 -1em; padding: 0.5em 1em; clear: left; height: 3em; width: 16em; position: relative; }
+aside#right ul li.loading { margin: 0; }
 aside#right ul li:last-child { margin-bottom: 0; }
+aside#right ul li:hover { background: rgba(0,0,0,0.2); }
 aside#right ul li img { width: 1.5em; height: 1.5em; float: left; margin-right: 0.5em; }
 aside#right ul li span.timeago { display: inline-block; padding: 0 0.5em; font-size: 0.9em; color: rgba(255,255,255,0.5)}
-aside#right ul li canvas { width: 3em; height: 3em; float: left; margin-left: -3em; background: rgba(255,255,255,0.1); cursor: pointer; }
-aside#right ul li a { display: block; padding: 0 0.5em; cursor: pointer; font-size: 0.9em; line-height: 1.5em; height: 1.5em; overflow: hidden; }
+aside#right ul li canvas { width: 3em; height: 3em; float: left; background: rgba(255,255,255,0.1); cursor: pointer; }
+aside#right ul li a.user { display: block; padding: 0 0.5em; cursor: pointer; font-size: 0.9em; line-height: 1.5em; height: 1.5em; overflow: hidden; white-space: no-wrap; }
+aside#right ul li nav.mod { display: none; position: absolute; bottom: 0; right: 0;  }
+aside#right ul li:hover nav.mod { display: block; }
+aside#right ul li nav.mod a { width: 16px; height: 16px; float: left; overflow: hidden; margin: 0; opacity: 0.2; }
+aside#right ul li nav.mod a.report { background: no-repeat center center url(/i/report.png); }
+aside#right ul li nav.mod a:hover { opacity: 0.8; }
+.reporting aside#right ul li.reporting { display: block; background: rgba(0,0,0,0.2); }
+.reporting aside#right ul li.reporting nav.mod { display: block; }
+.reporting aside#right ul li.reporting nav.mod a.report { opacity: 0.7; }
+
+#report { display: none; position: absolute; background: rgba(64,64,64,0.9); z-index: 1002; right: 0; width: 18em; }
+#report a { padding: 0 1em; display: block; line-height: 2em; width: 4em; float: right; clear: right; }
+#report a:hover { background: rgba(32,32,32,0.8); text-decoration: none; }
+#report .reason { float: left; width: 10em; height: 7em; padding: 0.5em 1em; background: rgba(32,32,32,0.8); color: rgba(255,255,255,0.7); }
+.reporting #report { display: block; }
+
+#flash { position: absolute; top: 0; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.9); z-index: 1000; display: none; padding-top: 2em; }
+#flash.active { display: block; }
+#flash span { display: inline-block; padding: 0.5em 1.5em; line-height: 1.5em; font-size: 1.5em; border-radius: 1.25em; box-shadow: 0 5px 5px rgba(0,0,0,0.1); text-shadow: 0 0 2px rgb(0 0 0 / 70%); }
+#flash span.success { background: #080; }
+#flash span.error { background: #a00; }
 
 nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
 

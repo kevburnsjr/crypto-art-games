@@ -20,6 +20,7 @@ func newSocket(
 	oauth *oauth,
 	hub sock.Hub,
 	rUser repo.User,
+	rReport repo.Report,
 	rUserBan repo.UserBan,
 	rFrame repo.Frame,
 	rTileLock repo.TileLock,
@@ -31,6 +32,7 @@ func newSocket(
 		oauth:                oauth,
 		hub:                  hub,
 		repoUser:             rUser,
+		repoReport:           rReport,
 		repoUserBan:          rUserBan,
 		repoFrame:            rFrame,
 		repoTileLock:         rTileLock,
@@ -44,6 +46,7 @@ type socket struct {
 	oauth                *oauth
 	hub                  sock.Hub
 	repoUser             repo.User
+	repoReport           repo.Report
 	repoUserBan          repo.UserBan
 	repoFrame            repo.Frame
 	repoTileLock         repo.TileLock
@@ -166,40 +169,43 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageHandler {
-	return func(t int, msg []byte) error {
+	return func(t int, msg []byte) (res *sock.Msg, err error) {
 		var userID = user.UserID
-		var err error
 		if user == nil {
-			return fmt.Errorf("User authentication required")
+			err = fmt.Errorf("User authentication required")
+			return
 		}
 		if !user.Policy {
-			return fmt.Errorf("Must accept terms of service before participating")
+			err = fmt.Errorf("Must accept terms of service before participating")
+			return
 		}
 		if user.Timeout.After(time.Now()) {
-			return fmt.Errorf("User timed out")
+			err = fmt.Errorf("User timed out")
+			return
 		}
 		if user.Banned {
-			return fmt.Errorf("User banned")
+			err = fmt.Errorf("User banned")
+			return
 		}
 
 		// Handle all operations and persist frames before broadcast
 		if t == websocket.TextMessage {
 			var m = map[string]interface{}{}
-			err := json.Unmarshal(msg, &m)
+			err = json.Unmarshal(msg, &m)
 			if err != nil {
-				return err
+				return
 			}
 			if _, ok := m["type"]; !ok {
-				return err
+				return
 			}
 			switch m["type"].(string) {
 			case "tile-lock":
 				var tileID = uint16(m["tileID"].(float64))
 				if err = c.repoUser.Consume(user); err != nil {
-					return err
+					return
 				}
-				if err := c.repoTileLock.Acquire(userID, tileID, time.Now()); err != nil {
-					return err
+				if err = c.repoTileLock.Acquire(userID, tileID, time.Now()); err != nil {
+					return
 				}
 				c.hub.Broadcast(sock.JsonMessagePure(boardChannel, map[string]interface{}{
 					"type":   "tile-locked",
@@ -210,10 +216,10 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 			case "tile-lock-release":
 				var tileID = uint16(m["tileID"].(float64))
 				if err = c.repoUser.Credit(user); err != nil {
-					return err
+					return
 				}
-				if err := c.repoTileLock.Release(userID, tileID, time.Now()); err != nil {
-					return err
+				if err = c.repoTileLock.Release(userID, tileID, time.Now()); err != nil {
+					return
 				}
 				c.hub.Broadcast(sock.JsonMessagePure(boardChannel, map[string]interface{}{
 					"type":   "tile-lock-released",
@@ -221,10 +227,6 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 					"userID": userID,
 					"bucket": user.Bucket,
 				}))
-			case "report-create":
-				// Insert report
-			case "report-clear":
-				// Insert report
 			case "frame-undo":
 				// Insert frame undo
 				// Mark frame hidden
@@ -233,6 +235,22 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 				// Insert frame redo
 				// Mark frame unhidden
 				// Broadcast frame update
+			case "report":
+				var timecode = uint16(m["timecode"].(float64))
+				var reason = m["reason"].(string)
+				if err = c.repoReport.Insert(userID, timecode, reason, time.Now()); err != nil {
+					return
+				}
+				res = sock.NewJsonRes(map[string]interface{}{
+					"type":     "report",
+					"timecode": timecode,
+					"userID":   userID,
+					"reason":   reason,
+				})
+				c.hub.Broadcast(res.Raw("reports"))
+				return
+			case "report-clear":
+				// Insert report
 			case "user-ban":
 				// Authorize user
 				// Ban user on twitch
@@ -245,7 +263,7 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 				// register connection on new board channel(s?)
 				// Could avoid this by just breaking the socket and reconnecting.
 			}
-			c.hub.Broadcast(sock.TextMsgFromBytes(boardChannel, msg))
+			// c.hub.Broadcast(sock.TextMsgFromBytes(boardChannel, msg))
 		} else if t == websocket.BinaryMessage {
 			frame := &entity.Frame{
 				Data: msg,
@@ -253,19 +271,19 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 			frame.SetUserID(userID)
 			if err = c.repoTileLock.Release(userID, frame.TileID(), time.Now()); err != nil {
 				// User does not have lock
-				return err
+				return
 			}
 			_, err = c.repoFrame.Insert(frame, time.Now())
 			if err != nil {
-				return err
+				return
 			}
 			err = c.repoTileHistory.Insert(frame)
 			if err != nil {
-				return err
+				return
 			}
 			err = c.repoUserFrameHistory.Insert(frame)
 			if err != nil {
-				return err
+				return
 			}
 			c.hub.Broadcast(sock.JsonMessagePure(boardChannel, map[string]interface{}{
 				"type":   "tile-lock-release",
@@ -276,6 +294,6 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 		} else {
 			c.log.Debugf("Uknown: %d, %s", t, string(msg))
 		}
-		return nil
+		return
 	}
 }

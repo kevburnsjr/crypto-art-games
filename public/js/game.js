@@ -87,17 +87,34 @@ var Game = (function(g){
         return new Promise((resolve, reject) => {
           f.getHash().then(function(hash) {
             socket.awaiting = hash;
-            socket.on('complete', function(h) {
-              if (h == hash) {
-                socket.awaiting = null;
-                nav.resetScrubber();
-                resolve();
-              }
+            socket.on('complete', function(f) {
+              f.getHash().then((h) => {
+                if (h == hash) {
+                  socket.awaiting = null;
+                  nav.resetScrubber();
+                  resolve(f);
+                }
+              });
             });
             socket.send(f.data);
           });
         }).finally(() => {
           socket.off('complete');
+        });
+      },
+      undoFrame: function(board, f) {
+        var fn;
+        return new Promise((resolve, reject) => {
+          socket.awaiting = f.timecode;
+          fn = function(e) {
+            if (e.timecode == socket.awaiting) {
+              resolve(e);
+            }
+          };
+          socket.on('frame-undone', fn);
+          socket.send(JSON.stringify({type:'frame-undo', boardId: board.id, timecode: f.timecode}));
+        }).finally(() => {
+          socket.off('frame-undone');
         });
       },
       lockTile: function(t) {
@@ -109,6 +126,7 @@ var Game = (function(g){
           }
           socket.on(['tile-locked', 'err'], function(e) {
             if (e.type == 'err') {
+              nav.flash("error", e.msg, 1500);
               reject(e.msg);
             } else if (e.userID == userID){
               nav.showHeart(e.bucket);
@@ -126,6 +144,7 @@ var Game = (function(g){
         return new Promise((resolve, reject) => {
           socket.on(['tile-lock-released', 'err'], function(e) {
             if (e.type == 'err') {
+              nav.flash("error", e.msg, 1500);
               nav.resetScrubber();
               reject(e.msg);
             } else if (e.userID == userID) {
@@ -140,14 +159,32 @@ var Game = (function(g){
           socket.off('err');
           return msg;
         });
-      }
+      },
+      report: async function(timecode, reason) {
+        var f = board.frames[timecode];
+        const user = await Game.User.find(f.userid);
+        return new Promise((resolve, reject) => {
+          if (userID == null) {
+            nav.showLoginModal();
+            reject();
+            return
+          }
+          socket.once(['report'], function(e) {
+            if (e.userID == userID){
+              nav.flash("success", `${user.display_name} reported for ${reason}`, 1500);
+              resolve();
+            }
+          });
+          socket.send(JSON.stringify({type:'report', timecode: parseInt(timecode), reason: reason}));
+        });
+      },
     });
     socket.on('message', function(msg) {
       if (msg instanceof ArrayBuffer) {
         const f = Game.Frame.fromBytes(msg);
         return board.saveFrame(f).then(() => {
           if (socket.awaiting) {
-            f.getHash().then(h => h == socket.awaiting ? socket.emit('complete', h) : null);
+            socket.emit('complete', f);
           }
         });
       } else {
@@ -318,6 +355,7 @@ var Game = (function(g){
 
   // mouseup
   var mouseup = function(e){
+    document.body.classList.remove("reporting");
     if (worldnav) {
       document.getElementById("world-nav").classList.remove("open");
       worldnav = false;
@@ -494,7 +532,7 @@ var Game = (function(g){
 
   var visibilitychange = function(e){
     document.getElementById("world-nav").classList.remove("open");
-    document.body.classList.remove("color-picking", "erasing", "editing");
+    document.body.classList.remove("color-picking", "erasing", "editing", "reporting");
     keyDownMap = {};
     board.cancelActive();
   };

@@ -139,7 +139,7 @@ func (r *user) Consume(user *entity.User) (err error) {
 		user.Bucket = entity.NewUserBucket()
 	}
 	if !user.Bucket.Consume(1) {
-		return fmt.Errorf("Bucket empty")
+		return fmt.Errorf("Insufficient tile credits")
 	}
 	idBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(idBytes, user.UserID)
