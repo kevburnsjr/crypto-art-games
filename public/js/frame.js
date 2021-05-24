@@ -31,11 +31,11 @@ Game.Frame = (function(g){
     var w = tile.buffer.length;
     for (var i in tile.buffer) {
       for (var j in tile.buffer[i]) {
-        if (tile.buffer[i][j] != "") {
+        if (tile.buffer[i][j] != null) {
           this.mask.set(i*w + parseInt(j), 1);
-          colorNum = tile.palette.getIdx(tile.buffer[i][j]);
+          colorNum = tile.buffer[i][j];
           this.colors.push(colorNum);
-          this.prev.push(tile.palette.getIdx(tile.px[i][j]));
+          this.prev.push(tile.px[i][j]);
           if (!this.colorsUniq[colorNum]) {
             this.colorCount++;
           }

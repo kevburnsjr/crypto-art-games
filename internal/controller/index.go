@@ -25,7 +25,11 @@ var indexTpl = template.Must(template.ParseFiles("./template/index.html"))
 func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stdHeaders(w)
 	b := bytes.NewBuffer(nil)
-	err := indexTpl.Execute(b, nil)
+	err := indexTpl.Execute(b, struct {
+		HOST string
+	}{
+		c.cfg.Api.Host,
+	})
 	if check(err, w, c.log) {
 		return
 	}
