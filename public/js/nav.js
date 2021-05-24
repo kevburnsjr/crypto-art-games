@@ -110,7 +110,22 @@ Game.Nav = (function(g){
     window.cancelAnimationFrame(this.showRecentAnimationFrame);
     this.showRecentAnimationFrame = window.requestAnimationFrame(() => {
       var userIds = [];
-      const frames = board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 0)).reverse();
+      var frames = [];
+      if (board.focused) {
+        for (var i = board.tile.frames.length-1; i >= 0; i--) {
+          if (board.tile.frames[i].timecode > board.timecode) {
+            continue;
+          }
+          frames.push(board.tile.frames[i]);
+          if (frames.length > 10) {
+            break;
+          }
+        }
+        this.recentFrames.querySelector('h4').innerHTML = "Recent Tile Edits";
+      } else {
+        frames = board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 0)).reverse();
+        this.recentFrames.querySelector('h4').innerHTML = "Recent Board Edits";
+      }
       frames.forEach((f, i) => {
         userIds.push(f.userid);
       });

@@ -42,19 +42,21 @@ var Game = (function(g){
     uiCtx = uiElem.getContext('2d', { alpha: true });
     stores.map((name) => store[name] = localforage.createInstance({name: "project-64", storeName: name}));
     palette = new Game.Palette(paletteElem, autumn);
-    board = new Game.Board(Game, store.board,
-    "/palettes/autumn.gif", palette, 16, 16, function() {
-      if(window.location.hash) {
-        var parts = window.location.hash.substr(1).split(':');
-        zoom = parseInt(parts[1]);
-        board.setTile(parseInt(parts[3]));
-        if (parts[2] != "1") {
+    await new Promise((resolve, reject) => {
+      board = new Game.Board(Game, store.board, "/palettes/autumn.gif", palette, 16, 16, function() {
+        if(window.location.hash) {
+          var parts = window.location.hash.substr(1).split(':');
+          zoom = parseInt(parts[1]);
+          board.setTile(parseInt(parts[3]));
+          if (parts[2] != "1") {
             board.cancelFocus();
+          }
+          setColor(parts[0]);
+        } else {
+          setColor(autumn[Math.floor(Math.random() * autumn.length)]);
         }
-        setColor(parts[0]);
-      } else {
-        setColor(autumn[Math.floor(Math.random() * autumn.length)]);
-      }
+        resolve();
+      });
     });
     nav = new Game.Nav(Game, store.ui, leftNavElem, rightNavElem, scrubberElem, modalElem);
     reset();

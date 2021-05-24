@@ -20,7 +20,7 @@ Game.Board = (function(g){
     this.palette = palette;
     this.tiles = [];
     this.frames = [];
-    this.newFrames = [];
+    this.tileFrameIndex = [];
     this.tile = null;
     this.edits = [];
     this.enabled = false;
@@ -286,7 +286,10 @@ Game.Board = (function(g){
     this.tile = this.tiles[i][j];
     this.dirty = true;
     this.uiDirty = true;
-    this.focused = true
+    this.focused = true;
+    if (this.game.nav() != undefined) {
+      this.game.nav().showRecent(this);
+    }
   };
 
   board.prototype.cancelFocus = function() {
@@ -296,6 +299,9 @@ Game.Board = (function(g){
     this.focused = false;
     this.dirty = true;
     this.uiDirty = true;
+    if (this.game.nav() != undefined) {
+      this.game.nav().showRecent(this);
+    }
   };
 
   board.prototype.getTimecode = async function(tc) {
@@ -315,8 +321,9 @@ Game.Board = (function(g){
       if (f.timecheck > 0) {
         this.timecheck = f.timecheck*1000;
       }
-      f.date = new Date(); //this.timecheck + f.timestamp * 60 * 1000);
+      f.date = new Date();
       this.frames[f.timecode] = f;
+      this.tiles[f.ti][f.tj].frames.push(f);
       g.nav().updateScrubber(f.timecode+1);
       if (!this.paused) {
         this.timecode = f.timecode+1;
@@ -357,6 +364,7 @@ Game.Board = (function(g){
       }
       f.date = new Date(self.timecheck + f.timestamp * 60 * 1000);
       self.frames[timecode] = f;
+      self.tiles[f.ti][f.tj].frames.push(f);
     }).then(() => {
       self.setTimecode(timecode);
     }).then(() => {

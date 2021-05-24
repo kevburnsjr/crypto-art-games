@@ -14,6 +14,7 @@ Game.Tile = (function(g){
     this.cursi = -1;
     this.cursj = -1;
     this.scale = 1;
+    this.frames = [];
     this.px = [];
     this.maxScale = maxScale;
     this.canvas = document.createElement('canvas');
