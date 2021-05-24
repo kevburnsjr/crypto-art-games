@@ -35,8 +35,8 @@ Game.Tile = (function(g){
       this.buffer[i] = [];
       for (var j = 0; j < this.h; j++) {
         var n = j*this.w*4 + i*4;
-        this.px[i][j] = imgData ? "#" + this.palette.nearestColor(imgData.data[n], imgData.data[n+1], imgData.data[n+2]) : "rgba(0,0,0,0)";
-        this.buffer[i][j] = "";
+        this.px[i][j] = imgData ? this.palette.getIdx(this.palette.nearestColor(imgData.data[n], imgData.data[n+1], imgData.data[n+2])) : null;
+        this.buffer[i][j] = null;
       }
     }
     this.dirty = true;
@@ -63,10 +63,10 @@ Game.Tile = (function(g){
     if (this.dirty) {
       for (this.v.i = 0; this.v.i < this.w; this.v.i++) {
         for (this.v.j = 0; this.v.j < this.h; this.v.j++) {
-          if (this.buffer[this.v.i][this.v.j] != "") {
-            this.ctx.fillStyle = this.buffer[this.v.i][this.v.j];
+          if (this.buffer[this.v.i][this.v.j] != null) {
+            this.ctx.fillStyle = "#" + this.palette.colors[this.buffer[this.v.i][this.v.j]];
           } else {
-            this.ctx.fillStyle = this.px[this.v.i][this.v.j];
+            this.ctx.fillStyle = "#" + this.palette.colors[this.px[this.v.i][this.v.j]];
           }
           this.ctx.fillRect(this.v.i * this.maxScale, this.v.j * this.maxScale, this.maxScale, this.maxScale);
         }
@@ -96,9 +96,7 @@ Game.Tile = (function(g){
     return Game.getSocket().unlockTile(this).then(() => {
       for (var i in self.buffer) {
         for (var j in self.buffer[i]) {
-          if (self.buffer[i][j] != "") {
-            self.buffer[i][j] = "";
-          }
+          self.buffer[i][j] = null;
         }
       }
       self.active = false;
@@ -120,9 +118,7 @@ Game.Tile = (function(g){
   tile.prototype.clearBuffer = function() {
     for (var i in this.buffer) {
       for (var j in this.buffer[i]) {
-        if (this.buffer[i][j] != "") {
-          this.buffer[i][j] = "";
-        }
+        this.buffer[i][j] = null;
       }
     }
     this.bufferCount = 0;
@@ -130,17 +126,21 @@ Game.Tile = (function(g){
 
   tile.prototype.renderFrameBuffer = function(f) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width);
-    const a = f.mask.toArray();
-    for (var n in a) {
-      const i = Math.floor(a[n]/16);
-      const j = a[n]%16;
-      this.ctx.fillStyle = "#" + this.palette.colors[f.colors[n]];
-      this.ctx.fillRect(i * this.maxScale, j * this.maxScale, this.maxScale, this.maxScale);
+    var n = 0;
+    var i = 0;
+    for (let b of f.mask) {
+      if (b == 1) {
+        this.ctx.fillStyle = "#" + this.palette.colors[f.colors[i]];
+        this.ctx.fillRect(Math.floor(n/16) * this.maxScale, n%16 * this.maxScale, this.maxScale, this.maxScale);
+        i++;
+      }
+      n++;
     }
   };
 
   tile.prototype.get = function(i, j) {
-    return this.buffer[i][j] || this.px[i][j]
+    const ci = this.buffer[i][j] || this.px[i][j];
+    return this.palette.colors[ci];
   };
 
   tile.prototype.getXY = function(x, y, c) {
@@ -150,30 +150,37 @@ Game.Tile = (function(g){
   };
 
   tile.prototype.set = function(i, j, c) {
-    if (this.px[i][j] == c) {
+    const ci = this.palette.getIdx(c);
+    if (this.px[i][j] == ci) {
       this.clear(i, j);
       return;
     }
-    if (this.buffer[i][j] == "") {
+    if (this.buffer[i][j] == null) {
       if (this.bufferCount > editLimit) {
         return;
       }
       this.bufferCount++;
     }
-    this.buffer[i][j] = c;
+    this.buffer[i][j] = ci;
     this.dirty = true;
   };
 
-  tile.prototype.applyFrame = function(f) {
+  tile.prototype.applyFrame = function(f, refresh) {
     if (!f) {
       return
     }
-    const a = f.mask.toArray();
-    for (var n in a) {
-      const i = Math.floor(a[n]/16);
-      const j = a[n]%16;
-      f.prev.push(this.palette.getIdx(this.px[i][j]));
-      this.px[i][j] = "#" + this.palette.colors[f.colors[n]];
+    var n = 0;
+    var i = 0;
+    var push = f.prev.length == 0 || refresh;
+    for (let b of f.mask) {
+      if (b == 1) {
+        if (push) {
+          f.prev.push(this.px[Math.floor(n/16)][n%16]);
+        }
+        this.px[Math.floor(n/16)][n%16] = f.colors[i];
+        i++;
+      }
+      n++;
     }
     this.dirty = true;
   };
@@ -182,13 +189,14 @@ Game.Tile = (function(g){
     if (!f) {
       return
     }
-    var i;
-    var j;
-    const a = f.mask.toArray();
-    for (var n in a) {
-      i = Math.floor(a[n]/16);
-      j = a[n]%16;
-      this.px[i][j] = "#" + this.palette.colors[f.prev[n]];
+    var n = 0;
+    var i = 0;
+    for (let b of f.mask) {
+      if (b == 1) {
+        this.px[Math.floor(n/16)][n%16] = f.prev[i];
+        i++;
+      }
+      n++;
     }
     this.dirty = true;
   };
@@ -215,10 +223,10 @@ Game.Tile = (function(g){
   };
 
   tile.prototype.clear = function(i, j) {
-    if (this.buffer[i][j] == "") {
+    if (this.buffer[i][j] == null) {
       return;
     }
-    this.buffer[i][j] = "";
+    this.buffer[i][j] = null;
     this.bufferCount--;
     this.dirty = true;
   };

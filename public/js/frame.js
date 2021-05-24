@@ -6,6 +6,7 @@ Game.Frame = (function(g){
   const headerflag_runLengthEncodedMask = 46; // 62;
   const headerflag_runLengthEncodedColorTable = 47; // 63;
 
+
   var frame = function(tile){
     this.mask = new BitSet();
     this.prev = [];
@@ -42,10 +43,13 @@ Game.Frame = (function(g){
         }
       }
     }
-    this.mask = this.mask.slice(0,255);
+    this.mask = this.mask.slice(0, 255);
   };
 
-  // Touchy
+  // Dictionary encoding (color indeces)
+  // Bit mask encoding   (alpha channel)
+  // Run length encoding (mask and colors)
+  // Offset encoding     (timestamp / timecheck)
   frame.prototype.toBytes = function() {
     if (this.data) {
       return this.data

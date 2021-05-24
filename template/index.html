@@ -1,14 +1,14 @@
 <html><head>
 <link href="/css/font.css" rel="stylesheet"></link>
 <link href="/css/global.css" rel="stylesheet"></link>
-<title>Project 64 - Crypto Art Games</title>
+<title>Game 1 - Crypto Art Games</title>
 </head><body>
 <nav class="user">
     <div class="healthbar ltr" id="healthbar"></div>
 </nav>
 <nav class="world" id="world-nav">
     <a href="/" id="logo" draggable="false">
-        <span>Project 64</span>
+        <span>Game 1</span>
         <img src="/i/logo.png" draggable="false"/>
     </a>
     <div class="levels">
@@ -84,12 +84,25 @@
     <a data-reason="nudes" title="Nudity, gore, vulgar language">Lude</a>
     <a data-reason="hate" title="Hate symbols, racial slurs">Hateful</a>
 </div>
+<template id="recent-frames-li">
+<li data-timecode="">
+    <nav class="mod">
+        <a class="love" title="Love"><span class="heart f4-4"/></a>
+        <a class="report" title="Report"></a>
+    </nav>
+    <a class="user" title="">
+        <img src=""/>
+        <span/>
+    </a>
+    <span class="timeago" datetime=""/>
+</li>
+</template>
 <div id="scrubber"><div></div></div>
 <div id="flash"></div>
-<canvas id="palette"></canvas>
+<canvas id="palette" width="0" height="0"></canvas>
 <nav class="brush-state" id="brush-state"></nav>
-<canvas id="bgcanvas" class="full"></canvas>
-<canvas id="uicanvas" class="full"></canvas>
+<canvas id="bgcanvas" class="full" width="0" height="0"></canvas>
+<canvas id="uicanvas" class="full" width="0" height="0"></canvas>
 <script src="/js/lib/helpers.js"></script>
 <script src="/js/lib/timeago.min.js"></script>
 <script src="/js/lib/jsuri-1.1.1.js"></script>

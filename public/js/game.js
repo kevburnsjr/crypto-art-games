@@ -246,6 +246,7 @@ var Game = (function(g){
     w = window.innerWidth;
     h = window.innerHeight;
     draw();
+    bgElem.style.display = "block";
   };
 
   var draw = function() {

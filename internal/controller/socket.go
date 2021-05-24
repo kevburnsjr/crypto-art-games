@@ -68,22 +68,25 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIdx := r.FormValue("userIdx")
-	userBanIdx := r.FormValue("userBanIdx")
-	boardId := r.FormValue("boardId")
-	generation := r.FormValue("generation")
-	timecode := r.FormValue("timecode")
-
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
 		return
 	}
 
-	userIdxInt, _ := strconv.Atoi(userIdx)
-	userBanIdxInt, _ := strconv.Atoi(userBanIdx)
+	var (
+		boardId    = r.FormValue("boardId")
+		generation = r.FormValue("generation")
+		// palette    = r.FormValue("palette")
+		timecode   = r.FormValue("timecode")
+		userBanIdx = r.FormValue("userBanIdx")
+		userIdx    = r.FormValue("userIdx")
+	)
+
 	boardIdInt, _ := strconv.Atoi(boardId)
 	generationInt, _ := strconv.Atoi(generation)
 	timecodeInt, _ := strconv.Atoi(timecode)
+	userBanIdxInt, _ := strconv.Atoi(userBanIdx)
+	userIdxInt, _ := strconv.Atoi(userIdx)
 
 	if user != nil {
 		var found bool

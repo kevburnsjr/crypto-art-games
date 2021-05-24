@@ -1,6 +1,6 @@
 html { font-size: 100%; }
 body { margin: 0; font-size: 13px; line-height: 1.231; font-family: open sans, arial, sans-serif; color: rgba(0,0,0,0.75); position: relative; }
-html, body { min-height: 100vh; overflow: hidden; background: #191919; }
+html, body { min-height: 100vh; overflow: hidden; background: #666; }
 button { font-weight: bold; background: #000; border-radius: 0; border: none; text-align: center; line-height: 2em; }
 a { text-decoration: none; color: rgba(255,255,255,0.7); cursor: pointer; }
 a:hover { text-decoration: underline; color: rgba(255,255,255,0.9); }
@@ -16,7 +16,7 @@ a {
 ::-webkit-scrollbar-track { background: rgba(80,80,80,0.95); border-radius: 1em; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.5); border-radius: 1em; }
 
-#palette { position: absolute; display: none; z-index: 200; box-shadow: 0px 0px 10px rgba(0,0,0,0.5); }
+#palette { position: absolute; display: none; z-index: 200; box-shadow: 0px 0px 10px rgba(0,0,0,0.5); background: #666; }
 
 nav.world { position: absolute; top: 0; left: 0; z-index: 100; }
 nav.world a { float: left; background: #ccc; }
@@ -106,7 +106,7 @@ nav.user a span { float: left; line-height: 3em; padding: 0em 1.5em; }
 nav.user a img { height: 3em; margin: 0 0 0 -1.5em; float: left; border-radius: 50%; padding: 0; }
 
 canvas.full {
-    position: absolute; top: 0; left: 0;
+    position: absolute;
     z-index: 1;
     image-rendering: -moz-crisp-edges;
     image-rendering: -webkit-crisp-edges;
@@ -114,7 +114,7 @@ canvas.full {
     image-rendering: crisp-edges;
 }
 body.editing canvas.full { cursor: crosshair; }
-canvas#bgcanvas { background: #666; }
+canvas#bgcanvas { background: #666; display: none; }
 canvas#uicanvas { z-index: 2; }
 
 body.color-picking canvas.full, #palette { cursor: url(/i/cursor-eyedropper-light.png) 0 10, cell; }

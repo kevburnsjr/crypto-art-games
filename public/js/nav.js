@@ -14,6 +14,7 @@ Game.Nav = (function(g){
     this.flashEl = document.getElementById("flash");
     this.flashTimeout = null;
     this.heartTimeout = null;
+    this.recentTiles = [];
     const toggleFunc = el => {
       var id = el.dataset.toggle;
       this.toggles[id] = el;
@@ -63,12 +64,18 @@ Game.Nav = (function(g){
       if (e.target.nodeName == "A" && e.target.classList.contains("report")) {
         self.reportEl.style.right = 0;
         self.reportEl.style.top = e.target.getBoundingClientRect().bottom;
-        self.reportEl.dataset.timecode = e.target.dataset.timecode;
+        self.reportEl.dataset.timecode = e.target.parentNode.parentNode.dataset.timecode;
         document.querySelectorAll('.reporting').forEach((el) => el.classList.remove('reporting'));
         document.body.classList.add('reporting');
         e.target.parentNode.parentNode.classList.add('reporting');
       }
     });
+    this.recentFramesTimeago = function() {
+      self.recentFrames.querySelectorAll('.timeago').forEach((el) => {
+        el.innerHTML = timeago.format(el.getAttribute("datetime"));
+      });
+    };
+    setInterval(this.recentFramesTimeago, 5000);
     this.reportEl.addEventListener('mouseup', e => {
       if (document.body.classList.contains('reporting')) {
         game.getSocket().report(
@@ -108,62 +115,68 @@ Game.Nav = (function(g){
 
   nav.prototype.showRecent = function(board) {
     window.cancelAnimationFrame(this.showRecentAnimationFrame);
-    this.showRecentAnimationFrame = window.requestAnimationFrame(() => {
-      var userIds = [];
-      var frames = [];
-      if (board.focused) {
-        for (var i = board.tile.frames.length-1; i >= 0; i--) {
-          if (board.tile.frames[i].timecode > board.timecode) {
-            continue;
-          }
-          frames.push(board.tile.frames[i]);
-          if (frames.length > 10) {
-            break;
-          }
+    this.showRecentAnimationFrame = window.requestAnimationFrame(() => this.doShowRecent(board));
+  };
+
+  nav.prototype.doShowRecent = function(board) {
+    var userIds = [];
+    var frames = [];
+    if (board.focused) {
+      for (var i = board.tile.frames.length-1; i >= 0; i--) {
+        if (board.tile.frames[i].timecode > board.timecode) {
+          continue;
         }
-        this.recentFrames.querySelector('h4').innerHTML = "Recent Tile Edits";
-      } else {
-        frames = board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 0)).reverse();
-        this.recentFrames.querySelector('h4').innerHTML = "Recent Board Edits";
+        frames.push(board.tile.frames[i]);
+        if (frames.length > 10) {
+          break;
+        }
       }
-      frames.forEach((f, i) => {
-        userIds.push(f.userid);
-      });
-      g.User.findAll(userIds).then(users => {
-        var html = '';
-        var tiles = [];
-        users.forEach((u, i) => {
-          tiles[i] = new Game.Tile(null, board.palette, 0, 0);
-          tiles[i].renderFrameBuffer(frames[i]);
-          html += '<li>';
-          html += '<nav class="mod">';
-          html += '<a class="love" data-timecode="'+frames[i].timecode+'" title="Love"><span class="heart f4-4"/></a>';
-          html += '<a class="report" data-timecode="'+frames[i].timecode+'" title="Report"></a>';
-          html += '</nav>';
-          html += '<a class="user" title="'+sanitizeHTML(u.display_name)+'">';
-          if (u === null) {
-            html += frames[i].userid.toString(16).padStart(4,0);
-          } else {
-            if (u.profile_image_url.length > 0) {
-              html += '<img src="'+u.profile_image_url+'"/>'
-            }
-            html += sanitizeHTML(u.display_name);
-          }
-          html += '</a>';
-          html += '<span class="timeago" datetime="'+frames[i].date.toISOString()+'"/>';
-          html += '</li>';
-        });
-        this.recentFrames.querySelector("ul").innerHTML = html;
-        this.recentFrames.querySelectorAll("li").forEach((el, i) => {
-          tiles[i].canvas.dataset.i = frames[i].ti;
-          tiles[i].canvas.dataset.j = frames[i].tj;
-          el.prepend(tiles[i].canvas);
-        });
-        const ta = this.recentFrames.querySelectorAll('.timeago');
-        if (ta.length > 0) {
-          timeago.render(ta, 'en_US', {minInterval: 60});
+      this.recentFrames.querySelector('h4').innerHTML = "Recent Tile Edits";
+    } else {
+      frames = board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 0)).reverse();
+      this.recentFrames.querySelector('h4').innerHTML = "Recent Board Edits";
+    }
+    frames.forEach((f, i) => {
+      userIds.push(f.userid);
+    });
+    if (this.recentTiles.length == 0) {
+      var html = '';
+      const tpl = document.getElementById("recent-frames-li").innerHTML;
+      for (var i = 0; i < 10; i++) {
+        this.recentTiles.push(new Game.Tile(null, board.palette, 0, 0));
+        html += tpl;
+      }
+      this.recentFrames.querySelector("ul").innerHTML = html;
+      this.recentFrames.querySelectorAll("li").forEach((el, i) => {
+        el.prepend(this.recentTiles[i].canvas);
+      })
+    }
+    g.User.findAll(userIds).then(users => {
+      var li = this.recentFrames.querySelectorAll("li");
+      var a, img, span, ta;
+      for (var i = 0; i < 10; i++) {
+        if (frames.length <= i) {
+          li[i].style.visibility = "hidden";
+          continue;
         }
-      });
+        li[i].style.visibility = "visible";
+        li[i].dataset.timecode = frames[i].timecode;
+        a = li[i].querySelector('a.user');
+        img = a.querySelector('img');
+        a.title = sanitizeHTML(users[i].display_name);
+        if (users[i].profile_image_url.length > 0) {
+          img.src = users[i].profile_image_url;
+          img.style.display = "block";
+        } else {
+          img.style.display = "none";
+        }
+        a.querySelector('span').textContent = sanitizeHTML(users[i].display_name);
+        li[i].querySelector('.timeago').setAttribute('datetime', frames[i].date.toISOString());
+        this.recentTiles[i].renderFrameBuffer(frames[i]);
+        this.recentTiles[i].canvas.dataset.i = frames[i].ti;
+        this.recentTiles[i].canvas.dataset.j = frames[i].tj;
+      }
+      this.recentFramesTimeago();
     });
   };
 
