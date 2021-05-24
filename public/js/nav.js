@@ -250,7 +250,9 @@ Game.Nav = (function(g){
     for (var i = 0; i < bucket.size; i++) {
       html += ` <span class="heart f`+Math.max(Math.min(bucket.level-i*4, 4), 0)+`-4"></span> `;
     }
-    document.getElementById("healthbar").innerHTML = html;
+    const healthbar = document.getElementById("healthbar");
+    healthbar.innerHTML = html;
+    healthbar.style.display = "block";
     var self = this;
     if (bucket.level < bucket.size * 4) {
       this.heartTimeout = setTimeout(() => {
@@ -258,6 +260,7 @@ Game.Nav = (function(g){
         self.showHeart(bucket);
       }, 60000 / bucket.rate);
     }
+
   };
 
   return nav

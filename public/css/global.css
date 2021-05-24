@@ -92,7 +92,7 @@ nav.user {
     position: absolute; top: 0; right: 0;
     z-index: 100;
 }
-nav.user .healthbar { float: left; margin: 0 -1em 0 0; line-height: 2.55em; padding: 0.45em 3.5em 0 1.25em; background: rgba(0,0,0,0.15); border-radius: 1.5em; }
+nav.user .healthbar { float: left; margin: 0 -1em 0 0; line-height: 2.55em; padding: 0.45em 3.5em 0 1.25em; background: rgba(0,0,0,0.15); border-radius: 1.5em; display: none; }
 nav.user .healthbar.ltr .heart {
     -moz-transform: scaleX(-1);
     -o-transform: scaleX(-1);
