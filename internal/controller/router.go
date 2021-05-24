@@ -60,7 +60,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Permitted-Cross-Domain-Policies", "none")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: "+imgUrl+"; font-src 'self' data:; script-src 'self'; style-src 'self'; connect-src 'self' "+wsUrl)
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: "+imgUrl+"; font-src 'self' data:; frame-src https://www.twitch.tv; script-src 'self'; style-src 'self'; connect-src 'self' "+wsUrl)
 	}
 
 	hub := sock.NewHub()

@@ -1,7 +1,7 @@
 Game.Nav = (function(g){
   "use strict";
 
-  var nav = function(game, uiStore, left, right, scrubber, modal){
+  var nav = function(game, uiStore, left, right, bot, scrubber, modal){
     this.initialized = false;
     this.game = game;
     this.timeagoInterval = null;
@@ -21,6 +21,7 @@ Game.Nav = (function(g){
       el.addEventListener("click", (e) => {
         e.preventDefault();
         el.classList.toggle('active');
+        console.log(document.getElementById(id).classList.contains('active'));
         document.getElementById(id).classList.toggle('active');
         uiStore.setItem("ui-"+id, el.classList.contains('active'));
       });
@@ -36,6 +37,7 @@ Game.Nav = (function(g){
     };
     left.querySelectorAll("nav a").forEach(toggleFunc);
     right.querySelectorAll("nav a").forEach(toggleFunc);
+    bot.querySelectorAll("nav a").forEach(toggleFunc);
     scrubber.addEventListener('scroll', e => {
       e.stopPropagation();
       if (game.board().tile.active) {
@@ -111,6 +113,18 @@ Game.Nav = (function(g){
 
   nav.prototype.toggleRecentFrames = function(){
     this.toggles["recent-frames"].click();
+  };
+
+  nav.prototype.toggleChat = function(){
+    console.log(this.toggles);
+    this.toggles["chat"].click();
+  };
+
+  nav.prototype.untoggleSiblings = function(id){
+    this.toggles[id].parentNode.parentNode.querySelectorAll('.active').forEach((el) => {
+      el.classList.remove('active');
+    })
+    return this.toggles[id];
   };
 
   nav.prototype.showRecent = function(board) {

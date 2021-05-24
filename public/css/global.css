@@ -45,7 +45,6 @@ aside#right nav { float: left; }
 
 aside#right { top: 3em; right: 0; }
 aside#right nav { float: right; }
-aside#right nav { float: right; }
 aside#right hr { margin-bottom: 0.5em; }
 aside#right ul { padding: 0; margin: 0; height: 39em; width: 16em; }
 aside#right ul li { list-style: none; margin: 0 -1em; padding: 0.5em 1em; clear: left; height: 3em; width: 16em; position: relative; }
@@ -64,6 +63,10 @@ aside#right ul li nav.mod a:hover { opacity: 0.8; }
 .reporting aside#right ul li.reporting { display: block; background: rgba(0,0,0,0.2); }
 .reporting aside#right ul li.reporting nav.mod { display: block; }
 .reporting aside#right ul li.reporting nav.mod a.report { opacity: 0.7; }
+
+aside#bot { bottom: 0; right: 0; }
+aside#bot nav { float: left; }
+aside#bot a.active { display: none; }
 
 #report { display: none; position: absolute; background: rgba(64,64,64,0.9); z-index: 1002; right: 0; width: 18em; }
 #report a { padding: 0 1em; display: block; line-height: 2em; width: 4em; float: right; clear: right; }

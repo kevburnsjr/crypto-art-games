@@ -35,7 +35,7 @@ var Game = (function(g){
   var store = {};
   const stores = ["global", "board", "user", "ui"];
 
-  var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, scrubberElem, modalElem) {
+  var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, botNavElem, scrubberElem, modalElem) {
     bgElem = bgCanvasElem;
     bgCtx = bgElem.getContext('2d', { alpha: false });
     uiElem = uiCanvasElem;
@@ -58,7 +58,7 @@ var Game = (function(g){
         resolve();
       });
     });
-    nav = new Game.Nav(Game, store.ui, leftNavElem, rightNavElem, scrubberElem, modalElem);
+    nav = new Game.Nav(Game, store.ui, leftNavElem, rightNavElem, botNavElem, scrubberElem, modalElem);
     reset();
     document.addEventListener('mousemove', mousemove);
     document.addEventListener('mousedown', mousedown);
@@ -496,6 +496,10 @@ var Game = (function(g){
     if (k == "r") {
       e.preventDefault();
       nav.toggleRecentFrames();
+    }
+    if (k == "c") {
+      e.preventDefault();
+      nav.toggleChat();
     }
   };
 

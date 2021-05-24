@@ -8,6 +8,7 @@
       document.getElementById("palette"),
       document.getElementById("left"),
       document.getElementById("right"),
+      document.getElementById("bot"),
       document.getElementById("scrubber"),
       document.getElementById("modal")
     );
