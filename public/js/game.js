@@ -325,6 +325,7 @@ var Game = (function(g){
       return
     }
     if (t.id == "brush-state") {
+      e.preventDefault();
       if (!palette.active) {
         palette.showBottom();
         brushState = true;
@@ -360,13 +361,20 @@ var Game = (function(g){
 
   // mouseup
   var mouseup = function(e){
+    isMousedown = false;
     document.body.classList.remove("reporting");
     if (worldnav) {
       document.getElementById("world-nav").classList.remove("open");
       worldnav = false;
       return
     }
-    isMousedown = false;
+    if (brushState && e.target.nodeName == "CANVAS" && e.target.parentNode.id == "palette") {
+      e.preventDefault();
+      e.stopPropagation();
+      setColor(palette.getXY(e.pageX, e.pageY));
+      palette.hide();
+      brushState = false;
+    }
     board.clearPath();
     clickpoint = [];
   };
@@ -507,6 +515,10 @@ var Game = (function(g){
 
   // wheel
   var wheel = function(e) {
+    if (e.shiftKey) {
+      Game.nav().handleWheel(e);
+      return;
+    }
     if (e.deltaY < 0) {
       if (zoom < 6) {
         zoom += 1;

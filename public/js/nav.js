@@ -37,6 +37,13 @@ Game.Nav = (function(g){
     left.querySelectorAll("nav a").forEach(toggleFunc);
     right.querySelectorAll("nav a").forEach(toggleFunc);
     bot.querySelectorAll("nav a").forEach(toggleFunc);
+    this.handleWheel = e => {
+      e.stopPropagation();
+      if (game.board().tile.active) {
+        return;
+      }
+      scrubber.scrollLeft += e.deltaY/Math.abs(e.deltaY);
+    };
     scrubber.addEventListener('scroll', e => {
       e.stopPropagation();
       if (game.board().tile.active) {
@@ -45,13 +52,7 @@ Game.Nav = (function(g){
       }
       this.game.setTimecode(scrubber.scrollWidth - scrubber.offsetWidth - scrubber.scrollLeft);
     });
-    this.recentFrames.addEventListener('wheel', e => {
-      e.stopPropagation();
-      if (game.board().tile.active) {
-        return;
-      }
-      scrubber.scrollLeft += e.deltaY/Math.abs(e.deltaY);
-    }, { passive: true });
+    this.recentFrames.addEventListener('wheel', this.handleWheel, { passive: true });
     this.recentFrames.addEventListener('click', e => {
       e.preventDefault();
       if (e.target.nodeName == "CANVAS") {
