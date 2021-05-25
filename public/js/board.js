@@ -28,6 +28,7 @@ Game.Board = (function(g){
     this.timecode = 0;
     this.drawnTimecode = 0;
     this.timecheck = 0;
+    this.speed = 4;
     var icanvas = document.createElement('canvas');
     var ictx = icanvas.getContext("2d");
     var img = new Image();
@@ -60,9 +61,6 @@ Game.Board = (function(g){
     if (this.tiles.length == 0) {
       return;
     }
-    if (window.bugOut) {
-      throw window.Error;
-    }
     this.scale = tilesize*zoom;
     if (this.focused) {
       this.v.x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
@@ -84,16 +82,21 @@ Game.Board = (function(g){
           // Don't render offscreen tiles
           continue;
         }
-        this.tiles[i][j].render(ctx, this.v.tx, this.v.ty, this.scale/tilesize, dirty || this.dirty);
+        if (dirty || this.dirty || this.tiles[i][j].dirty) {
+          this.tiles[i][j].render(ctx, this.v.tx, this.v.ty, this.scale/tilesize);
+        }
       }
     }
     var drawn = this.drawnTimecode - this.timecode != 0;
-    if (this.enabled && this.drawnTimecode < this.timecode) {
-      this.applyFrame(this.frames[this.drawnTimecode]);
-      this.drawnTimecode++;
-    } else if (this.enabled && this.drawnTimecode > this.timecode) {
-      this.undoFrame(this.frames[this.drawnTimecode-1]);
-      this.drawnTimecode--;
+    if (this.enabled) {
+      for (this.v.i = 0; this.drawnTimecode < this.timecode && this.v.i < this.speed; this.v.i++) {
+        this.applyFrame(this.frames[this.drawnTimecode]);
+        this.drawnTimecode++;
+      }
+      for (this.v.i = 0; this.drawnTimecode > this.timecode && this.v.i < this.speed; this.v.i++) {
+        this.undoFrame(this.frames[this.drawnTimecode-1]);
+        this.drawnTimecode--;
+      }
     }
     if (this.drawnTimecode - this.timecode === 0 && drawn) {
       g.nav().showRecent(this);

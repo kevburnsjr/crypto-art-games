@@ -72,7 +72,7 @@ Game.Nav = (function(g){
     });
     this.recentFramesTimeago = function() {
       self.recentFrames.querySelectorAll('.timeago').forEach((el) => {
-        el.innerHTML = timeago.format(el.getAttribute("datetime"));
+        el.textContent = timeago.format(el.getAttribute("datetime"));
       });
     };
     setInterval(this.recentFramesTimeago, 5000);
@@ -86,11 +86,11 @@ Game.Nav = (function(g){
     });
     this.reportEl.addEventListener('mouseover', e => {
       if (e.target.dataset.reason != undefined) {
-        self.reportEl.querySelector('.reason').innerHTML = e.target.title;
+        self.reportEl.querySelector('.reason').textContent = e.target.title;
       }
     });
     this.reportEl.addEventListener('mouseout', e => {
-      self.reportEl.querySelector('.reason').innerHTML = "";
+      self.reportEl.querySelector('.reason').textContent = "";
     });
     modal.querySelector("#modal-policy form").addEventListener('submit', e => {
       this.submitPolicyModal(e);
@@ -142,10 +142,10 @@ Game.Nav = (function(g){
           break;
         }
       }
-      this.recentFrames.querySelector('h4').innerHTML = "Recent Tile Edits";
+      this.recentFrames.querySelector('h4').textContent = "Recent Tile Edits";
     } else {
       frames = board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 0)).reverse();
-      this.recentFrames.querySelector('h4').innerHTML = "Recent Board Edits";
+      this.recentFrames.querySelector('h4').textContent = "Recent Board Edits";
     }
     frames.forEach((f, i) => {
       userIds.push(f.userid);

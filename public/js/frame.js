@@ -11,7 +11,6 @@ Game.Frame = (function(g){
     this.mask = new BitSet();
     this.prev = [];
     this.colors = [];
-    this.colorsUniq = {};
     this.colorCount = 0;
     this.timecode = 0;
     this.timestamp = 0;
@@ -26,6 +25,7 @@ Game.Frame = (function(g){
     }
     this.ti = tile.ti;
     this.tj = tile.tj;
+    var colorsUniq = {};
     var colorNum = 0;
     var n = 0;
     var w = tile.buffer.length;
@@ -36,10 +36,10 @@ Game.Frame = (function(g){
           colorNum = tile.buffer[i][j];
           this.colors.push(colorNum);
           this.prev.push(tile.px[i][j]);
-          if (!this.colorsUniq[colorNum]) {
+          if (!colorsUniq[colorNum]) {
             this.colorCount++;
           }
-          this.colorsUniq[colorNum] = true;
+          colorsUniq[colorNum] = true;
         }
       }
     }

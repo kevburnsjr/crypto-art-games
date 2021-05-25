@@ -56,7 +56,7 @@ Game.Tile = (function(g){
     this.dirty = true;
   }
 
-  tile.prototype.render = function(ctx, x1, y1, scale, dirty){
+  tile.prototype.render = function(ctx, x1, y1, scale){
     if (scale != this.scale) {
       this.scale = scale;
     }
@@ -72,13 +72,11 @@ Game.Tile = (function(g){
         }
       }
     }
-    if (dirty || this.dirty) {
-      this.x1 = x1;
-      this.y1 = y1;
-      this.dirty = false;
-      ctx.drawImage(this.canvas, x1, y1, this.w * scale, this.h * scale);
-      window.renders++;
-    }
+    this.x1 = x1;
+    this.y1 = y1;
+    this.dirty = false;
+    ctx.drawImage(this.canvas, x1, y1, this.w * scale, this.h * scale);
+    window.renders++;
   };
 
   tile.prototype.lock = function() {

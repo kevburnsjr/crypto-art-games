@@ -24,6 +24,11 @@ var indexTpl = template.Must(template.ParseFiles("./template/index.html"))
 
 func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stdHeaders(w)
+	if r.URL.Path == "/" {
+		w.Header().Set("Location", "/1")
+		w.WriteHeader(302)
+		return
+	}
 	b := bytes.NewBuffer(nil)
 	err := indexTpl.Execute(b, struct {
 		HOST string

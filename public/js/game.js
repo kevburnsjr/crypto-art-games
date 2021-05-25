@@ -245,12 +245,12 @@ var Game = (function(g){
     setZoom();
     w = window.innerWidth;
     h = window.innerHeight;
+    window.cancelAnimationFrame(animationFrame);
     draw();
     bgElem.style.display = "block";
   };
 
   var draw = function() {
-    window.cancelAnimationFrame(animationFrame);
     var dirty = false;
     var uiDirty = false;
     if (bgElem.width != w || bgElem.height != h || zoom != pzoom) {
