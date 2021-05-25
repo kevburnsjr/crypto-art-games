@@ -333,7 +333,7 @@ var Game = (function(g){
     }
     isMousedown = true;
     clickpoint = [e.offsetX, e.offsetY];
-    if (t.id == "palette") {
+    if (e.target.nodeName == "CANVAS" && t.parentNode.id == "palette") {
       e.preventDefault();
       e.stopPropagation();
       setColor(palette.getXY(e.pageX, e.pageY));
@@ -343,8 +343,10 @@ var Game = (function(g){
       }
     } else if (palette.active) {
       e.preventDefault();
-      palette.hide();
-      brushState = false;
+      if (t.parentNode.parentNode.id != "palette") {
+        palette.hide();
+        brushState = false;
+      }
       return;
     }
   };

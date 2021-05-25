@@ -7,7 +7,8 @@ Game.Palette = (function(g){
 
   var palette = function(el, colors){
     this.el = el;
-    this.ctx = el.getContext("2d");
+    this.canvas = el.querySelector('canvas');
+    this.ctx = this.canvas.getContext("2d");
     this.scale = 0;
     this.colors = colors;
     this.colorIdx = {};
@@ -21,9 +22,9 @@ Game.Palette = (function(g){
   };
 
   palette.prototype.render = function(){
-    this.el.width = this.w * this.scale;
-    this.el.height = this.h * this.scale;
-    this.ctx.clearRect(0, 0, this.el.width, this.el.height);
+    this.canvas.width = this.w * this.scale;
+    this.canvas.height = this.h * this.scale;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     for (var i = 0; i < this.w; i++) {
       for (var j = 0; j < this.h; j++) {
         this.ctx.fillStyle = "#" + this.colors[j*8+i];
@@ -42,8 +43,9 @@ Game.Palette = (function(g){
       this.scale = defaultScale;
       this.render();
     }
-    this.el.style.left = x - this.el.width / 2;
-    this.el.style.top = y - this.el.height / 2;
+    this.el.classList.remove("bottom");
+    this.el.style.left = x - this.canvas.width / 2;
+    this.el.style.top = y - this.canvas.height / 2;
     this.el.style.removeProperty("bottom");
     this.el.style.display = "block";
     this.active = true;
@@ -54,9 +56,10 @@ Game.Palette = (function(g){
       this.scale = 2 * defaultScale;
       this.render();
     }
-    this.el.style.left = 0;
+    this.el.classList.add("bottom");
+    this.el.style.left = -5;
     this.el.style.removeProperty("top");
-    this.el.style.bottom = 0;
+    this.el.style.bottom = -5;
     this.el.style.display = "block";
     this.active = true;
   };
@@ -76,8 +79,9 @@ Game.Palette = (function(g){
   };
 
   palette.prototype.getXY = function(x, y) {
-    var i = Math.floor((x-this.el.offsetLeft) / this.scale);
-    var j = Math.floor((y-this.el.offsetTop) / this.scale);
+    const b = this.canvas.getBoundingClientRect();
+    var i = Math.floor((x-b.left) / this.scale);
+    var j = Math.floor((y-b.top) / this.scale);
     return this.colors[j*paletterowsize+i];
   };
 

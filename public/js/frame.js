@@ -41,9 +41,10 @@ Game.Frame = (function(g){
           }
           colorsUniq[colorNum] = true;
         }
+        n++;
       }
     }
-    this.mask = this.mask.slice(0, 255);
+    this.mask = this.mask.slice(0, n);
   };
 
   // Dictionary encoding (color indeces)

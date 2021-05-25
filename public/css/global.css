@@ -16,7 +16,9 @@ a, span {
 ::-webkit-scrollbar-track { background: rgba(80,80,80,0.95); border-radius: 1em; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.5); border-radius: 1em; }
 
-#palette { position: absolute; display: none; z-index: 200; box-shadow: 0px 0px 10px rgba(0,0,0,0.5); background: #666; }
+#palette { position: absolute; display: none; z-index: 200; }
+#palette .info { background: none; line-height: 1.5em; padding: 0.25em 0.75em 0; background: #000; border-top-right-radius: 5px; border-top-left-radius: 5px; width: auto; color: rgba(255,255,255,0.4); float: left; }
+#palette canvas { background: #666; box-shadow: 0px 0px 10px rgba(0,0,0,0.5); float: left; clear: left; border: outset 4px #000; border-radius: 5px; border-top-left-radius: 0; }
 
 nav.world { position: absolute; top: 0; left: 0; z-index: 100; }
 nav.world a { float: left; background: #ccc; }
@@ -125,7 +127,7 @@ body.editing canvas.full { cursor: crosshair; }
 canvas#bgcanvas { background: #666; display: none; }
 canvas#uicanvas { z-index: 2; }
 
-body.color-picking canvas.full, #palette { cursor: url(/i/cursor-eyedropper-light.png) 0 10, cell; }
+body.color-picking canvas.full, #palette canvas { cursor: url(/i/cursor-eyedropper-light.png) 0 10, cell; }
 body.erasing canvas.full { cursor: url(/i/cursor-eraser.png) 5 5, cell; }
 
 #scrubber {
