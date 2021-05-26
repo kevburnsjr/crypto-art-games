@@ -22,6 +22,7 @@ func newDebug(
 	logger *logrus.Logger,
 	oauth *oauth,
 	hub sock.Hub,
+	rGame repo.Game,
 	rUser repo.User,
 	rReport repo.Report,
 	rUserBan repo.UserBan,
@@ -35,6 +36,7 @@ func newDebug(
 		log:                  logger,
 		oauth:                oauth,
 		hub:                  hub,
+		repoGame:             rGame,
 		repoUser:             rUser,
 		repoReport:           rReport,
 		repoUserBan:          rUserBan,
@@ -50,6 +52,7 @@ type debug struct {
 	log                  *logrus.Logger
 	oauth                *oauth
 	hub                  sock.Hub
+	repoGame             repo.Game
 	repoUser             repo.User
 	repoReport           repo.Report
 	repoUserBan          repo.UserBan

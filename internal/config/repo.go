@@ -3,6 +3,7 @@ package config
 type Repos struct {
 	Global *KeyValueStore `yaml:"global"`
 
+	Game             KeyValueStore `yaml:"game"`
 	User             KeyValueStore `yaml:"user"`
 	Report           KeyValueStore `yaml:"report"`
 	UserBan          KeyValueStore `yaml:"userBan"`

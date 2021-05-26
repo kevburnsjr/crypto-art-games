@@ -28,7 +28,7 @@ Game.Board = (function(g){
     this.timecode = 0;
     this.drawnTimecode = 0;
     this.timecheck = 0;
-    this.speed = 4;
+    this.speed = 64;
     var icanvas = document.createElement('canvas');
     var ictx = icanvas.getContext("2d");
     var img = new Image();
@@ -99,8 +99,8 @@ Game.Board = (function(g){
       }
     }
     if (this.drawnTimecode - this.timecode === 0 && drawn) {
-      g.nav().showRecent(this);
       this.paused = this.timecode != this.frames.length;
+      g.nav().showRecent(this);
     }
     if (this.tile.active && (this.tile.dirty || this.tile.inBounds(curx, cury)) && !this.game.isKeyDown("alt") && !this.game.isKeyDown("tab") && !this.game.isKeyDown("e")) {
       this.tile.cursor(ctx, curx, cury, c, this.v.tileDirty);
@@ -268,7 +268,9 @@ Game.Board = (function(g){
     var self = this;
     return this.tile.active ? this.tile.commit().then((frame) => {
       self.redo = [];
-      self.undo.push(frame.timecode);
+      if (frame) {
+        self.undo.push(frame.timecode);
+      }
       self.uiDirty = true;
     }) : Promise.resolve();
   };

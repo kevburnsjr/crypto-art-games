@@ -19,6 +19,7 @@ func newSocket(
 	logger *logrus.Logger,
 	oauth *oauth,
 	hub sock.Hub,
+	rGame repo.Game,
 	rUser repo.User,
 	rReport repo.Report,
 	rUserBan repo.UserBan,
@@ -31,6 +32,7 @@ func newSocket(
 		log:                  logger,
 		oauth:                oauth,
 		hub:                  hub,
+		repoGame:             rGame,
 		repoUser:             rUser,
 		repoReport:           rReport,
 		repoUserBan:          rUserBan,
@@ -45,6 +47,7 @@ type socket struct {
 	log                  *logrus.Logger
 	oauth                *oauth
 	hub                  sock.Hub
+	repoGame             repo.Game
 	repoUser             repo.User
 	repoReport           repo.Report
 	repoUserBan          repo.UserBan
@@ -58,12 +61,13 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stdHeaders(w)
 	user, err := c.oauth.getUser(r, w)
 	if err != nil && err != ErrorTokenNotFound {
-		c.log.Errorf("%w", err)
+		c.log.Errorf("%v", err)
 		http.Error(w, "Unable to read session", 400)
 		session, err := c.oauth.getSession(r)
-		if err == nil {
-			session.Options.MaxAge = -1
-			session.Save(r, w)
+		session.Options.MaxAge = -1
+		session.Save(r, w)
+		if err != nil {
+			c.log.Errorf("%v", err)
 		}
 		return
 	}
@@ -88,21 +92,12 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	userBanIdxInt, _ := strconv.Atoi(userBanIdx)
 	userIdxInt, _ := strconv.Atoi(userIdx)
 
+	var found bool
 	if user != nil {
-		var found bool
 		_, found, err = c.repoUser.Find(user)
 		if err != nil {
-			c.log.Errorf("%w", err)
+			c.log.Errorf("%v", err)
 			http.Error(w, "Error finding user", 400)
-			return
-		}
-		if user.Policy && !found {
-			session, err := c.oauth.getSession(r)
-			if err == nil {
-				session.Options.MaxAge = -1
-				session.Save(r, w)
-			}
-			http.Error(w, "User not found", 400)
 			return
 		}
 	}
@@ -112,7 +107,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not a websocket handshake", 400)
 		return
 	} else if err != nil {
-		c.log.Errorf("%w", err)
+		c.log.Errorf("%v", err)
 		return
 	}
 
@@ -126,6 +121,16 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	conn := sock.CreateConnection(channels, ws)
+
+	if user != nil && user.Policy && !found {
+		c.log.Errorf("User not found")
+		conn.Write(sock.JsonMessage("global", map[string]interface{}{
+			"type": "logout",
+		}))
+		return
+	}
+
 	// Sync new frames
 	frames, err := c.repoFrame.Since(uint16(boardIdInt), uint16(generationInt), uint16(timecodeInt))
 	var first *uint16
@@ -134,13 +139,18 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		first = &a
 	}
 
-	conn := sock.CreateConnection(channels, ws)
+	v, err := c.repoGame.Version()
+	if err != nil {
+		c.log.Errorf("%v", err)
+		http.Error(w, "Unable to retrieve game vesrion", 500)
+		return
+	}
 
 	conn.Write(sock.JsonMessage(boardId, map[string]interface{}{
 		"type":     "init",
 		"user":     user,
 		"timecode": first,
-		"v":        0,
+		"v":        fmt.Sprintf("%016x", v),
 	}))
 
 	for _, frame := range frames {
@@ -208,6 +218,7 @@ func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageH
 					return
 				}
 				if err = c.repoTileLock.Acquire(userID, tileID, time.Now()); err != nil {
+					c.repoUser.Credit(user)
 					return
 				}
 				c.hub.Broadcast(sock.JsonMessagePure(boardChannel, map[string]interface{}{

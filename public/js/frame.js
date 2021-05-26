@@ -210,25 +210,24 @@ Game.Frame = (function(g){
       o += bits;
       return n;
     }
-    var f = new Game.Frame();
+    const f = new Game.Frame();
     f.data = bytes;
     f.timecode = readInt(16);
     f.userid = readInt(16);
-    var tileID = readInt(8);
+    const tileID = readInt(8);
+    f.ti = Math.floor(tileID/16);
+    f.tj = tileID % 16;
     f.colorCount = readInt(4)+1;
     f.deleted = !!b.get(headerflag_deleted);
-    var useMask = b.get(headerflag_useMask);
     o += 4
     f.timestamp = readInt(16);
     if (f.timestamp == 0) {
       f.timecheck = readInt(32);
     }
-    f.ti = Math.floor(tileID/16);
-    f.tj = tileID % 16;
-    var bits = Math.ceil(Math.log2(f.colorCount));
+    const bits = Math.ceil(Math.log2(f.colorCount));
     var numpx = 0;
     if (b.get(headerflag_runLengthEncodedMask)) {
-      var initial = "1".repeat(16);
+      const initial = "1".repeat(16);
       var quad = initial;
       for (i = 0; i < 16; i++) {
         if (readInt(1)) {

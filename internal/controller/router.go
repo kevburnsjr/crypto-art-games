@@ -16,6 +16,11 @@ var stdHeaders func(w http.ResponseWriter)
 func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 	router := mux.NewRouter()
 
+	rGame, err := repo.NewGame(cfg.Repo.Game)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	rUser, err := repo.NewUser(cfg.Repo.User)
 	if err != nil {
 		logger.Fatal(err)
@@ -68,9 +73,9 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	oauth := newOAuth(cfg, logger, rUser)
 
-	socket := newSocket(logger, oauth, hub, rUser, rReport, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+	socket := newSocket(logger, oauth, hub, rGame, rUser, rReport, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
-	debug := newDebug(cfg, logger, oauth, hub, rUser, rReport, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+	debug := newDebug(cfg, logger, oauth, hub, rGame, rUser, rReport, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
 
 	router.Handle("/", index{})
 	router.Handle("/1", index{oauth, cfg, logger, hub, rUser})

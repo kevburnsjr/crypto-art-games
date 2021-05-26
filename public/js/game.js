@@ -201,6 +201,9 @@ var Game = (function(g){
       const user = new Game.User(e);
       user.save();
     });
+    socket.on('logout', function(e) {
+      window.location.href = "/logout";
+    });
     socket.on('init', function(e) {
       return checkVersion(e.v).then(() => {
         if (e.user) {
