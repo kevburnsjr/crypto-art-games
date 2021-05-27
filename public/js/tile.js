@@ -134,7 +134,10 @@ Game.Tile = (function(g){
   };
 
   tile.prototype.get = function(i, j) {
-    const ci = this.buffer[i][j] || this.px[i][j];
+    var ci = this.buffer[i][j];
+    if (ci == undefined) {
+      ci = this.px[i][j];
+    }
     return this.palette.colors[ci];
   };
 
