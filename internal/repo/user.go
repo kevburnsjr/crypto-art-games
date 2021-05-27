@@ -79,7 +79,7 @@ func (r *user) FindOrInsert(user *entity.User) (userID uint16, inserted bool, er
 func (r *user) Insert(user *entity.User) (userID uint16, err error) {
 	idVers, idBytes, err := r.db.Get([]byte("_id"))
 	if err == errors.RepoItemNotFound {
-		userID = uint16(0)
+		userID = uint16(1)
 		err = nil
 	} else if err != nil {
 		return
