@@ -196,7 +196,7 @@ Game.Board = (function(g){
     }
     const i = Math.floor((curx-x1) / this.scale);
     const j = Math.floor((cury-y1) / this.scale);
-    if(this.tile.active && (i != this.i || j != this.j)) {
+    if(this.tile.active && (i != this.i || j != this.j) && !this.game.isKeyDown("shift", "tab", "alt", "e")) {
        this.commitActive();
     }
   };
