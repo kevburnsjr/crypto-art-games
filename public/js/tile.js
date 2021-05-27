@@ -23,7 +23,6 @@ Game.Tile = (function(g){
     // }
     this.ctx = this.canvas.getContext("2d");
     this.buffer = [];
-    this.bufferCount = 0;
     this.palette = palette;
     this.w = imgData ? imgData.width : tilesize;
     this.h = imgData ? imgData.height : tilesize;
@@ -99,12 +98,11 @@ Game.Tile = (function(g){
       }
       self.active = false;
       self.dirty = true;
-      self.bufferCount = 0;
     });
   };
 
   tile.prototype.commit = function() {
-    if (this.bufferCount == 0) {
+    if (!this.hasEdits()) {
       return this.rollback();
     }
     var f = new Game.Frame(this);
@@ -119,7 +117,6 @@ Game.Tile = (function(g){
         this.buffer[i][j] = null;
       }
     }
-    this.bufferCount = 0;
   };
 
   tile.prototype.renderFrameBuffer = function(f) {
@@ -151,19 +148,19 @@ Game.Tile = (function(g){
     if (i < 0 || i >= this.w || j < 0 || j >= this.h) {
       return;
     }
-    const ci = this.palette.getIdx(c);
-    if (this.px[i][j] == ci) {
-      this.clear(i, j);
-      return;
-    }
-    if (this.buffer[i][j] == null) {
-      if (this.bufferCount > editLimit) {
-        return;
-      }
-      this.bufferCount++;
-    }
-    this.buffer[i][j] = ci;
+    this.buffer[i][j] = this.palette.getIdx(c);
     this.dirty = true;
+  };
+
+  tile.prototype.hasEdits = function() {
+    for (var i in this.buffer) {
+      for (var j in this.buffer[i]) {
+        if (this.buffer[i][j] != null && this.buffer[i][j] != this.px[i][j]) {
+          return true;
+        }
+      }
+    }
+    return false;
   };
 
   tile.prototype.applyFrame = function(f, refresh) {
@@ -257,7 +254,6 @@ Game.Tile = (function(g){
       return;
     }
     this.buffer[i][j] = null;
-    this.bufferCount--;
     this.dirty = true;
   };
 
