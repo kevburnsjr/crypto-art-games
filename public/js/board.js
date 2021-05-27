@@ -137,22 +137,6 @@ Game.Board = (function(g){
       }
       return
     }
-    if (e.button == 2) {
-      e.preventDefault();
-      if (this.tile.active) {
-        if (this.i == i && this.j == j) {
-          var self = this;
-          this.tile.commit().then(function(f){
-            self.dirty = true;
-          }).catch((e) => {
-            self.cancelActive();
-          });
-        } else {
-          this.cancelActive();
-        }
-      }
-      return
-    }
     if (this.focused && this.enabled && this.i == i && this.j == j) {
       if (this.paused) {
         this.timecode = this.frames.length;
