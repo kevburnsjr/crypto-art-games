@@ -29,6 +29,7 @@ Game.Board = (function(g){
     this.drawnTimecode = 0;
     this.timecheck = 0;
     this.speed = 64;
+    this.brush = 0;
     var icanvas = document.createElement('canvas');
     var ictx = icanvas.getContext("2d");
     var img = new Image();
@@ -102,8 +103,8 @@ Game.Board = (function(g){
       this.paused = this.timecode != this.frames.length;
       g.nav().showRecent(this);
     }
-    if (this.tile.active && (this.tile.dirty || this.tile.inBounds(curx, cury)) && !this.game.isKeyDown("alt") && !this.game.isKeyDown("tab") && !this.game.isKeyDown("e")) {
-      this.tile.cursor(ctx, curx, cury, c, this.v.tileDirty);
+    if (this.tile.active && (this.dirty || this.tile.dirty || this.tile.inBounds(curx, cury, this.brushSize())) && !this.game.isKeyDown("alt", "tab", "e")) {
+      this.tile.cursor(ctx, curx, cury, c, this.brushSize(), this.v.tileDirty);
     } else if (this.tile.cursi > -1) {
       this.tile.clearCursor();
     }
@@ -159,9 +160,9 @@ Game.Board = (function(g){
       }
       if (this.tile.active && !this.game.isKeyDown("tab")) {
         if (this.game.isKeyDown("e")) {
-          this.tile.clearXY(curx, cury);
+          this.tile.clearXY(curx, cury, curx, cury, this.brushSize());
         } else {
-          this.tile.setXY(curx, cury, this.prevx, this.prevy, this.game.color());
+          this.tile.setXY(curx, cury, this.prevx, this.prevy, this.game.color(), this.brushSize());
         }
       } else if(!this.tile.active) {
         this.toggleActive();
@@ -173,13 +174,40 @@ Game.Board = (function(g){
     }
   };
 
+  board.prototype.brushSize = function() {
+    const b = this.game.isKeyDown("shift") ? 1 : 0;
+    if (this.brush != b) {
+      this.brush != b
+      this.dirty = true;
+      if (this.tile) {
+        this.tile.dirty = true;
+      }
+    }
+    return b;
+  }
+
+  board.prototype.handleMouseDown = function(cx, cy, curx, cury) {
+    if (this.focused) {
+      var x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
+      var y1 = parseInt(cy - (this.j+1)*this.scale + this.scale/2);
+    } else {
+      var x1 = parseInt(cx - (this.xTiles * this.scale)/2);
+      var y1 = parseInt(cy - (this.yTiles * this.scale)/2);
+    }
+    const i = Math.floor((curx-x1) / this.scale);
+    const j = Math.floor((cury-y1) / this.scale);
+    if(this.tile.active && (i != this.i || j != this.j)) {
+       this.commitActive();
+    }
+  };
+
   board.prototype.handleMouseMove = function(x, y, mousedown, c) {
-    if (mousedown && this.tile && this.tile.active && this.tile.inBounds(x, y) &&
-      !this.game.isKeyDown("alt") && !this.game.isKeyDown("tab")) {
+    if (mousedown && this.tile && this.tile.active && this.tile.inBounds(x, y, this.brushSize()) &&
+      !this.game.isKeyDown("alt", "tab")) {
       if (this.game.isKeyDown("e")) {
-        this.tile.clearXY(x, y, this.prevx, this.prevy);
+        this.tile.clearXY(x, y, this.prevx, this.prevy, this.brushSize());
       } else {
-        this.tile.setXY(x, y, this.prevx, this.prevy, c);
+        this.tile.setXY(x, y, this.prevx, this.prevy, c, this.brushSize());
       }
     }
     this.prevx = x;

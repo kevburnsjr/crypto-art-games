@@ -303,15 +303,17 @@ var Game = (function(g){
   var worldnav = false;
   var brushState = false;
   var keyDownMap = {};
-  var isKeyDown = function(k) {
-    return keyDownMap[k];
+  var isKeyDown = function() {
+    for (let k of arguments) {
+      if (keyDownMap[k]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // click
   var click = function(e){
-    if (!e.altKey) {
-
-    }
     if (e.target.id == "uicanvas") {
       board.handleClick(e, w/2, h/2, hoverX, hoverY, zoom);
       setHash();
@@ -353,6 +355,7 @@ var Game = (function(g){
       }
       return;
     }
+    board.handleMouseDown(w/2, h/2, hoverX, hoverY);
   };
 
   // mousemove
@@ -439,6 +442,12 @@ var Game = (function(g){
       board.cancelFocus();
       setZoom();
       setHash();
+    }
+    if (k == "[" || k == "-") {
+      board.setBrushSize(0);
+    }
+    if (k == "]" || k == "=") {
+      board.setBrushSize(1);
     }
     if (k == "pageup") {
       e.preventDefault();
