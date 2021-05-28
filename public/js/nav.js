@@ -50,7 +50,7 @@ Game.Nav = (function(g){
         e.preventDefault();
         return;
       }
-      this.game.setTimecode(scrubber.scrollWidth - scrubber.offsetWidth - scrubber.scrollLeft);
+      this.game.setTimecode(scrubber.scrollWidth - scrubber.offsetWidth - Math.round(scrubber.scrollLeft*window.devicePixelRatio));
     });
     this.recentFrames.addEventListener('wheel', this.handleWheel, { passive: true });
     this.recentFrames.addEventListener('click', e => {
