@@ -183,11 +183,11 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (c socket) MsgHandler(user *entity.User, boardChannel string) sock.MessageHandler {
 	return func(t int, msg []byte) (res *sock.Msg, err error) {
-		var userID = user.UserID
 		if user == nil {
 			err = fmt.Errorf("User authentication required")
 			return
 		}
+		var userID = user.UserID
 		if !user.Policy {
 			err = fmt.Errorf("Must accept terms of service before participating")
 			return
