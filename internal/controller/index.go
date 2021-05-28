@@ -32,8 +32,10 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	b := bytes.NewBuffer(nil)
 	err := indexTpl.Execute(b, struct {
 		HOST string
+		Test bool
 	}{
 		c.cfg.Api.Host,
+		c.cfg.Test,
 	})
 	if check(err, w, c.log) {
 		return

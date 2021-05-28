@@ -6,6 +6,7 @@ type Api struct {
 	Twitch Twitch `yaml:"twitch"`
 	Secret string `yaml:"secret"`
 	Repo   Repos  `yaml:"repo"`
+	Test   bool   `yaml:"test"`
 }
 
 type Http struct {
