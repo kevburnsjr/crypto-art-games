@@ -76,10 +76,10 @@ aside#bot a.active em { background: rgba(80,80,80,0.95); }
 aside#bot div { z-index: 5; }
 aside#bot div iframe { z-index: 5; position: relative; margin: -5px -15px -15px -5px; }
 
-aside#left ul { padding: 0 0 0.5em; margin: 0; height: 39em; width: 14em; }
-aside#left ul li { list-style: none; margin: 0 -1em; padding: 0.5em 1em; clear: left; width: 16em; position: relative; }
-aside#left #series h1 { clear: left; padding: 0 0 0.5em; }
-aside#left #series a { float: left; padding: 0.5em; }
+aside#left ul { padding: 0 0 0.5em; margin: 0; height: 39em; width: 17em; }
+aside#left ul li { list-style: none; margin: 0 -1em; padding: 0.5em 1em; clear: left; width: 17em; position: relative; padding-right: 0; }
+aside#left #series h4 { clear: left; padding: 0 0.25em 0.5em; }
+aside#left #series a { float: left; padding: 0.25em; }
 aside#left #series img { width: 48px; height: 48px; float: left; }
 
 #report { display: none; position: absolute; background: rgba(64,64,64,0.9); z-index: 1002; right: 0; width: 18em; }
