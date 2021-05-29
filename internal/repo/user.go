@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
@@ -16,8 +17,8 @@ type User interface {
 	FindOrInsert(user *entity.User) (userID uint16, inserted bool, err error)
 	Update(user *entity.User) (u *entity.User, err error)
 	Since(userIdx, generation uint16) (users []*entity.User, userIds []uint16, err error)
-	Consume(user *entity.User) (err error)
-	Credit(user *entity.User) (err error)
+	Consume(user *entity.User, boardId uint16) (err error)
+	Credit(user *entity.User, boardId uint16) (err error)
 }
 
 // NewUser returns an User repo instance
@@ -134,11 +135,15 @@ func (r *user) Update(user *entity.User) (u *entity.User, err error) {
 	return
 }
 
-func (r *user) Consume(user *entity.User) (err error) {
-	if user.Bucket == nil {
-		user.Bucket = entity.NewUserBucket()
+func (r *user) Consume(user *entity.User, boardId uint16) (err error) {
+	if user.Buckets == nil {
+		user.Buckets = map[uint16]*entity.UserBucket{}
 	}
-	if !user.Bucket.Consume(1) {
+	bucket, ok := user.Buckets[boardId]
+	if !ok {
+		user.Buckets[boardId] = entity.NewUserBucket(time.Now())
+	}
+	if !bucket.Consume(1, time.Now()) {
 		return fmt.Errorf("Insufficient tile credits")
 	}
 	idBytes := make([]byte, 2)
@@ -155,11 +160,15 @@ func (r *user) Consume(user *entity.User) (err error) {
 	return
 }
 
-func (r *user) Credit(user *entity.User) (err error) {
-	if user.Bucket == nil {
-		user.Bucket = entity.NewUserBucket()
+func (r *user) Credit(user *entity.User, boardId uint16) (err error) {
+	if user.Buckets == nil {
+		user.Buckets = map[uint16]*entity.UserBucket{}
 	}
-	user.Bucket.Credit(1)
+	bucket, ok := user.Buckets[boardId]
+	if !ok {
+		user.Buckets[boardId] = entity.NewUserBucket(time.Now())
+	}
+	bucket.Credit(1, time.Now())
 	idBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(idBytes, user.UserID)
 	userVers, _, err := r.db.Get(idBytes)

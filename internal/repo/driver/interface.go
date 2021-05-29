@@ -7,6 +7,7 @@ type DB interface {
 	Has(key []byte) (exists bool, err error)
 	PutRanged(id, date string, value []byte) (err error)
 	GetRanged(start []byte, limit int, reverse bool) (keys [][]byte, values [][]byte, err error)
+	PrefixIterator(prefix string) (Iterator, error)
 	Close() error
 	/*
 		Batch() Batch
@@ -17,20 +18,20 @@ type DB interface {
 
 }
 
+type Iterator interface {
+	Seek(key string) bool
+	Next() bool
+	Key() string
+	Value() []byte
+	Release()
+	Error() error
+}
+
 /*
 type Batch interface {
 	Put(key, value string)
 	Delete(key string)
 	Write() error
-}
-
-type Iterator interface {
-	Seek(key string) bool
-	Next() bool
-	Key() string
-	Value() string
-	Release()
-	Error() error
 }
 
 type Transaction interface {

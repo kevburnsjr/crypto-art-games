@@ -17,8 +17,10 @@ a, span {
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.5); border-radius: 1em; }
 
 #palette { position: absolute; display: none; z-index: 200; }
-#palette .info { background: none; line-height: 1.3em; padding: 0.2em 0.75em 0; background: #000; border-top-right-radius: 5px; border-top-left-radius: 5px; width: auto; color: rgba(255,255,255,0.4); float: left; }
+#palette .info { background: none; line-height: 1.5em; padding: 0.2em 0.75em 0; background: #000; border-top-right-radius: 5px; border-top-left-radius: 5px; width: auto; color: rgba(255,255,255,0.4); float: left; }
 #palette canvas { background: #666; box-shadow: 0px 0px 10px rgba(0,0,0,0.5); float: left; clear: left; border: outset 4px #000; border-radius: 5px; border-top-left-radius: 0; }
+#palette a { display: inline-block; vertical-align: middle; }
+#palette img { display: inline-block; padding: 0 0.5em; vertical-align: middle; }
 
 nav.world { position: absolute; top: 0; left: 0; z-index: 100; }
 nav.world a { float: left; background: #ccc; }
@@ -87,7 +89,7 @@ aside#bot div iframe { z-index: 5; position: relative; margin: -5px -15px -15px 
 #flash span.success { background: #080; }
 #flash span.error { background: #a00; }
 
-nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); display: none; }
 
 span.heart { width: 15px; height: 14px; overflow: hidden; display: inline-block; opacity: 0.75; }
 

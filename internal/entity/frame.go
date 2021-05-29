@@ -8,14 +8,17 @@ import (
 
 var le = binary.LittleEndian
 
+type Frame struct {
+	Data []byte
+}
+
 func FrameFromBytes(b []byte) *Frame {
+	if len(b) == 0 {
+		return nil
+	}
 	return &Frame{
 		Data: b,
 	}
-}
-
-type Frame struct {
-	Data []byte
 }
 
 func (f *Frame) Validate() error {
@@ -45,6 +48,10 @@ func (f *Frame) TimecodeHex() string {
 
 func (f *Frame) TileIDHex() string {
 	return fmt.Sprintf("%04x", f.TileID())
+}
+
+func (f *Frame) UserIDHex() string {
+	return fmt.Sprintf("%04x", f.UserID())
 }
 
 func (f *Frame) DataHex() string {

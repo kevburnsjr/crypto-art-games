@@ -24,9 +24,10 @@ func newDebug(
 	hub sock.Hub,
 	rGame repo.Game,
 	rUser repo.User,
+	rBoard repo.Board,
+	rLove repo.Love,
 	rReport repo.Report,
 	rUserBan repo.UserBan,
-	rFrame repo.Frame,
 	rTileLock repo.TileLock,
 	rTileHistory repo.TileHistory,
 	rUserFrameHistory repo.UserFrameHistory,
@@ -38,9 +39,10 @@ func newDebug(
 		hub:                  hub,
 		repoGame:             rGame,
 		repoUser:             rUser,
+		repoBoard:            rBoard,
+		repoLove:             rLove,
 		repoReport:           rReport,
 		repoUserBan:          rUserBan,
-		repoFrame:            rFrame,
 		repoTileLock:         rTileLock,
 		repoTileHistory:      rTileHistory,
 		repoUserFrameHistory: rUserFrameHistory,
@@ -54,9 +56,10 @@ type debug struct {
 	hub                  sock.Hub
 	repoGame             repo.Game
 	repoUser             repo.User
+	repoBoard            repo.Board
+	repoLove             repo.Love
 	repoReport           repo.Report
 	repoUserBan          repo.UserBan
-	repoFrame            repo.Frame
 	repoTileLock         repo.TileLock
 	repoTileHistory      repo.TileHistory
 	repoUserFrameHistory repo.UserFrameHistory
@@ -75,11 +78,35 @@ func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	section := r.FormValue("section")
 	user, err := c.oauth.getUser(r, w)
 	if check(err, w, c.log) {
 		return
+	}
+
+	var section = r.FormValue("section")
+	var id = r.FormValue("id")
+	var data string
+
+	if r.Method == "POST" {
+		switch section {
+		case "series":
+			id = r.FormValue("id")
+			data = r.FormValue("data")
+			if id == "" {
+				c.repoGame.InsertSeries(data)
+			} else {
+				c.repoGame.UpdateSeries(id, data)
+			}
+		}
+	}
+	if len(id) > 0 {
+		switch section {
+		case "series":
+			s, err := c.repoGame.FindSeries(id)
+			if err == nil {
+				data = string(s.ToJson())
+			}
+		}
 	}
 	t := template.New("debug.html")
 	t.Funcs(sprig.FuncMap())
@@ -101,21 +128,30 @@ func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if check(err, w, c.log) {
 		return
 	}
+	var boardId uint16 = 1
 	b := bytes.NewBuffer(nil)
 	err = t.Execute(b, struct {
 		User         *entity.User
 		Section      string
+		BoardId      uint16
+		RepoGame     repo.Game
 		RepoUser     repo.User
+		RepoBoard    repo.Board
 		RepoReport   repo.Report
-		RepoFrame    repo.Frame
 		RepoTileLock repo.TileLock
+		Id           string
+		Data         string
 	}{
 		user,
 		section,
+		boardId,
+		c.repoGame,
 		c.repoUser,
+		c.repoBoard,
 		c.repoReport,
-		c.repoFrame,
 		c.repoTileLock,
+		id,
+		data,
 	})
 	if check(err, w, c.log) {
 		return

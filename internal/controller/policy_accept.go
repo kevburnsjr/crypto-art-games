@@ -5,7 +5,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/kevburnsjr/crypto-art-games/internal/entity"
 	"github.com/kevburnsjr/crypto-art-games/internal/repo"
 	sock "github.com/kevburnsjr/crypto-art-games/internal/socket"
 )
@@ -48,7 +47,6 @@ func (c policyAccept) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user.Policy = true
-	user.Bucket = entity.NewUserBucket()
 	userID, inserted, err := c.repoUser.FindOrInsert(user)
 	if inserted {
 		c.hub.Broadcast(sock.TextMsgFromBytes("global", user.ToDto(userID)))

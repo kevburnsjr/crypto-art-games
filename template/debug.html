@@ -1,12 +1,13 @@
 <html><head>
-<title>Project 64 - Debug</title>
+<title>!!! Debug</title>
 <link href="/css/debug.css" rel="stylesheet"></link>
 </head><body>
 <nav class="section">
     <a href="?section=auth">Auth</a>
     <a href="?section=user">User</a>
+    <a href="?section=series">Series</a>
+    <a href="?section=board">Board</a>
     <a href="?section=report">Report</a>
-    <a href="?section=frame">Frame</a>
     <a href="?section=tileLock">TileLock</a>
 </nav>
 <h2>{{.Section}}</h2>
@@ -30,13 +31,33 @@ Val: {{pjson $v}}</pre>
         {{end}}
     {{end}}
 {{end}}
+{{if eq .Section "series"}}
+    <form id="series" method="POST" action="/debug" class="std">
+        <input type="hidden" name="section" value="{{.Section}}"/>
+        <input type="hidden" name="id" value="{{.Id}}"/>
+        <div class="field">
+            <label>ID: {{.Id}}</label>
+        </div>
+        <div class="field">
+            <textarea name="data">{{pjson .Data}}</textarea>
+        </div>
+        <div class="field submit">
+            <input type="submit" class="submit" name="Submit"/>
+            <a class="cancel" href="?section=series">cancel</a>
+        </div>
+    </form>
+    {{range $v := .RepoGame.ActiveSeries}}
+        <a href="?section=series&id={{$v.IDHex}}">{{$v.IDHex}}</a>
+        <pre>{{pjson $v}}</pre>
+    {{end}}
+{{end}}
 {{if eq .Section "report"}}
     {{range $v := .RepoReport.All}}
         <pre>{{pjson $v}}</pre>
     {{end}}
 {{end}}
 {{if eq .Section "frame"}}
-    {{range $i, $f := .RepoFrame.Since 0 0 0}}
+    {{range $i, $f := .RepoBoard.Since .BoardId 0 0}}
         <pre>Key: {{$f.TimecodeHex}} ({{len $f.Data}} Bytes)
 Val: {{$f.DataHex}}</pre>
     {{end}}

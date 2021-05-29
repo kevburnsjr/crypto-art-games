@@ -155,7 +155,7 @@ Game.Nav = (function(g){
       var html = '';
       const tpl = document.getElementById("recent-frames-li").innerHTML;
       for (var i = 0; i < 10; i++) {
-        this.recentTiles.push(new Game.Tile(null, board.palette, 0, 0));
+        this.recentTiles.push(new Game.Tile(null, board.palette, 0, 0, 16));
         html += tpl;
       }
       this.recentFrames.querySelector("ul").innerHTML = html;
@@ -257,20 +257,28 @@ Game.Nav = (function(g){
   };
 
   nav.prototype.showHeart = function(bucket) {
+    if (!bucket instanceof Array || bucket.length != 4) {
+      return
+    }
     clearTimeout(this.heartTimeout);
-    var html = ""
-    for (var i = 0; i < bucket.size; i++) {
-      html += ` <span class="heart f`+Math.max(Math.min(bucket.level-i*4, 4), 0)+`-4"></span> `;
+    const size = bucket[0];
+    const rate = bucket[1];
+    const level = bucket[2];
+    const time = bucket[3];
+    var html = "";
+    for (var i = 0; i < size; i++) {
+      html += ` <span class="heart f`+Math.max(Math.min(level-i*4, 4), 0)+`-4"></span> `;
     }
     const healthbar = document.getElementById("healthbar");
     healthbar.innerHTML = html;
     healthbar.style.display = "block";
     var self = this;
-    if (bucket.level < bucket.size * 4) {
+    if (level < size * 4) {
+      const diff = Math.floor(Date.now() / 1000) - time;
       this.heartTimeout = setTimeout(() => {
-        bucket.level++
+        bucket[2]++
         self.showHeart(bucket);
-      }, 60000 / bucket.rate);
+      }, (diff > 0 && diff < rate ? diff : rate) * 1000);
     }
 
   };

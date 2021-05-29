@@ -36,7 +36,7 @@ type userBan struct {
 func (r *userBan) Insert(userBan *entity.UserBan) (id uint16, err error) {
 	idVers, idBytes, err := r.db.Get([]byte("_id"))
 	if err == errors.RepoItemNotFound {
-		id = uint16(0)
+		id = uint16(1)
 	} else if err != nil {
 		return
 	} else {

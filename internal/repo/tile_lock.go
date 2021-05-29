@@ -45,8 +45,11 @@ func (r *tileLock) Acquire(userID, tileID uint16, t time.Time) (err error) {
 		return r.acquire(key, userID, t)
 	} else if err != nil {
 		return
-	} else {
-		if len(b) == 6 && time.Unix(int64(binary.BigEndian.Uint32(b[2:6])), 0).Before(t) {
+	} else if len(b) == 6 {
+		if binary.BigEndian.Uint16(b[0:2]) == userID {
+			return r.acquire(key, userID, t)
+		}
+		if time.Unix(int64(binary.BigEndian.Uint32(b[2:6])), 0).Before(t) {
 			return r.acquire(key, userID, t)
 		}
 	}

@@ -26,17 +26,22 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		logger.Fatal(err)
 	}
 
+	rBoard, err := repo.NewBoard(cfg.Repo.Board)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	rLove, err := repo.NewLove(cfg.Repo.Love)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	rReport, err := repo.NewReport(cfg.Repo.Report)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	rUserBan, err := repo.NewUserBan(cfg.Repo.UserBan)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	rFrame, err := repo.NewFrame(cfg.Repo.Frame)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -56,7 +61,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		logger.Fatal(err)
 	}
 
-	imgUrl := "https://static-cdn.jtvnw.net"
+	imgUrl := "https://static-cdn.jtvnw.net https://lospec.com"
 	wsUrl := "wss://" + cfg.Api.Host
 
 	stdHeaders = func(w http.ResponseWriter) {
@@ -65,7 +70,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Permitted-Cross-Domain-Policies", "none")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: "+imgUrl+"; font-src 'self' data:; frame-src https://www.twitch.tv; script-src 'self'; style-src 'self'; connect-src 'self' "+wsUrl)
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: "+imgUrl+"; font-src 'self' data:; frame-src; script-src 'self'; style-src 'self'; connect-src 'self' "+wsUrl)
 	}
 
 	hub := sock.NewHub()
@@ -73,9 +78,9 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	oauth := newOAuth(cfg, logger, rUser)
 
-	socket := newSocket(logger, oauth, hub, rGame, rUser, rReport, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+	socket := newSocket(logger, oauth, hub, rGame, rUser, rBoard, rLove, rReport, rUserBan, rTileLock, rTileHistory, rUserFrameHistory)
 
-	debug := newDebug(cfg, logger, oauth, hub, rGame, rUser, rReport, rUserBan, rFrame, rTileLock, rTileHistory, rUserFrameHistory)
+	debug := newDebug(cfg, logger, oauth, hub, rGame, rUser, rBoard, rLove, rReport, rUserBan, rTileLock, rTileHistory, rUserFrameHistory)
 
 	router.Handle("/", index{})
 	router.Handle("/1", index{oauth, cfg, logger, hub, rUser})

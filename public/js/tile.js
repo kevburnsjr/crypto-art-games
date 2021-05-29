@@ -2,15 +2,15 @@ Game.Tile = (function(g){
   "use strict";
 
   var maxScale = 32;
-  var tilesize = 16;
   var editLimit = 256;
   var artificialLatency = 250;
 
-  var tile = function(imgData, palette, ti, tj){
+  var tile = function(imgData, palette, ti, tj, size){
     this.ti = ti;
     this.tj = tj;
     this.x1 = 0;
     this.y1 = 0;
+    this.size = size;
     this.cursi = -1;
     this.cursj = -1;
     this.scale = 1;
@@ -24,8 +24,8 @@ Game.Tile = (function(g){
     this.ctx = this.canvas.getContext("2d");
     this.buffer = [];
     this.palette = palette;
-    this.w = imgData ? imgData.width : tilesize;
-    this.h = imgData ? imgData.height : tilesize;
+    this.w = imgData ? imgData.width : this.size;
+    this.h = imgData ? imgData.height : this.size;
     this.canvas.width = this.w * maxScale;
     this.canvas.height = this.h * maxScale;
     this.active = false;
@@ -126,7 +126,7 @@ Game.Tile = (function(g){
     for (let b of f.mask) {
       if (b == 1) {
         this.ctx.fillStyle = "#" + this.palette.colors[f.colors[i]];
-        this.ctx.fillRect(Math.floor(n/16) * this.maxScale, n%16 * this.maxScale, this.maxScale, this.maxScale);
+        this.ctx.fillRect(Math.floor(n/this.size) * this.maxScale, n%this.size * this.maxScale, this.maxScale, this.maxScale);
         i++;
       }
       n++;
@@ -176,9 +176,9 @@ Game.Tile = (function(g){
     for (let b of f.mask) {
       if (b == 1) {
         if (push) {
-          f.prev.push(this.px[Math.floor(n/16)][n%16]);
+          f.prev.push(this.px[Math.floor(n/this.size)][n%this.size]);
         }
-        this.px[Math.floor(n/16)][n%16] = f.colors[i];
+        this.px[Math.floor(n/this.size)][n%this.size] = f.colors[i];
         i++;
       }
       n++;
@@ -194,7 +194,7 @@ Game.Tile = (function(g){
     var i = 0;
     for (let b of f.mask) {
       if (b == 1) {
-        this.px[Math.floor(n/16)][n%16] = f.prev[i];
+        this.px[Math.floor(n/this.size)][n%this.size] = f.prev[i];
         i++;
       }
       n++;
@@ -225,8 +225,8 @@ Game.Tile = (function(g){
       var di = Math.floor((prevx-this.x1) / this.scale) - i;
       var dj = Math.floor((prevy-this.y1) / this.scale) - j;
       while (di != 0 || dj != 0) {
-        if (-1 < i + di && i + di < (tilesize-1)
-         && -1 < j + dj && j + dj < (tilesize-1)) {
+        if (-1 < i + di && i + di < (this.size-1)
+         && -1 < j + dj && j + dj < (this.size-1)) {
           // Connect non-adjacent consecutive pixels
           switch (brushSize) {
             case 1:
@@ -283,8 +283,8 @@ Game.Tile = (function(g){
       var di = Math.floor((prevx-this.x1) / this.scale) - i;
       var dj = Math.floor((prevy-this.y1) / this.scale) - j;
       while (di != 0 || dj != 0) {
-        if (-1 < i + di && i + di < (tilesize-1)
-         && -1 < j + dj && j + dj < (tilesize-1)) {
+        if (-1 < i + di && i + di < (this.size-1)
+         && -1 < j + dj && j + dj < (this.size)) {
           // Connect non-adjacent consecutive pixels
           switch (brushSize) {
             case 1:
@@ -309,8 +309,8 @@ Game.Tile = (function(g){
 
   tile.prototype.inBounds = function(x, y, brushSize) {
     const b = brushSize * this.scale;
-    return (this.x1 - b) < x && x < (this.x1 + tilesize * this.scale + b)
-        && (this.y1 - b) < y && y < (this.y1 + tilesize * this.scale + b);
+    return (this.x1 - b) < x && x < (this.x1 + this.size * this.scale + b)
+        && (this.y1 - b) < y && y < (this.y1 + this.size * this.scale + b);
   };
 
   tile.prototype.cursor = function(ctx, x, y, c, brushSize, dirty) {
@@ -370,7 +370,7 @@ Game.Tile = (function(g){
   }
 
   tile.prototype.getID = function() {
-    return this.ti * 16 + this.tj
+    return this.ti * this.size + this.tj
   };
 
   return tile

@@ -5,14 +5,11 @@ var Game = (function(g){
   var animationFrame;
   var deg_to_rad = Math.PI / 180.0;
   var bgcolor = "#666";
-  var color = "#000";
   var zoom = defaultZoom;
   var pzoom = defaultZoom;
   var bgCtx, bgElem;
   var uiCtx, uiElem;
   var fps_tick = Date.now();
-  var pause = false;
-  var animate = true;
   var w;
   var h;
   var board;
@@ -21,45 +18,35 @@ var Game = (function(g){
   var hoverX;
   var hoverY;
   var bgtimeout = null;
-  var autumn = [
-    "ec6f1c", "b4522e", "7a3030", "f6ae3c", "fbdb7a", "eafba3", "e3f6d5", "9ce77f",
-    "49d866", "408761", "2d4647", "345452", "3a878b", "3da4db", "95c5f2", "cacff9"
-  ];
   var last;
-  var checkpoint;
   var generation;
   var timecode;
   var userIdx;
   var socket;
   var policy;
+  var boardId;
   var store = {};
-  const stores = ["global", "board", "user", "ui"];
+  const stores = ["global", "user", "ui"];
+
+  var createStores = async function() {
+    stores.map((name) => store[name] = localforage.createInstance({name: "Game", storeName: name}));
+    return Promise.resolve()
+  }
+  var boardStore = function(boardId) {
+    var storeName = "board-"+boardId.toString(16).padStart(4, 0);
+    if (!(storeName in store)) {
+      store[storeName] = localforage.createInstance({name: "Game", storeName: storeName})
+    }
+    return store[storeName];
+  }
 
   var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, botNavElem, scrubberElem, modalElem) {
+    createStores();
     bgElem = bgCanvasElem;
     bgCtx = bgElem.getContext('2d', { alpha: false });
     uiElem = uiCanvasElem;
     uiCtx = uiElem.getContext('2d', { alpha: true });
-    stores.map((name) => store[name] = localforage.createInstance({name: "project-64", storeName: name}));
-    palette = new Game.Palette(paletteElem, autumn);
-    await new Promise((resolve, reject) => {
-      board = new Game.Board(Game, store.board, "/palettes/autumn.gif", palette, 16, 16, function() {
-        if(window.location.hash) {
-          var parts = window.location.hash.substr(1).split(':');
-          zoom = parseInt(parts[1]);
-          board.setTile(parseInt(parts[3]));
-          if (parts[2] != "1") {
-            board.cancelFocus();
-          }
-          setColor(parts[0]);
-        } else {
-          setColor(autumn[Math.floor(Math.random() * autumn.length)]);
-        }
-        resolve();
-      });
-    });
     nav = new Game.Nav(Game, store.ui, leftNavElem, rightNavElem, botNavElem, scrubberElem, modalElem);
-    reset();
     document.addEventListener('mousemove', mousemove);
     document.addEventListener('mousedown', mousedown);
     document.addEventListener('mouseup', mouseup);
@@ -74,15 +61,21 @@ var Game = (function(g){
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
     var userID = null;
-    checkpoint = await board.store.getItem("checkpoint");
-    generation = await board.store.getItem("generation");
-    userIdx = await board.store.getItem("userIdx");
-    timecode = await board.getTimecode();
-    board.timecode = timecode;
+    boardId = 1;
+    await boardStore(boardId).getItem("userIdx").then(idx => userIdx = idx).catch(log);
+    await boardStore(boardId).getItem("generation").then(gen => generation = parseInt(gen, 16) || 0).catch(log);
+    await boardStore(boardId).getItem("timecode").then(tc => timecode = parseInt(tc, 16) || 0).catch(log);
     // initiate websocket
     socket = new Game.socket({
       url: function() {
-        return "/socket?generation="+(generation || 0)+"&timecode="+(timecode || 0);
+        return "/socket?boardId="+boardId+"&generation="+generation+"&timecode="+timecode;
+      },
+      changeBoard: function(id) {
+        document.getElementById('brush-state').style.display = "none";
+        boardId = id;
+        setHash();
+        socket.stop();
+        socket.start();
       },
       awaiting: null,
       sendFrame: function(f) {
@@ -191,11 +184,13 @@ var Game = (function(g){
         });
       } else {
         var e = JSON.parse(msg);
-        return socket.emit(e.type, e);
+        return socket.serial(e.type, e);
       }
     });
     socket.on('sync-complete', function(e) {
-      board.enable(e.timecode, e.userIdx);
+      if (board != null) {
+        board.enable(e.timecode, e.userIdx);
+      }
     });
     socket.on('new-user', function(e) {
       const user = new Game.User(e);
@@ -205,42 +200,89 @@ var Game = (function(g){
       window.location.href = "/logout";
     });
     socket.on('init', function(e) {
-      return checkVersion(e.v).then(() => {
-        if (e.user) {
-          userID = e.user.userID;
-          policy = e.user.policy;
-        }
-        nav.init(e.user);
-        if (e.user && e.user.id != null) {
-          if(!policy) {
-            nav.showPolicyModal();
-          } else {
-            nav.showHeart(e.user.bucket);
+      return new Promise((resolve, reject) => {
+        checkVersion(e.v).then(() => {
+          if (e.user) {
+            userID = e.user.userID;
+            policy = e.user.policy;
           }
-        }
-      }).catch((e) => window.location.reload());
+          nav.init(e.user);
+          if (e.user && e.user.id != null) {
+            if(!policy) {
+              nav.showPolicyModal();
+            }
+          }
+          if (!e.series) {
+            log("Series missing from init", e);
+            return;
+          }
+          var series;
+          var data;
+          outer:
+          for (let s of e.series) {
+            for (let b of s.boards) {
+              if (b.id == boardId) {
+                data = b;
+                series = s;
+                break outer;
+              }
+            }
+          }
+          if (!series) {
+            log("Series missing from init", e);
+            return;
+          }
+          if (e.user) {
+            nav.showHeart(e.user.buckets[data.id]);
+          }
+          // render series nav
+          palette = new Game.Palette(paletteElem, series.palette);
+          board = new Game.Board(Game, boardStore(boardId), data, palette, function() {
+            if(window.location.hash) {
+              var parts = window.location.hash.substr(1).split(':');
+              zoom = parseInt(parts[1]);
+              board.setTile(parseInt(parts[3]));
+              if (parts[2] != "1") {
+                board.cancelFocus();
+              }
+              palette.color = parts[0];
+            }
+            setColor();
+            board.timecode = e.timecode;
+            resolve();
+          });
+        }).catch((d) => {
+          log("New version ", e.v, d);
+          if (d == undefined) {
+            window.location.reload();
+          }
+        });
+      });
     });
+    reset();
     socket.start();
   };
 
-  var checkVersion = async function (v) {
+  var checkVersion = function (v) {
     return new Promise((res, rej) => {
       store.global.getItem("_v").then((_v) => {
         if (v === undefined || v === null) {
           res();
-          return
+          return;
         }
         if (_v === null) {
           store.global.setItem("_v", v).then(res);
         } else if (_v !== v) {
+          log(_v === v, _v == v);
           socket.stop();
-          Promise.all(stores.map((s) => store[s].clear()))
+          localforage.dropInstance({name: "Game"})
+            .then(createStores)
             .then(() => store.global.setItem("_v", v))
             .then(rej);
         } else {
           res();
         }
-      });
+      }).catch(log);
     });
   }
 
@@ -253,7 +295,13 @@ var Game = (function(g){
     bgElem.style.display = "block";
   };
 
+  var prevBoardId;
+
   var draw = function() {
+    if (board == null) {
+      animationFrame = window.requestAnimationFrame(draw);
+      return;
+    }
     var dirty = false;
     var uiDirty = false;
     if (bgElem.width != w || bgElem.height != h || zoom != pzoom) {
@@ -273,9 +321,8 @@ var Game = (function(g){
       uiCtx.clearRect(0, 0, w, h);
     }
     try {
-      board.render(bgCtx, uiCtx, w/2, h/2, hoverX, hoverY, zoom, dirty, uiDirty, mousedown, color);
+      board.render(bgCtx, uiCtx, w/2, h/2, hoverX, hoverY, zoom, dirty, uiDirty, mousedown, "#"+palette.colors[palette.color]);
     } catch(e) {
-      log(e);
       bgtimeout = setTimeout(function(){
         draw();
       }, 1000);
@@ -342,7 +389,8 @@ var Game = (function(g){
     if (e.target.nodeName == "CANVAS" && t.parentNode.id == "palette") {
       e.preventDefault();
       e.stopPropagation();
-      setColor(palette.getXY(e.pageX, e.pageY));
+      palette.setXY(e.pageX, e.pageY);
+      setColor();
       if (brushState) {
         palette.hide();
         brushState = false;
@@ -360,9 +408,12 @@ var Game = (function(g){
 
   // mousemove
   var mousemove = function(e){
+    if (board == null) {
+      return;
+    }
     hoverX = Math.round(e.pageX);
     hoverY = Math.round(e.pageY);
-    board.handleMouseMove(hoverX, hoverY, isMousedown, color);
+    board.handleMouseMove(hoverX, hoverY, isMousedown, palette.colors[palette.color]);
   };
 
   // mouseup
@@ -377,7 +428,8 @@ var Game = (function(g){
     if (brushState && e.target.nodeName == "CANVAS" && e.target.parentNode.id == "palette") {
       e.preventDefault();
       e.stopPropagation();
-      setColor(palette.getXY(e.pageX, e.pageY));
+      palette.setXY(e.pageX, e.pageY);
+      setColor(palette);
       palette.hide();
       brushState = false;
     }
@@ -421,7 +473,6 @@ var Game = (function(g){
       e.preventDefault();
       // if ctrl move boards else move tiles
       board.moveTile(-1, 0).then(setHash);
-      setHash();
       document.body.classList.remove("editing");
     }
     if (k == "s" || k == "arrowdown") {
@@ -567,13 +618,14 @@ var Game = (function(g){
     document.getElementById("world-nav").classList.remove("open");
     document.body.classList.remove("color-picking", "erasing", "editing", "reporting");
     keyDownMap = {};
-    board.cancelActive();
+    if (board != null) {
+      board.cancelActive();
+    }
   };
 
   // ----------------- Clipboard  Functions -------------------
 
   var paste = function(e) {
-    // e.preventDefault();
     if (!board.tile || !board.tile.active) {
       return
     }
@@ -591,10 +643,10 @@ var Game = (function(g){
         var ictx = icanvas.getContext("2d");
         var img = new Image();
         img.onload = function() {
-          icanvas.width = 16;
-          icanvas.height = 16;
-          ictx.drawImage(img, 0, 0, 16, 16);
-          board.tile.setBufferData(ictx.getImageData(0,0,16,16));
+          icanvas.width = board.tileSize;
+          icanvas.height = board.tileSize;
+          ictx.drawImage(img, 0, 0, board.tileSize, board.tileSize);
+          board.tile.setBufferData(ictx.getImageData(0,0,board.tileSize,board.tileSize));
         };
         img.src = e.target.result;
       };
@@ -605,7 +657,12 @@ var Game = (function(g){
   // ----------------- State Functions -------------------
 
   var setHash = function() {
-    window.location.hash = [color, zoom, board.focused?1:0, board.getTileID()].join(':');
+    window.location.replace(window.location.href.split("#")[0] + "#" + [
+      palette.color,
+      zoom,
+      board.focused?1:0,
+      board.getTileID(),
+    ].join(':'));
   };
 
   window.onhashchange = function() {
@@ -616,20 +673,9 @@ var Game = (function(g){
     zoom = Math.max(1, Math.min(32, zoom));
   };
 
-  var setColor = function(c) {
-    color = c.replace(/%20/g,"");
-    var rgb = [...color.matchAll(/\d+/g)];
-    if (c.length == 6) {
-      color = "#" + color;
-      rgb = [parseInt(c.substr(0,2), 16), parseInt(c.substr(2,2), 16), parseInt(c.substr(4,2), 16)];
-    }
-    var hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
-    if (hsl[2] > 0.5) {
-      document.body.classList.add('bg-light');
-    } else {
-      document.body.classList.remove('bg-light');
-    }
-    document.getElementById("brush-state").style.backgroundColor = color;
+  var setColor = function() {
+    document.getElementById("brush-state").style.display = "block";
+    document.getElementById("brush-state").style.backgroundColor = palette.colors[palette.color];
     setHash();
   };
 
@@ -645,9 +691,6 @@ var Game = (function(g){
 
   return {
     start: start,
-    color: function(){
-      return color.replace(/%20/g, "");
-    },
     mousedown: function(){
       return mousedown;
     },

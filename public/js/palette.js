@@ -5,20 +5,32 @@ Game.Palette = (function(g){
   var paletterowsize = 8;
   var defaultScale = 32;
 
-  var palette = function(el, colors){
+  var palette = function(el, data){
     this.el = el;
     this.canvas = el.querySelector('canvas');
     this.ctx = this.canvas.getContext("2d");
     this.scale = 0;
-    this.colors = colors;
+    this.name = data.name;
+    this.displayName = data.displayName;
+    this.author = data.author;
+    this.authorDisplayName = data.authorDisplayName;
+    this.color = 0;
+    this.colors = data.colors;
     this.colorIdx = {};
     this.w = paletterowsize;
-    this.h = parseInt(colors.length / paletterowsize);
+    this.h = parseInt(this.colors.length / paletterowsize);
     this.active = false;
-    this.nearest = nearestColor.from(colors);
-    for(var i in colors) {
-      this.colorIdx[colors[i]] = parseInt(i);
+    this.nearest = nearestColor.from(this.colors);
+    for(var i in this.colors) {
+      this.colorIdx[this.colors[i]] = parseInt(i);
     }
+    var paletteLinkEl = el.querySelector('a.palette');
+    paletteLinkEl.textContent = data.displayName;
+    paletteLinkEl.href = "https://lospec.com/palette-list/" + data.name;
+    var authorLinkEl = el.querySelector('a.author');
+    authorLinkEl.textContent = data.authorDisplayName;
+    authorLinkEl.href = "https://lospec.com/" + data.author;
+    // el.querySelector('img').src = "https://lospec.com/user/avatar/"+data.author+".png";
   };
 
   palette.prototype.render = function(){
@@ -78,11 +90,11 @@ Game.Palette = (function(g){
     return this.colorIdx[c];
   };
 
-  palette.prototype.getXY = function(x, y) {
+  palette.prototype.setXY = function(x, y) {
     const b = this.canvas.getBoundingClientRect();
     var i = Math.floor((x-b.left) / this.scale);
     var j = Math.floor((y-b.top) / this.scale);
-    return this.colors[j*paletterowsize+i];
+    this.color = j*paletterowsize+i;
   };
 
   palette.prototype.nearestColor = function(r, g, b) {

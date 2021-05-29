@@ -6,7 +6,7 @@ import (
 
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbErr "github.com/syndtr/goleveldb/leveldb/errors"
-	// "github.com/syndtr/goleveldb/leveldb/iterator"
+	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
@@ -103,16 +103,41 @@ func (w *leveldbDriver) GetRanged(start []byte, limit int, reverse bool) (keys [
 	return
 }
 
+func (w *leveldbDriver) PrefixIterator(prefix string) (Iterator, error) {
+	return leveldb_iterator{w.db.NewIterator(util.BytesPrefix([]byte(prefix)), nil)}, nil
+}
+
 func (w *leveldbDriver) Close() error {
 	return w.db.Close()
+}
+
+type leveldb_iterator struct {
+	iter iterator.Iterator
+}
+
+func (i leveldb_iterator) Seek(key string) bool {
+	return i.iter.Seek([]byte(key))
+}
+func (i leveldb_iterator) Next() bool {
+	return i.iter.Next()
+}
+func (i leveldb_iterator) Key() string {
+	return string(i.iter.Key())
+}
+func (i leveldb_iterator) Value() []byte {
+	return i.iter.Value()
+}
+func (i leveldb_iterator) Release() {
+	i.iter.Release()
+	return
+}
+func (i leveldb_iterator) Error() error {
+	return i.iter.Error()
 }
 
 /*
 func (w *leveldbDriver) Batch() Batch {
 	return leveldb_batch{w.db, new(leveldb.Batch)}
-}
-func (w *leveldbDriver) PrefixIterator(prefix string) Iterator {
-	return leveldb_iterator{w.db.NewIterator(util.BytesPrefix([]byte(prefix)), nil)}
 }
 func (w *leveldbDriver) RangeIterator(start, limit string) Iterator {
 	return leveldb_iterator{w.db.NewIterator(&util.Range{Start: []byte(start), Limit: []byte(limit)}, nil)}
@@ -140,30 +165,6 @@ func (b leveldb_batch) Delete(key string) {
 }
 func (b leveldb_batch) Write() error {
 	return b.db.Write(b.batch, nil)
-}
-
-type leveldb_iterator struct {
-	iter iterator.Iterator
-}
-
-func (i leveldb_iterator) Seek(key string) bool {
-	return i.iter.Seek([]byte(key))
-}
-func (i leveldb_iterator) Next() bool {
-	return i.iter.Next()
-}
-func (i leveldb_iterator) Key() string {
-	return string(i.iter.Key())
-}
-func (i leveldb_iterator) Value() []byte {
-	return i.iter.Value()
-}
-func (i leveldb_iterator) Release() {
-	i.iter.Release()
-	return
-}
-func (i leveldb_iterator) Error() error {
-	return i.iter.Error()
 }
 
 type leveldb_transaction struct {

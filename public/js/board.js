@@ -1,14 +1,16 @@
 Game.Board = (function(g){
   "use strict";
 
-  var tilesize = 16;
-
-  var board = function(g, store, src, palette, xt, yt, callback) {
+  var board = function(g, store, data, palette, callback) {
+    this.id = data.id;
+    this.active = data.act;
+    this.finished = data.fin;
+    this.tileSize = data.ts;
+    this.xTiles = data.w;
+    this.yTiles = data.h;
     this.game = g;
     this.store = store;
     this.focused = false;
-    this.xTiles = xt;
-    this.yTiles = yt;
     this.prevx = -1;
     this.prevy = -1;
     this.undo = [];
@@ -16,7 +18,7 @@ Game.Board = (function(g){
     this.i = 0;
     this.j = 0;
     this.dirty = true;
-    this.scale = tilesize;
+    this.scale = 1;
     this.palette = palette;
     this.tiles = [];
     this.frames = [];
@@ -43,7 +45,7 @@ Game.Board = (function(g){
         callback();
       }
     };
-    img.src = src;
+    img.src = data.bg;
     // temporary variable collection to minimize garbage collection in render loop
     this.v = {};
   };
@@ -52,7 +54,7 @@ Game.Board = (function(g){
     for (var i = 0; i < this.xTiles; i++) {
       this.tiles[i] = [];
       for (var j = 0; j < this.yTiles; j++) {
-        this.tiles[i][j] = new Game.Tile(bgctx.getImageData(i*tilesize, j*tilesize, tilesize, tilesize), this.palette, i, j);
+        this.tiles[i][j] = new Game.Tile(bgctx.getImageData(i*this.tileSize, j*this.tileSize, this.tileSize, this.tileSize), this.palette, i, j, this.tileSize);
       }
     }
     this.tile = this.tiles[this.i][this.j];
@@ -62,7 +64,7 @@ Game.Board = (function(g){
     if (this.tiles.length == 0) {
       return;
     }
-    this.scale = tilesize*zoom;
+    this.scale = this.tileSize*zoom;
     if (this.focused) {
       this.v.x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
       this.v.y1 = parseInt(cy - (this.j+1)*this.scale + this.scale/2);
@@ -84,7 +86,7 @@ Game.Board = (function(g){
           continue;
         }
         if (dirty || this.dirty || this.tiles[i][j].dirty) {
-          this.tiles[i][j].render(ctx, this.v.tx, this.v.ty, this.scale/tilesize);
+          this.tiles[i][j].render(ctx, this.v.tx, this.v.ty, this.scale/this.tileSize);
         }
       }
     }
@@ -133,7 +135,8 @@ Game.Board = (function(g){
     var j = Math.floor((cury-y1) / this.scale);
     if (e.altKey) {
       if (i >= 0 && i < this.xTiles && j >= 0 && j < this.yTiles) {
-        this.game.setColor(this.tiles[i][j].getXY(curx, cury));
+        this.palette.color = this.tiles[i][j].getXY(curx, cury);
+        this.game.setColor();
       }
       return
     }
@@ -146,7 +149,7 @@ Game.Board = (function(g){
         if (this.game.isKeyDown("e")) {
           this.tile.clearXY(curx, cury, curx, cury, this.brushSize());
         } else {
-          this.tile.setXY(curx, cury, this.prevx, this.prevy, this.game.color(), this.brushSize());
+          this.tile.setXY(curx, cury, this.prevx, this.prevy, this.palette.colors[this.palette.color], this.brushSize());
         }
       } else if(!this.tile.active) {
         this.toggleActive();
@@ -161,7 +164,7 @@ Game.Board = (function(g){
   board.prototype.brushSize = function() {
     const b = this.game.isKeyDown("shift") ? 1 : 0;
     if (this.brush != b) {
-      this.brush != b
+      this.brush = b;
       this.dirty = true;
       if (this.tile) {
         this.tile.dirty = true;
@@ -369,7 +372,7 @@ Game.Board = (function(g){
     }
   };
 
-  board.prototype.enable = function(timecode, userIdx, bucket) {
+  board.prototype.enable = function(timecode, userIdx) {
     var self = this;
     if (this.enabled) {
       return;
