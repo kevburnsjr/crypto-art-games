@@ -46,9 +46,12 @@ Val: {{pjson $v}}</pre>
             <a class="cancel" href="?section=series">cancel</a>
         </div>
     </form>
-    {{range $v := .RepoGame.ActiveSeries}}
+    {{$id := .Id}}
+    {{range $v := .RepoGame.AllSeries}}
+        {{if or (eq $id $v.IDHex) (eq $id "")}}
         <a href="?section=series&id={{$v.IDHex}}">{{$v.IDHex}}</a>
         <pre>{{pjson $v}}</pre>
+        {{end}}
     {{end}}
 {{end}}
 {{if eq .Section "report"}}

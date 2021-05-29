@@ -61,7 +61,7 @@ var Game = (function(g){
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
     var userID = null;
-    boardId = 1;
+    boardId = 2;
     await boardStore(boardId).getItem("userIdx").then(idx => userIdx = idx).catch(log);
     await boardStore(boardId).getItem("generation").then(gen => generation = parseInt(gen, 16) || 0).catch(log);
     await boardStore(boardId).getItem("timecode").then(tc => timecode = parseInt(tc, 16) || 0).catch(log);
@@ -71,7 +71,6 @@ var Game = (function(g){
         return "/socket?boardId="+boardId+"&generation="+generation+"&timecode="+timecode;
       },
       changeBoard: function(id) {
-        document.getElementById('brush-state').style.display = "none";
         boardId = id;
         setHash();
         socket.stop();

@@ -15,8 +15,8 @@ type Game interface {
 	Version() (v uint64, err error)
 	ActiveSeries() (all entity.SeriesList, err error)
 	AllSeries() (all entity.SeriesList, err error)
-	InsertSeries(data string) (err error)
-	UpdateSeries(id, data string) (err error)
+	InsertSeries( series *entity.Series) (err error)
+	UpdateSeries(id string, series *entity.Series) (err error)
 	FindSeries(id string) (res *entity.Series, err error)
 }
 
@@ -95,9 +95,9 @@ func (r *game) FindSeries(id string) (res *entity.Series, err error) {
 }
 
 // InsertSeries inserts a new series
-func (r *game) InsertSeries(data string) (err error) {
+func (r *game) InsertSeries(series *entity.Series) (err error) {
 	var id uint16
-	_, idBytes, err := r.db.Get([]byte("_id"))
+	idVers, idBytes, err := r.db.Get([]byte("_id"))
 	if err == errors.RepoItemNotFound {
 		id = uint16(1)
 	} else if err != nil {
@@ -106,13 +106,20 @@ func (r *game) InsertSeries(data string) (err error) {
 		id = binary.BigEndian.Uint16(idBytes)
 		id++
 	}
-	_, err = r.db.Put([]byte(fmt.Sprintf("series-%04x", id)), "", []byte(data))
+	idBytes = make([]byte, 2)
+	binary.BigEndian.PutUint16(idBytes, id)
+	_, err = r.db.Put([]byte("_id"), idVers, idBytes)
+	if err != nil {
+		return
+	}
+	series.ID = id
+	_, err = r.db.Put([]byte(fmt.Sprintf("series-%04x", id)), "", series.ToJson())
 	return
 }
 
 // UpdateSeries updates a new series
-func (r *game) UpdateSeries(id, data string) (err error) {
-	_, err = r.db.Put([]byte("series-"+id), "", []byte(data))
+func (r *game) UpdateSeries(id string, series *entity.Series) (err error) {
+	_, err = r.db.Put([]byte("series-"+id), "", series.ToJson())
 	return
 }
 

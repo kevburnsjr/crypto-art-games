@@ -1,0 +1,38 @@
+{
+    "name": "test2",
+    "author": "test-author2",
+    "palette": {
+        "name": "galaxy-flame",
+        "displayName": "GalaxyFlame",
+        "author": "rhoq",
+        "authorDisplayName": "RHOQ",
+        "colors": [
+            "699fad",
+            "3a708e",
+            "2b454f",
+            "111215",
+            "151d1a",
+            "1d3230",
+            "314e3f",
+            "4f5d42",
+            "9a9f87",
+            "ede6cb",
+            "f5d893",
+            "e8b26f",
+            "b6834c",
+            "704d2b",
+            "40231e",
+            "151015"
+        ]
+    },
+    "boards": [
+        { "id": 11, "bg": "/palette/galaxy-flame-01.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 12, "bg": "/palette/galaxy-flame-02.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 13, "bg": "/palette/galaxy-flame-03.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 14, "bg": "/palette/galaxy-flame-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 15, "bg": "/palette/galaxy-flame-05.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 17, "bg": "/palette/galaxy-flame-07.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
+    ],
+    "act": true,
+    "fin": false
+}

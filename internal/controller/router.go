@@ -61,7 +61,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		logger.Fatal(err)
 	}
 
-	imgUrl := "https://static-cdn.jtvnw.net https://lospec.com"
+	imgUrl := "https://static-cdn.jtvnw.net"
 	wsUrl := "wss://" + cfg.Api.Host
 
 	stdHeaders = func(w http.ResponseWriter) {

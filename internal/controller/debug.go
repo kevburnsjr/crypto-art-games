@@ -92,10 +92,15 @@ func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case "series":
 			id = r.FormValue("id")
 			data = r.FormValue("data")
+			series := entity.SeriesFromJson([]byte(data))
+			if series == nil {
+				println("invalid series")
+				break
+			}
 			if id == "" {
-				c.repoGame.InsertSeries(data)
+				c.repoGame.InsertSeries(series)
 			} else {
-				c.repoGame.UpdateSeries(id, data)
+				c.repoGame.UpdateSeries(id, series)
 			}
 		}
 	}
