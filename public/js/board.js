@@ -135,7 +135,7 @@ Game.Board = (function(g){
     var j = Math.floor((cury-y1) / this.scale);
     if (e.altKey) {
       if (i >= 0 && i < this.xTiles && j >= 0 && j < this.yTiles) {
-        this.palette.color = this.tiles[i][j].getXY(curx, cury);
+        this.palette.color = this.palette.getIdx(this.tiles[i][j].getXY(curx, cury));
         this.game.setColor();
       }
       return
