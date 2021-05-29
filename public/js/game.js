@@ -35,13 +35,13 @@ var Game = (function(g){
   var boardStore = function(boardId) {
     var storeName = "board-"+boardId.toString(16).padStart(4, 0);
     if (!(storeName in store)) {
-      store[storeName] = localforage.createInstance({name: "Game", storeName: storeName})
+      store[storeName] = localforage.createInstance({name: "Game", storeName: storeName});
     }
     return store[storeName];
   }
 
   var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, botNavElem, scrubberElem, modalElem) {
-    createStores();
+    await createStores();
     bgElem = bgCanvasElem;
     bgCtx = bgElem.getContext('2d', { alpha: false });
     uiElem = uiCanvasElem;
@@ -62,9 +62,12 @@ var Game = (function(g){
     window.addEventListener('paste', paste);
     var userID = null;
     boardId = 2;
-    await boardStore(boardId).getItem("userIdx").then(idx => userIdx = idx).catch(log);
-    await boardStore(boardId).getItem("generation").then(gen => generation = parseInt(gen, 16) || 0).catch(log);
-    await boardStore(boardId).getItem("timecode").then(tc => timecode = parseInt(tc, 16) || 0).catch(log);
+    var boardInit = async function() {
+      userIdx = parseInt(await boardStore(boardId).getItem("userIdx"), 16) || 0;
+      generation = parseInt(await boardStore(boardId).getItem("generation"), 16) || 0;
+      timecode = parseInt(await boardStore(boardId).getItem("timecode"), 16) || 0;
+    };
+    await boardInit();
     // initiate websocket
     socket = new Game.socket({
       url: function() {
@@ -72,9 +75,11 @@ var Game = (function(g){
       },
       changeBoard: function(id) {
         boardId = id;
-        setHash();
-        socket.stop();
-        socket.start();
+        boardInit().then(() => {
+          setHash();
+          socket.stop();
+          socket.start();
+        });
       },
       awaiting: null,
       sendFrame: function(f) {
@@ -211,17 +216,13 @@ var Game = (function(g){
               nav.showPolicyModal();
             }
           }
-          if (!e.series) {
-            log("Series missing from init", e);
-            return;
-          }
           var series;
-          var data;
+          var boardData;
           outer:
           for (let s of e.series) {
             for (let b of s.boards) {
               if (b.id == boardId) {
-                data = b;
+                boardData = b;
                 series = s;
                 break outer;
               }
@@ -231,12 +232,13 @@ var Game = (function(g){
             log("Series missing from init", e);
             return;
           }
+          nav.showSeries(e.series);
           if (e.user) {
-            nav.showHeart(e.user.buckets[data.id]);
+            nav.showHeart(e.user.buckets[boardData.id]);
           }
           // render series nav
           palette = new Game.Palette(paletteElem, series.palette);
-          board = new Game.Board(Game, boardStore(boardId), data, palette, function() {
+          board = new Game.Board(Game, boardStore(boardId), boardData, palette, function() {
             if(window.location.hash) {
               var parts = window.location.hash.substr(1).split(':');
               zoom = parseInt(parts[1]);
@@ -251,15 +253,17 @@ var Game = (function(g){
             resolve();
           });
         }).catch((d) => {
-          log("New version ", e.v, d);
           if (d == undefined) {
+            log("New version ", e.v);
             window.location.reload();
+          } else {
+            log(d);
           }
         });
       });
     });
     reset();
-    socket.start();
+    await socket.start();
   };
 
   var checkVersion = function (v) {
@@ -272,8 +276,6 @@ var Game = (function(g){
         if (_v === null) {
           store.global.setItem("_v", v).then(res);
         } else if (_v !== v) {
-          log(_v === v, _v == v);
-          socket.stop();
           localforage.dropInstance({name: "Game"})
             .then(createStores)
             .then(() => store.global.setItem("_v", v))
@@ -564,6 +566,10 @@ var Game = (function(g){
     if (k == "h") {
       e.preventDefault();
       nav.toggleHelp();
+    }
+    if (k == "b") {
+      e.preventDefault();
+      nav.toggleSeries();
     }
     if (k == "r") {
       e.preventDefault();

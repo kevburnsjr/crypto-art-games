@@ -13,24 +13,14 @@
 </nav>
 <nav class="world" id="world-nav">
     <a href="/1" id="logo" draggable="false">
-        <span>World 1 - 1</span>
+        <span>Pixel</span>
         <img src="/i/logo.png" draggable="false"/>
     </a>
-    <div class="levels">
-        <div></div><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div>
-        <div>1</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-        <div>2</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-        <div>3</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-        <div>4</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-        <div>5</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-        <div>6</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-        <div>7</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-        <div>8</div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
-    </div>
 </nav>
 <aside id="left">
     <nav>
         <a id="help-toggle" data-toggle="help"><em>H</em></a>
+        <a id="series-toggle" data-toggle="series"><em>B</em></a>
     </nav>
     <div id="help">
         <em>Click</em> to focus/edit tile<br/>
@@ -49,9 +39,11 @@
         <em>Space</em> to edit/commit tile<br/>
         <em>Scroll</em> to zoom<br/>
         &#8735; <em>Shift</em> to scrub<br/>
-        <em>B</em> to open board menu<br/>
         <hr/>
         <em>H</em> to toggle this menu<br/>
+        <em>B</em> to toggle board menu<br/>
+    </div>
+    <div id="series">
     </div>
 </aside>
 <aside id="right">
@@ -148,6 +140,7 @@
 <script src="/js/lib/object.js"></script>
 <script src="/js/lib/event.js"></script>
 <script src="/js/lib/socket.js"></script>
+<script src="/js/lib/dom.js"></script>
 <script src="/js/user.js"></script>
 <script src="/js/nav.js"></script>
 <script src="/js/board.js"></script>

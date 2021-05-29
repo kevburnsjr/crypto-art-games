@@ -102,6 +102,9 @@ func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			} else {
 				c.repoGame.UpdateSeries(id, series)
 			}
+			w.Header().Set("Location", `/debug?section=`+section+`&id=`+id)
+			w.WriteHeader(302)
+			return
 		}
 	}
 	if len(id) > 0 {

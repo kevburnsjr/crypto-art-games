@@ -20,12 +20,17 @@ Game.Nav = (function(g){
       this.toggles[id] = el;
       el.addEventListener("click", (e) => {
         e.preventDefault();
-        el.classList.toggle('active');
-        document.getElementById(id).classList.toggle('active');
-        uiStore.setItem("ui-"+id, el.classList.contains('active'));
+        const on = el.classList.contains('active');
+        g.dom.findParent(el, 'aside').querySelectorAll('nav a').forEach((el2) => el2.classList.remove('active'));
+        g.dom.findParent(el, 'aside').querySelectorAll('div').forEach((el2) => el2.classList.remove('active'));
+        if (!on) {
+          el.classList.toggle('active');
+          document.getElementById(id).classList.toggle('active');
+        }
+        uiStore.setItem("ui-"+id, !on);
       });
       uiStore.getItem("ui-"+id).then(active => {
-        if (active == null) {
+        if (el.previousElementSibling == null && active == null) {
           uiStore.setItem("ui-"+id, true);
           active = true
         }
@@ -96,10 +101,25 @@ Game.Nav = (function(g){
     modal.querySelector("#modal-policy form").addEventListener('submit', e => {
       this.submitPolicyModal(e);
     });
+    this.seriesEl = document.getElementById("series");
+    this.seriesEl.addEventListener('click', e => {
+      e.preventDefault();
+      var t = e.target;
+      if (t.nodeName == "IMG") {
+        t = t.parentNode;
+      }
+      if (t.nodeName == "A" && t.classList.contains('board')) {
+        game.getSocket().changeBoard(parseInt(t.dataset.id));
+      }
+    });
   };
 
   nav.prototype.toggleHelp = function(){
     this.toggles.help.click();
+  };
+
+  nav.prototype.toggleSeries = function(){
+    this.toggles.series.click();
   };
 
   nav.prototype.updateScrubber = function(timecode) {
@@ -190,6 +210,19 @@ Game.Nav = (function(g){
       }
       this.recentFramesTimeago();
     });
+  };
+
+  nav.prototype.showSeries = function(series) {
+    var html = "<ul>";
+    for (let s of series) {
+      html += `<li><h4>${s.name}</h4>`;
+      for (let b of s.boards) {
+        html += `<a class="board" data-id="${b.id}"><img src="${b.bg}"/></a>`;
+      }
+      html += `</li>`;
+    }
+    html += "</ul>";
+    this.seriesEl.innerHTML = html;
   };
 
   nav.prototype.showLoginModal = function() {
