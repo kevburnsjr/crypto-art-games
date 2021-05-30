@@ -53,14 +53,6 @@ var Game = (function(g){
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
     var userID = null;
-    if(window.location.hash) {
-      const parts = window.location.hash.substr(1).split(':');
-      boardId = parseInt(parts[0]);
-      tile    = parseInt(parts[1]);
-      color   = parseInt(parts[2]);
-      zoom    = parseInt(parts[3]);
-      focused = parts[4] == "1";
-    }
     // initiate websocket
     socket = new Game.socket({
       initializing: false,
@@ -70,7 +62,6 @@ var Game = (function(g){
       },
       changeBoard: async function(id) {
         if (socket.initializing || (board && board.id == id)) {
-          log(socket.initializing, board.id, id);
           return;
         }
         socket.initializing = true;
@@ -270,6 +261,17 @@ var Game = (function(g){
     setZoom();
     w = window.innerWidth;
     h = window.innerHeight;
+    if(window.location.hash) {
+      const parts = window.location.hash.substr(1).split(':');
+      boardId = parseInt(parts[0]);
+      tile    = parseInt(parts[1]);
+      color   = parseInt(parts[2]);
+      zoom    = parseInt(parts[3]);
+      focused = parts[4] == "1";
+      if (board && board.id != boardId) {
+        socket.changeBoard(boardId);
+      }
+    }
     window.cancelAnimationFrame(animationFrame);
     draw();
     bgElem.style.display = "block";
@@ -641,7 +643,7 @@ var Game = (function(g){
   // ----------------- State Functions -------------------
 
   var setHash = function() {
-    window.location.replace(window.location.href.split("#")[0] + "#" + [
+    window.location.assign(window.location.href.split("#")[0] + "#" + [
       board.id,
       board.getTileID(),
       board.palette.color,
