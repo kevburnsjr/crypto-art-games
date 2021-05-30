@@ -60,7 +60,7 @@ Game.Board = (function(g){
     this.tile = this.tiles[this.i][this.j];
   };
 
-  board.prototype.render = function(ctx, uiCtx, cx, cy, curx, cury, zoom, dirty, uiDirty, mousedown, c, e) {
+  board.prototype.render = function(ctx, uiCtx, cx, cy, curx, cury, zoom, dirty, uiDirty, mousedown, e) {
     if (this.tiles.length == 0) {
       return;
     }
@@ -106,7 +106,7 @@ Game.Board = (function(g){
       g.nav().showRecent(this);
     }
     if (this.tile.active && (this.dirty || this.tile.dirty || this.tile.inBounds(curx, cury, this.brushSize())) && !this.game.isKeyDown("alt", "tab", "e")) {
-      this.tile.cursor(ctx, curx, cury, c, this.brushSize(), this.v.tileDirty);
+      this.tile.cursor(ctx, curx, cury, this.palette.getColor(), this.brushSize(), this.v.tileDirty);
     } else if (this.tile.cursi > -1) {
       this.tile.clearCursor();
     }
@@ -391,6 +391,8 @@ Game.Board = (function(g){
       self.setUserIdx(userIdx);
     }).then(() => {
       g.nav().updateScrubber(timecode);
+      g.nav().showRecent(this);
+      g.setColor();
       self.timecode = timecode;
       self.enabled = true;
     });

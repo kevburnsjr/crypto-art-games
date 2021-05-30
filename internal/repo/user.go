@@ -14,6 +14,7 @@ import (
 
 type User interface {
 	Find(user *entity.User) (userID uint16, found bool, err error)
+	FindByUserID(userID uint16) (user *entity.User, err error)
 	FindOrInsert(user *entity.User) (userID uint16, inserted bool, err error)
 	Update(user *entity.User) (u *entity.User, err error)
 	Since(userIdx, generation uint16) (users []*entity.User, userIds []uint16, err error)
@@ -56,6 +57,20 @@ func (r *user) Find(user *entity.User) (userID uint16, found bool, err error) {
 	if err != nil {
 		return
 	}
+	err = json.Unmarshal(userBytes, user)
+
+	return
+}
+
+// FindByUserID retrieves a user
+func (r *user) FindByUserID(userID uint16) (user *entity.User, err error) {
+	idBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(idBytes, userID)
+	_, userBytes, err := r.db.Get(idBytes)
+	if err != nil {
+		return
+	}
+	user = &entity.User{}
 	err = json.Unmarshal(userBytes, user)
 
 	return

@@ -6,6 +6,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type Connection interface {
+	Write(m wsmessage) error
+	Channels() []string
+}
+
 func CreateConnection(ids []string, ws *websocket.Conn) *connection {
 	return &connection{channel_ids: ids, ws: ws, send: make(chan wsmessage, 256)}
 }
@@ -44,6 +49,19 @@ func (c *connection) Reader(hub Hub, handler MessageHandler) {
 func (c *connection) Write(m wsmessage) error {
 	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 	return c.ws.WriteMessage(m.msgType, m.data)
+}
+
+func (c *connection) Channels() []string {
+	return c.channel_ids
+}
+
+func (c *connection) hasChannel(ch1 string) bool {
+	for _, ch2 := range c.channel_ids {
+		if ch1 == ch2 {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *connection) Writer() {

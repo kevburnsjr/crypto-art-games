@@ -84,6 +84,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	router.Handle("/", index{})
 	router.Handle("/1", index{oauth, cfg, logger, hub, rUser})
+	router.Handle("/u/i/{id:[0-9]+}", newUserImage(rUser))
 	router.Handle("/login", newLogin(logger, oauth))
 	router.Handle("/logout", newLogout(logger, oauth))
 	router.Handle("/policy-accept", newPolicyAccept(logger, oauth, hub, rUser))

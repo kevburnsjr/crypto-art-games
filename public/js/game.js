@@ -1,43 +1,35 @@
 var Game = (function(g){
   "use strict";
 
-  var defaultZoom = 3;
   var animationFrame;
-  var deg_to_rad = Math.PI / 180.0;
   var bgcolor = "#666";
+  var defaultZoom = 3;
   var zoom = defaultZoom;
   var pzoom = defaultZoom;
+  var tile = 0;
+  var focused = false;
+  var color = Math.floor(Math.random() * 16);
   var bgCtx, bgElem;
   var uiCtx, uiElem;
   var fps_tick = Date.now();
   var w;
   var h;
+  var allSeries = [];
   var board;
   var nav;
-  var palette;
   var hoverX;
   var hoverY;
   var bgtimeout = null;
   var last;
-  var generation;
-  var timecode;
-  var userIdx;
   var socket;
   var policy;
-  var boardId;
+  var boardId = 0;
   var store = {};
   const stores = ["global", "user", "ui"];
 
   var createStores = async function() {
     stores.map((name) => store[name] = localforage.createInstance({name: "Game", storeName: name}));
     return Promise.resolve()
-  }
-  var boardStore = function(boardId) {
-    var storeName = "board-"+boardId.toString(16).padStart(4, 0);
-    if (!(storeName in store)) {
-      store[storeName] = localforage.createInstance({name: "Game", storeName: storeName});
-    }
-    return store[storeName];
   }
 
   var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, botNavElem, scrubberElem, modalElem) {
@@ -61,27 +53,36 @@ var Game = (function(g){
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
     var userID = null;
-    boardId = 2;
-    var boardInit = async function() {
-      userIdx = parseInt(await boardStore(boardId).getItem("userIdx"), 16) || 0;
-      generation = parseInt(await boardStore(boardId).getItem("generation"), 16) || 0;
-      timecode = parseInt(await boardStore(boardId).getItem("timecode"), 16) || 0;
-    };
-    await boardInit();
+    if(window.location.hash) {
+      const parts = window.location.hash.substr(1).split(':');
+      boardId = parseInt(parts[0]);
+      tile    = parseInt(parts[1]);
+      color   = parseInt(parts[2]);
+      zoom    = parseInt(parts[3]);
+      focused = parts[4] == "1";
+    }
     // initiate websocket
     socket = new Game.socket({
-      url: function() {
-        return "/socket?boardId="+boardId+"&generation="+generation+"&timecode="+timecode;
-      },
-      changeBoard: function(id) {
-        boardId = id;
-        boardInit().then(() => {
-          setHash();
-          socket.stop();
-          socket.start();
-        });
-      },
+      initializing: false,
       awaiting: null,
+      url: function() {
+        return `/socket`;
+      },
+      changeBoard: async function(id) {
+        socket.initializing = true;
+        return Game.Series.findActiveBoard(id).then(async b => {
+          board = b;
+          boardId = board.id;
+          socket.send(JSON.stringify({
+            type:       'board-init',
+            boardId:    boardId,
+            userIdx:    parseInt(await board.store.getItem("userIdx"),    16) || 0,
+            generation: parseInt(await board.store.getItem("generation"), 16) || 0,
+            timecode:   parseInt(await board.store.getItem("timecode"),   16) || 0
+          }));
+          setHash();
+        }).catch((e) => log("Failed to load board", id, e));
+      },
       sendFrame: function(f) {
         return new Promise((resolve, reject) => {
           f.getHash().then(function(hash) {
@@ -191,8 +192,9 @@ var Game = (function(g){
         return socket.serial(e.type, e);
       }
     });
-    socket.on('sync-complete', function(e) {
+    socket.on('board-init-complete', function(e) {
       if (board != null) {
+        nav.showHeart(e.bucket);
         board.enable(e.timecode, e.userIdx);
       }
     });
@@ -203,56 +205,9 @@ var Game = (function(g){
     socket.on('logout', function(e) {
       window.location.href = "/logout";
     });
-    socket.on('init', function(e) {
+    socket.on('init', async function(e) {
       return new Promise((resolve, reject) => {
-        checkVersion(e.v).then(() => {
-          if (e.user) {
-            userID = e.user.userID;
-            policy = e.user.policy;
-          }
-          nav.init(e.user);
-          if (e.user && e.user.id != null) {
-            if(!policy) {
-              nav.showPolicyModal();
-            }
-          }
-          var series;
-          var boardData;
-          outer:
-          for (let s of e.series) {
-            for (let b of s.boards) {
-              if (b.id == boardId) {
-                boardData = b;
-                series = s;
-                break outer;
-              }
-            }
-          }
-          if (!series) {
-            log("Series missing from init", e);
-            return;
-          }
-          nav.showSeries(e.series);
-          if (e.user) {
-            nav.showHeart(e.user.buckets[boardData.id]);
-          }
-          // render series nav
-          palette = new Game.Palette(paletteElem, series.palette);
-          board = new Game.Board(Game, boardStore(boardId), boardData, palette, function() {
-            if(window.location.hash) {
-              var parts = window.location.hash.substr(1).split(':');
-              zoom = parseInt(parts[1]);
-              board.setTile(parseInt(parts[3]));
-              if (parts[2] != "1") {
-                board.cancelFocus();
-              }
-              palette.color = parts[0];
-            }
-            setColor();
-            board.timecode = e.timecode;
-            resolve();
-          });
-        }).catch((d) => {
+        checkVersion(e.v).catch((d) => {
           if (d == undefined) {
             log("New version ", e.v);
             window.location.reload();
@@ -260,6 +215,24 @@ var Game = (function(g){
             log(d);
           }
         });
+        if (e.user) {
+          userID = e.user.userID;
+          policy = e.user.policy;
+        }
+        nav.init(e.user);
+        if (e.user && e.user.id != null) {
+          if(!policy) {
+            nav.showPolicyModal();
+          }
+        }
+        if (!e.series) {
+          log("Series missing from init", e);
+          return;
+        }
+        Game.Series.init(e.series);
+        nav.showSeries(Game.Series.list());
+        socket.changeBoard(boardId);
+        resolve();
       });
     });
     reset();
@@ -322,7 +295,7 @@ var Game = (function(g){
       uiCtx.clearRect(0, 0, w, h);
     }
     try {
-      board.render(bgCtx, uiCtx, w/2, h/2, hoverX, hoverY, zoom, dirty, uiDirty, mousedown, "#"+palette.colors[palette.color]);
+      board.render(bgCtx, uiCtx, w/2, h/2, hoverX, hoverY, zoom, dirty, uiDirty, mousedown);
     } catch(e) {
       bgtimeout = setTimeout(function(){
         draw();
@@ -379,8 +352,8 @@ var Game = (function(g){
     }
     if (t.id == "brush-state") {
       e.preventDefault();
-      if (!palette.active) {
-        palette.showBottom();
+      if (!board.palette.active) {
+        board.palette.showBottom();
         brushState = true;
       }
       return
@@ -390,16 +363,16 @@ var Game = (function(g){
     if (e.target.nodeName == "CANVAS" && t.parentNode.id == "palette") {
       e.preventDefault();
       e.stopPropagation();
-      palette.setXY(e.pageX, e.pageY);
+      board.palette.setXY(e.pageX, e.pageY);
       setColor();
       if (brushState) {
-        palette.hide();
+        board.palette.hide();
         brushState = false;
       }
-    } else if (palette.active) {
+    } else if (board.palette.active) {
       e.preventDefault();
       if (t.parentNode.parentNode.id != "palette") {
-        palette.hide();
+        board.palette.hide();
         brushState = false;
       }
       return;
@@ -414,7 +387,7 @@ var Game = (function(g){
     }
     hoverX = Math.round(e.pageX);
     hoverY = Math.round(e.pageY);
-    board.handleMouseMove(hoverX, hoverY, isMousedown, palette.colors[palette.color]);
+    board.handleMouseMove(hoverX, hoverY, isMousedown, board.palette.getColor());
   };
 
   // mouseup
@@ -429,9 +402,9 @@ var Game = (function(g){
     if (brushState && e.target.nodeName == "CANVAS" && e.target.parentNode.id == "palette") {
       e.preventDefault();
       e.stopPropagation();
-      palette.setXY(e.pageX, e.pageY);
-      setColor(palette);
-      palette.hide();
+      board.palette.setXY(e.pageX, e.pageY);
+      setColor();
+      board.palette.hide();
       brushState = false;
     }
     board.clearPath();
@@ -459,8 +432,8 @@ var Game = (function(g){
     if (k == "tab") {
       e.preventDefault();
       e.stopPropagation();
-      if (!palette.active) {
-        palette.show(hoverX, hoverY);
+      if (!board.palette.active) {
+        board.palette.show(hoverX, hoverY);
         board.togglePalette();
       }
     }
@@ -515,7 +488,7 @@ var Game = (function(g){
         return
       }
       if (brushState) {
-        palette.hide();
+        board.palette.hide();
         brushState = false;
         return
       }
@@ -545,7 +518,7 @@ var Game = (function(g){
     if (k == "tab") {
       e.preventDefault();
       e.stopPropagation();
-      palette.hide();
+      board.palette.hide();
       board.togglePalette();
     }
   };
@@ -663,10 +636,11 @@ var Game = (function(g){
 
   var setHash = function() {
     window.location.replace(window.location.href.split("#")[0] + "#" + [
-      palette.color,
+      board.id,
+      board.getTileID(),
+      board.palette.color,
       zoom,
       board.focused?1:0,
-      board.getTileID(),
     ].join(':'));
   };
 
@@ -680,7 +654,7 @@ var Game = (function(g){
 
   var setColor = function() {
     document.getElementById("brush-state").style.display = "block";
-    document.getElementById("brush-state").style.backgroundColor = palette.colors[palette.color];
+    document.getElementById("brush-state").style.backgroundColor = board.palette.getColor();
     setHash();
   };
 

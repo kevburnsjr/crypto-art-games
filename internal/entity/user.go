@@ -26,8 +26,6 @@ type UserDto struct {
 	ID              uint16 `json:"id"`
 	Login           string `json:"login"`
 	DisplayName     string `json:"display_name"`
-	ProfileImageURL string `json:"profile_image_url"`
-	OfflineImageURL string `json:"offline_image_url"`
 }
 
 func (u *User) ToJson() []byte {
@@ -41,8 +39,6 @@ func (u *User) ToDto(userID uint16) []byte {
 		userID,
 		u.Login,
 		u.DisplayName,
-		u.ProfileImageURL,
-		u.OfflineImageURL,
 	})
 	return b
 }

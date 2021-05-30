@@ -194,14 +194,8 @@ Game.Nav = (function(g){
         li[i].style.visibility = "visible";
         li[i].dataset.timecode = frames[i].timecode;
         a = li[i].querySelector('a.user');
-        img = a.querySelector('img');
         a.title = sanitizeHTML(users[i].display_name);
-        if (users[i].profile_image_url.length > 0) {
-          img.src = users[i].profile_image_url;
-          img.style.display = "block";
-        } else {
-          img.style.display = "none";
-        }
+        a.querySelector('img').src = "/u/i/"+userIds[i];
         a.querySelector('span').textContent = sanitizeHTML(users[i].display_name);
         li[i].querySelector('.timeago').setAttribute('datetime', frames[i].date.toISOString());
         this.recentTiles[i].renderFrameBuffer(frames[i]);
@@ -290,7 +284,7 @@ Game.Nav = (function(g){
   };
 
   nav.prototype.showHeart = function(bucket) {
-    if (!bucket instanceof Array || bucket.length != 4) {
+    if (!(bucket instanceof Array) || bucket.length != 4) {
       return
     }
     clearTimeout(this.heartTimeout);

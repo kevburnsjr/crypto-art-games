@@ -17,6 +17,7 @@ type Hub interface {
 	Broadcast(wsmessage)
 	Register(*connection)
 	Unregister(*connection)
+	Update(conn Connection, channels []string)
 }
 
 type MessageHandler func(int, []byte) (*Msg, error)
@@ -27,6 +28,7 @@ func NewHub() *hub {
 		broadcast:   make(chan wsmessage),
 		register:    make(chan *connection),
 		unregister:  make(chan *connection),
+		update:      make(chan *connection),
 	}
 }
 
@@ -35,11 +37,25 @@ type hub struct {
 	broadcast   chan wsmessage
 	register    chan *connection
 	unregister  chan *connection
+	update      chan *connection
 }
 
 func (h *hub) Run() {
 	for {
 		select {
+		case conn := <-h.update:
+			for id := range h.connections {
+				if _, ok := h.connections[id][conn]; ok && !conn.hasChannel(id) {
+					delete(h.connections[id], conn)
+				}
+			}
+			for _, id := range conn.channel_ids {
+				if _, ok := h.connections[id]; !ok {
+					h.connections[id] = make(map[*connection]bool)
+				}
+				h.connections[id][conn] = true
+			}
+
 		case conn := <-h.register:
 			for _, id := range conn.channel_ids {
 				if _, ok := h.connections[id]; !ok {
@@ -47,11 +63,13 @@ func (h *hub) Run() {
 				}
 				h.connections[id][conn] = true
 			}
+
 		case conn := <-h.unregister:
 			for _, id := range conn.channel_ids {
 				delete(h.connections[id], conn)
 			}
 			close(conn.send)
+
 		case msg := <-h.broadcast:
 			if connections, ok := h.connections[msg.channel_id]; ok {
 				for conn := range connections {
@@ -77,4 +95,10 @@ func (h *hub) Register(conn *connection) {
 
 func (h *hub) Unregister(conn *connection) {
 	h.unregister <- conn
+}
+
+func (h *hub) Update(conn Connection, channels []string) {
+	c := conn.(*connection)
+	c.channel_ids = channels
+	h.update <- c
 }
