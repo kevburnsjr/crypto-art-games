@@ -69,6 +69,10 @@ var Game = (function(g){
         return `/socket`;
       },
       changeBoard: async function(id) {
+        if (socket.initializing || (board && board.id == id)) {
+          log(socket.initializing, board.id, id);
+          return;
+        }
         socket.initializing = true;
         return Game.Series.findActiveBoard(id).then(async b => {
           board = b;
@@ -192,10 +196,11 @@ var Game = (function(g){
         return socket.serial(e.type, e);
       }
     });
-    socket.on('board-init-complete', function(e) {
+    socket.on('board-init-complete', async (e) => {
       if (board != null) {
         nav.showHeart(e.bucket);
-        board.enable(e.timecode, e.userIdx);
+        await board.enable(e.timecode, e.userIdx);
+        socket.initializing = false;
       }
     });
     socket.on('new-user', function(e) {
@@ -215,6 +220,7 @@ var Game = (function(g){
             log(d);
           }
         });
+        socket.initializing = false;
         if (e.user) {
           userID = e.user.userID;
           policy = e.user.policy;
