@@ -15,33 +15,45 @@ Game.Nav = (function(g){
     this.flashTimeout = null;
     this.heartTimeout = null;
     this.recentTiles = [];
-    const toggleFunc = el => {
-      var id = el.dataset.toggle;
-      this.toggles[id] = el;
-      el.addEventListener("click", (e) => {
+
+    const toggleGroup = async el => {
+      const toggles = el.querySelectorAll("nav a");
+      const panels = el.querySelectorAll("div");
+      el.querySelector("nav").addEventListener('click', async e => {
         e.preventDefault();
-        const on = el.classList.contains('active');
-        g.dom.findParent(el, 'aside').querySelectorAll('nav a').forEach((el2) => el2.classList.remove('active'));
-        g.dom.findParent(el, 'aside').querySelectorAll('div').forEach((el2) => el2.classList.remove('active'));
-        if (!on) {
-          el.classList.toggle('active');
-          document.getElementById(id).classList.toggle('active');
+        var $a = g.dom.matchParent(e.target, "a")
+        var active = $a.classList.contains('active');
+        toggles.forEach(async t => {
+          var id = t.dataset.toggle;
+          await uiStore.setItem("ui-"+id, false);
+          t.classList.remove('active');
+          document.getElementById(id).classList.remove('active');
+        })
+        if (!active) {
+          var id = $a.dataset.toggle;
+          await uiStore.setItem("ui-"+id, true);
+          $a.classList.add('active');
+          document.getElementById(id).classList.add('active');
         }
-        uiStore.setItem("ui-"+id, !on);
       });
-      uiStore.getItem("ui-"+id).then(active => {
-        if (el.previousElementSibling == null && active == null) {
-          uiStore.setItem("ui-"+id, true);
-          active = true
-        }
-        if (active) {
-          el.click();
-        }
+      toggles.forEach((t, i) => {
+        var id = t.dataset.toggle;
+        this.toggles[id] = t
+        uiStore.getItem("ui-"+id).then(active => {
+          if (i == 0 && active == null) {
+            uiStore.setItem("ui-"+id, true);
+            active = true
+          }
+          if (active) {
+            t.click();
+          }
+        })
       });
     };
-    left.querySelectorAll("nav a").forEach(toggleFunc);
-    right.querySelectorAll("nav a").forEach(toggleFunc);
-    bot.querySelectorAll("nav a").forEach(toggleFunc);
+    toggleGroup(left);
+    toggleGroup(right);
+    toggleGroup(bot);
+
     this.handleWheel = e => {
       e.stopPropagation();
       if (game.board().tile.active) {

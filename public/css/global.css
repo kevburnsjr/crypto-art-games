@@ -43,6 +43,7 @@ aside hr { border: none; border-top: 1px dashed rgba(255,255,255,0.1); margin: 1
 aside em { display: inline-block; padding: 0 0.4em; font-style: normal; min-width: 1em; text-align: center;
     font-size: 1em; line-height: 1.7em; background: rgba(0,0,0,0.2); color: rgba(255,255,255,0.8); border-radius: 0.25em; }
 aside h4 { margin: 0; padding: 0; line-height: 1em; font-weight: normal; }
+aside h3 { margin: -0.5em 0 0; color: rgba(255,255,255,0.3); font-size: 1.2em; }
 
 aside#left { top: 3em; left: 0;  }
 aside#right nav { float: left; }

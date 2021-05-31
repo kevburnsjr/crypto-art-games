@@ -29,11 +29,7 @@
         { "id": 1, "bg": "/palette/lost-century-01.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
         { "id": 2, "bg": "/palette/lost-century-02.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
         { "id": 3, "bg": "/palette/lost-century-03.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 4, "bg": "/palette/lost-century-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 5, "bg": "/palette/lost-century-05.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 6, "bg": "/palette/lost-century-06.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 7, "bg": "/palette/lost-century-07.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 8, "bg": "/palette/lost-century-08.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
+        { "id": 4, "bg": "/palette/lost-century-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
     ],
     "act": true,
     "fin": false

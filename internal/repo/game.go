@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/rand"
+	"strconv"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
@@ -15,7 +16,7 @@ type Game interface {
 	Version() (v uint64, err error)
 	ActiveSeries() (all entity.SeriesList, err error)
 	AllSeries() (all entity.SeriesList, err error)
-	InsertSeries( series *entity.Series) (err error)
+	InsertSeries(series *entity.Series) (err error)
 	UpdateSeries(id string, series *entity.Series) (err error)
 	FindSeries(id string) (res *entity.Series, err error)
 }
@@ -119,6 +120,8 @@ func (r *game) InsertSeries(series *entity.Series) (err error) {
 
 // UpdateSeries updates a new series
 func (r *game) UpdateSeries(id string, series *entity.Series) (err error) {
+	i, _ := strconv.Atoi(id)
+	series.ID = uint16(i)
 	_, err = r.db.Put([]byte("series-"+id), "", series.ToJson())
 	return
 }

@@ -1,0 +1,36 @@
+{
+    "name": "Beta Series 4 - Europe",
+    "author": "Crypto Art Games",
+    "palette": {
+        "name": "tauriel-16",
+        "displayName": "TAURIEL-16",
+        "author": "joaovasconcelos",
+        "authorDisplayName": "Joao Vasconcelos",
+        "colors": [
+            "17171c",
+            "282a30",
+            "49363a",
+            "404735",
+            "3b536a",
+            "9b3535",
+            "92583f",
+            "21927e",
+            "a16a41",
+            "7e7b71",
+            "71a14e",
+            "be8d68",
+            "7abbb9",
+            "d9bd66",
+            "e8c6a1",
+            "dcd6cf"
+        ]
+    },
+    "boards": [
+        { "id": 31, "bg": "/palette/tauriel-16-01.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 32, "bg": "/palette/tauriel-16-02.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 33, "bg": "/palette/tauriel-16-03.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 34, "bg": "/palette/tauriel-16-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
+    ],
+    "act": true,
+    "fin": false
+}

@@ -5,7 +5,7 @@ var Game = (function(g){
   var bgcolor = "#666";
   var defaultZoom = 3;
   var zoom = defaultZoom;
-  var pzoom = defaultZoom;
+  var prevZoom = zoom;
   var tile = 0;
   var focused = false;
   var color = Math.floor(Math.random() * 16);
@@ -286,14 +286,14 @@ var Game = (function(g){
     }
     var dirty = false;
     var uiDirty = false;
-    if (bgElem.width != w || bgElem.height != h || zoom != pzoom) {
-        bgElem.width = w;
-        bgElem.height = h;
-        uiElem.width = w;
-        uiElem.height = h;
-        pzoom = zoom;
-        dirty = true;
-        uiDirty = true;
+    if (bgElem.width != w || bgElem.height != h || zoom != prevZoom) {
+      bgElem.width = w;
+      bgElem.height = h;
+      uiElem.width = w;
+      uiElem.height = h;
+      prevZoom = zoom;
+      dirty = true;
+      uiDirty = true;
     }
     if (dirty || board.dirty) {
       bgCtx.fillStyle = bgcolor;

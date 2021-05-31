@@ -1,5 +1,5 @@
 {
-    "name": "Beta Series 2 - Oak",
+    "name": "Beta Series 2 - Oak and Scotch",
     "author": "Crypto Art Games",
     "palette": {
         "name": "galaxy-flame",
@@ -29,9 +29,7 @@
         { "id": 11, "bg": "/palette/galaxy-flame-01.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
         { "id": 12, "bg": "/palette/galaxy-flame-02.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
         { "id": 13, "bg": "/palette/galaxy-flame-03.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 14, "bg": "/palette/galaxy-flame-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 15, "bg": "/palette/galaxy-flame-05.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 17, "bg": "/palette/galaxy-flame-07.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
+        { "id": 14, "bg": "/palette/galaxy-flame-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
     ],
     "act": true,
     "fin": false

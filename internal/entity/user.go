@@ -22,10 +22,10 @@ type User struct {
 }
 
 type UserDto struct {
-	Type            string `json:"type"`
-	ID              uint16 `json:"id"`
-	Login           string `json:"login"`
-	DisplayName     string `json:"display_name"`
+	Type        string `json:"type"`
+	ID          uint16 `json:"id"`
+	Login       string `json:"login"`
+	DisplayName string `json:"display_name"`
 }
 
 func (u *User) ToJson() []byte {

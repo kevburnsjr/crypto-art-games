@@ -131,10 +131,10 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	conn.Write(sock.JsonMessage("", map[string]interface{}{
-		"type":     "init",
-		"v":        fmt.Sprintf("%016x", v),
-		"user":     user,
-		"series":   series,
+		"type":   "init",
+		"v":      fmt.Sprintf("%016x", v),
+		"user":   user,
+		"series": series,
 	}))
 
 	c.hub.Register(conn)
@@ -322,14 +322,16 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				}
 				for _, frame := range frames {
 					conn.Write(sock.BinaryMsgFromBytes(boardChannel, frame.Data))
-					timecode = frame.Timecode()+1
+					timecode = frame.Timecode() + 1
 				}
+				bucket := user.GetBucket(boardId)
+				bucket.AdjustLevel(time.Now())
 				conn.Write(sock.JsonMessage(boardChannel, map[string]interface{}{
-					"type":       "board-init-complete",
-					"timecode":   timecode,
-					"userIdx":    userIdx,
+					"type":     "board-init-complete",
+					"timecode": timecode,
+					"userIdx":  userIdx,
 					// "userBanIdx": userBanIdxInt + len(bans),
-					"bucket":     user.GetBucket(boardId),
+					"bucket": bucket,
 				}))
 			}
 			// c.hub.Broadcast(sock.TextMsgFromBytes(boardChannel, msg))

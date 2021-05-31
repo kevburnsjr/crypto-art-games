@@ -28,8 +28,8 @@ func (c userImage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user, err := c.repoUser.FindByUserID(uint16(userID))
 	if err != nil {
 		w.WriteHeader(500)
-		w.Write([]byte(err.Error()));
-		println(err.Error());
+		w.Write([]byte(err.Error()))
+		println(err.Error())
 		return
 	}
 	if user == nil {

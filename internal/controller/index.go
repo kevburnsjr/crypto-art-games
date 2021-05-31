@@ -20,8 +20,6 @@ type index struct {
 	repoUser repo.User
 }
 
-var indexTpl = template.Must(template.ParseFiles("./template/index.html"))
-
 func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stdHeaders(w)
 	if r.URL.Path == "/" {
@@ -30,6 +28,7 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	b := bytes.NewBuffer(nil)
+	var indexTpl = template.Must(template.ParseFiles("./template/index.html"))
 	err := indexTpl.Execute(b, struct {
 		HOST string
 		Test bool

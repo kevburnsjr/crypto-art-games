@@ -48,9 +48,12 @@ Val: {{pjson $v}}</pre>
     </form>
     {{$id := .Id}}
     {{range $v := .RepoGame.AllSeries}}
-        {{if or (eq $id $v.IDHex) (eq $id "")}}
-        <a href="?section=series&id={{$v.IDHex}}">{{$v.IDHex}}</a>
-        <pre>{{pjson $v}}</pre>
+        {{if eq $id $v.IDHex}}
+        <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        {{end}}
+        <a href="?section=series&id={{$v.IDHex}}">{{$v.IDHex}} - {{$v.Name}}</a><br/>
+        {{if eq $id $v.IDHex}}
+        <br/>
         {{end}}
     {{end}}
 {{end}}
