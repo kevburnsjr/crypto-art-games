@@ -24,8 +24,9 @@ func newDebug(
 	hub sock.Hub,
 	rGame repo.Game,
 	rUser repo.User,
-	rBoard repo.Board,
 	rLove repo.Love,
+	rBoard repo.Board,
+	rFault repo.Fault,
 	rReport repo.Report,
 	rUserBan repo.UserBan,
 	rTileLock repo.TileLock,
@@ -39,8 +40,9 @@ func newDebug(
 		hub:                  hub,
 		repoGame:             rGame,
 		repoUser:             rUser,
-		repoBoard:            rBoard,
 		repoLove:             rLove,
+		repoBoard:            rBoard,
+		repoFault:            rFault,
 		repoReport:           rReport,
 		repoUserBan:          rUserBan,
 		repoTileLock:         rTileLock,
@@ -56,8 +58,9 @@ type debug struct {
 	hub                  sock.Hub
 	repoGame             repo.Game
 	repoUser             repo.User
-	repoBoard            repo.Board
 	repoLove             repo.Love
+	repoBoard            repo.Board
+	repoFault            repo.Fault
 	repoReport           repo.Report
 	repoUserBan          repo.UserBan
 	repoTileLock         repo.TileLock

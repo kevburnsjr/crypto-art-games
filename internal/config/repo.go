@@ -5,9 +5,10 @@ type Repos struct {
 
 	Game             KeyValueStore `yaml:"game"`
 	User             KeyValueStore `yaml:"user"`
-	Board            KeyValueStore `yaml:"board"`
-	Report           KeyValueStore `yaml:"report"`
 	Love             KeyValueStore `yaml:"love"`
+	Board            KeyValueStore `yaml:"board"`
+	Fault            KeyValueStore `yaml:"fault"`
+	Report           KeyValueStore `yaml:"report"`
 	UserBan          KeyValueStore `yaml:"userBan"`
 	TileLock         KeyValueStore `yaml:"tileLock"`
 	TileHistory      KeyValueStore `yaml:"tileHistory"`

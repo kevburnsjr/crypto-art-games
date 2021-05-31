@@ -11,7 +11,8 @@ var Game = (function(g){
   var color = Math.floor(Math.random() * 16);
   var bgCtx, bgElem;
   var uiCtx, uiElem;
-  var fps_tick = Date.now();
+  var dirty = false;
+  var uiDirty = false;
   var w;
   var h;
   var allSeries = [];
@@ -20,7 +21,6 @@ var Game = (function(g){
   var hoverX;
   var hoverY;
   var bgtimeout = null;
-  var last;
   var socket;
   var policy;
   var boardId = 0;
@@ -62,12 +62,13 @@ var Game = (function(g){
       },
       changeBoard: async function(id) {
         if (socket.initializing || (board && board.id == id)) {
-          return;
+          return Promise.resolve();
         }
         socket.initializing = true;
         return Game.Series.findActiveBoard(id).then(async b => {
           board = b;
           boardId = board.id;
+          uiDirty = true;
           socket.send(JSON.stringify({
             type:       'board-init',
             boardId:    boardId,
@@ -173,6 +174,11 @@ var Game = (function(g){
           socket.send(JSON.stringify({type:'report', timecode: parseInt(timecode), reason: reason}));
         });
       },
+      errStorage: async function() {
+        return new Promise((resolve, reject) => {
+          socket.send(JSON.stringify({type:'err-storage', userID: userID || 0, userAgent: navigator.userAgent}));
+        });
+      },
     });
     socket.on('message', function(msg) {
       if (msg instanceof ArrayBuffer) {
@@ -238,8 +244,10 @@ var Game = (function(g){
 
   var checkVersion = function (v) {
     return new Promise((res, rej) => {
+      var done = false;
       store.global.getItem("_v").then((_v) => {
         if (v === undefined || v === null) {
+          done = true;
           res();
           return;
         }
@@ -253,7 +261,15 @@ var Game = (function(g){
         } else {
           res();
         }
+        done = true;
       }).catch(log);
+      setTimeout(() => {
+        if (!done) {
+          socket.errStorage();
+        }
+      }, 1000);
+      // IndexedDB frequently becomes corrupt.
+      // Reads hang forever so detecting unrespon
     });
   }
 
@@ -284,8 +300,6 @@ var Game = (function(g){
       animationFrame = window.requestAnimationFrame(draw);
       return;
     }
-    var dirty = false;
-    var uiDirty = false;
     if (bgElem.width != w || bgElem.height != h || zoom != prevZoom) {
       bgElem.width = w;
       bgElem.height = h;
@@ -310,14 +324,8 @@ var Game = (function(g){
       }, 1000);
       return;
     }
-
-    var now = Date.now();
-    if(fps_tick + 1000 < now) {
-      // $('#fps').text();
-      // console.log(Math.round(1000/(now - last)) + " fps");
-      fps_tick = now;
-    }
-    last = now;
+    dirty = false;
+    uiDirty = false;
     animationFrame = window.requestAnimationFrame(draw);
   };
 
@@ -667,7 +675,7 @@ var Game = (function(g){
   };
 
   var log = function() {
-    if ("console" in window) {
+    if ("console" in window) {wwd
       console.trace(...arguments);
     }
   };

@@ -3,7 +3,7 @@ Game.Palette = (function(g){
 
   var palettesize = 16;
   var paletterowsize = 8;
-  var defaultScale = 32;
+  var defaultScale = 48;
 
   var palette = function(data){
     this.el = document.getElementById("palette");

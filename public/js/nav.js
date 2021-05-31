@@ -21,7 +21,10 @@ Game.Nav = (function(g){
       const panels = el.querySelectorAll("div");
       el.querySelector("nav").addEventListener('click', async e => {
         e.preventDefault();
-        var $a = g.dom.matchParent(e.target, "a")
+        var $a = g.dom.matchParent(e.target, "a");
+        if (!$a) {
+          return;
+        }
         var active = $a.classList.contains('active');
         toggles.forEach(async t => {
           var id = t.dataset.toggle;

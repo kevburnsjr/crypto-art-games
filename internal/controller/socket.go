@@ -22,8 +22,9 @@ func newSocket(
 	hub sock.Hub,
 	rGame repo.Game,
 	rUser repo.User,
-	rBoard repo.Board,
 	rLove repo.Love,
+	rBoard repo.Board,
+	rFault repo.Fault,
 	rReport repo.Report,
 	rUserBan repo.UserBan,
 	rTileLock repo.TileLock,
@@ -36,8 +37,9 @@ func newSocket(
 		hub:                  hub,
 		repoGame:             rGame,
 		repoUser:             rUser,
-		repoBoard:            rBoard,
 		repoLove:             rLove,
+		repoBoard:            rBoard,
+		repoFault:            rFault,
 		repoReport:           rReport,
 		repoUserBan:          rUserBan,
 		repoTileLock:         rTileLock,
@@ -52,8 +54,9 @@ type socket struct {
 	hub                  sock.Hub
 	repoGame             repo.Game
 	repoUser             repo.User
-	repoBoard            repo.Board
 	repoLove             repo.Love
+	repoBoard            repo.Board
+	repoFault            repo.Fault
 	repoReport           repo.Report
 	repoUserBan          repo.UserBan
 	repoTileLock         repo.TileLock
@@ -276,7 +279,15 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.auth(user); err != nil {
 					return
 				}
-				// Insert report
+				// Clear report
+			case "err-storage":
+				if err = c.auth(user); err != nil {
+					return
+				}
+				err = c.repoFault.Insert("storage", uint16(m["userID"].(float64)), m["userAgent"].(string), time.Now())
+				if err != nil {
+					return
+				}
 			case "user-ban":
 				if err = c.auth(user); err != nil {
 					return
@@ -330,8 +341,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 					"type":     "board-init-complete",
 					"timecode": timecode,
 					"userIdx":  userIdx,
-					// "userBanIdx": userBanIdxInt + len(bans),
-					"bucket": bucket,
+					"bucket":   bucket,
 				}))
 			}
 			// c.hub.Broadcast(sock.TextMsgFromBytes(boardChannel, msg))

@@ -1,0 +1,36 @@
+{
+    "name": "Beta Series - Lemonade",
+    "author": "Crypto Art Games",
+    "palette": {
+        "name": "lemon-16",
+        "displayName": "LEMON 16",
+        "author": "inconsistency",
+        "authorDisplayName": "Inconsistency",
+        "colors": [
+            "d5c7da",
+            "f8cfa7",
+            "f9e6ae",
+            "dffec9",
+            "bea9c7",
+            "f5bb8f",
+            "fbde86",
+            "bffcad",
+            "7a5784",
+            "eea273",
+            "fbbd62",
+            "02c69a",
+            "401f49",
+            "e68a59",
+            "fdb14a",
+            "029776"
+        ]
+    },
+    "boards": [
+        { "id": 41, "bg": "/palette/lemon-16-01.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 42, "bg": "/palette/lemon-16-02.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 43, "bg": "/palette/lemon-16-03.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
+        { "id": 44, "bg": "/palette/lemon-16-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
+    ],
+    "act": true,
+    "fin": false
+}

@@ -4,12 +4,18 @@ html, body { min-height: 100vh; overflow: hidden; background: #666; }
 button { font-weight: bold; background: #000; border-radius: 0; border: none; text-align: center; line-height: 2em; }
 a { text-decoration: none; color: rgba(255,255,255,0.7); cursor: pointer; }
 a:hover { text-decoration: underline; color: rgba(255,255,255,0.9); }
-a, span {
+a, span, img {
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -o-user-select: none;
     user-select: none;
+    user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 1em; }
@@ -26,13 +32,6 @@ nav.world { position: absolute; top: 0; left: 0; z-index: 100; }
 nav.world a { float: left; background: #ccc; }
 nav.world a span { float: left; line-height: 2em; padding: 0em 1.5em; color: #fff; font-weight: bold; text-shadow: 0 0 2px rgba(0,0,0,0.7); cursor: pointer; font-size: 1.5em; }
 nav.world a img { height: 3em; margin: 0 -1.5em 0 0; float: right; border-radius: 50%; padding: 0; }
-nav.world div.levels { width: 18em; height: 18em; background: rgba(255,255,255,0.9); margin-top: 3em; display: none; }
-nav.world div.levels div { width: 2em; height: 2em; float: left; content: "a"; color: rgba(0,0,0,0.7);
-    text-align: center; box-shadow: inset 0 0 1px rgba(0,0,0,0.5); font-size: 1em; line-height: 2em; font-family: monospace; }
-nav.world div.levels div:hover { box-shadow: inset 0 0 1px rgba(0,0,0,1); background: #fff; }
-nav.world.open div.levels { display: block; }
-nav.world div.levels div:nth-child(9n+1) { background: rgba(192,192,192,0.9); }
-nav.world div.levels div:nth-child(-n+9) { background: rgba(192,192,192,0.9); }
 
 aside { z-index: 99; position: absolute; }
 aside div { padding: 1em 1em 1em; color: rgba(255,255,255,0.7); line-height: 2em; display: none; background: rgba(80,80,80,0.95); clear: both; }
@@ -77,11 +76,12 @@ aside#bot a.active em { background: rgba(80,80,80,0.95); }
 aside#bot div { z-index: 5; }
 aside#bot div iframe { z-index: 5; position: relative; margin: -5px -15px -15px -5px; }
 
-aside#left ul { padding: 0 0 0.5em; margin: 0; height: 39em; width: 17em; }
+aside#left ul { padding: 0 0 0.5em; margin: 0; width: 17em; }
 aside#left ul li { list-style: none; margin: 0 -1em; padding: 0.5em 1em; clear: left; width: 17em; position: relative; padding-right: 0; }
 aside#left #series h4 { clear: left; padding: 0 0.25em 0.5em; }
 aside#left #series a { float: left; padding: 0.25em; }
 aside#left #series img { width: 48px; height: 48px; float: left; }
+aside#left #series { float: left; }
 
 #report { display: none; position: absolute; background: rgba(64,64,64,0.9); z-index: 1002; right: 0; width: 18em; }
 #report a { padding: 0 1em; display: block; line-height: 2em; width: 4em; float: right; clear: right; }

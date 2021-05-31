@@ -20,19 +20,34 @@ secret: REDACTED
 repo:
   global:
     leveldb:
-      path: ./_data/project64
+      path: ./_data/game
+  game:
+    leveldb:
+      path: ./_data/game/game
   user:
     leveldb:
-      path: ./_data/project64/user
-  frame:
+      path: ./_data/game/user
+  love:
     leveldb:
-      path: ./_data/project64/frame
+      path: ./_data/game/love
+  fault:
+    leveldb:
+      path: ./_data/game/fault
+  board:
+    leveldb:
+      path: ./_data/game/board
+  report:
+    leveldb:
+      path: ./_data/game/report
+  userBan:
+    leveldb:
+      path: ./_data/game/userBan
   tileLock:
     leveldb:
-      path: ./_data/project64/tileLock
+      path: ./_data/game/tileLock
   tileHistory:
     leveldb:
-      path: ./_data/project64/tileHistory
+      path: ./_data/game/tileHistory
   userFrameHistory:
     leveldb:
-      path: ./_data/project64/userFrameHistory
+      path: ./_data/game/userFrameHistory

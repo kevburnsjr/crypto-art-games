@@ -17,6 +17,9 @@ func NewUserBucket(t time.Time) *UserBucket {
 }
 
 func (b *UserBucket) AdjustLevel(t time.Time) {
+	if b == nil {
+		return
+	}
 	var delta = t.Sub(time.Unix(int64(b.Timestamp), 0))
 	var levelDelta = int(delta/time.Second) / int(b.Rate)
 	if levelDelta+int(b.Level) > int(b.Size*4) {
