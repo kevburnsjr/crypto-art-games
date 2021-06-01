@@ -20,14 +20,31 @@ No user
 {{end}}
 </pre>
 {{end}}
+{{$id := .Id}}
 {{if eq .Section "user"}}
-    {{range $k, $v := .RepoUser.All}}
-        {{if or (eq $k "_id") (hasPrefix "twitch" $k)}}
-            <pre>Key: {{$k}}
-Val: 0x{{hex $v}}</pre>
-        {{else}}
-            <pre>Key: 0x{{hex $k}}
-Val: {{pjson $v}}</pre>
+    {{if .Id}}
+    <form id="series" method="POST" action="/debug" class="std">
+        <input type="hidden" name="section" value="{{.Section}}"/>
+        <input type="hidden" name="id" value="{{.Id}}"/>
+        <div class="field">
+            <label>ID: {{.Id}}</label>
+        </div>
+        <div class="field">
+            <textarea name="data">{{pjson .Data}}</textarea>
+        </div>
+        <div class="field submit">
+            <input type="submit" class="submit" name="Submit"/>
+            <a class="cancel" href="?section=user">cancel</a>
+        </div>
+    </form>
+    {{end}}
+    {{range $v := .RepoUser.All}}
+        {{if eq $id $v.IDHex}}
+        <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        {{end}}
+        <a href="?section=user&id={{$v.IDHex}}">{{$v.IDHex}} - {{$v.DisplayName}}</a><br/>
+        {{if eq $id $v.IDHex}}
+        <br/>
         {{end}}
     {{end}}
 {{end}}
@@ -46,7 +63,6 @@ Val: {{pjson $v}}</pre>
             <a class="cancel" href="?section=series">cancel</a>
         </div>
     </form>
-    {{$id := .Id}}
     {{range $v := .RepoGame.AllSeries}}
         {{if eq $id $v.IDHex}}
         <br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -59,6 +75,11 @@ Val: {{pjson $v}}</pre>
 {{end}}
 {{if eq .Section "report"}}
     {{range $v := .RepoReport.All}}
+        <pre>{{pjson $v}}</pre>
+    {{end}}
+{{end}}
+{{if eq .Section "ban"}}
+    {{range $v := .RepoUserBan.All}}
         <pre>{{pjson $v}}</pre>
     {{end}}
 {{end}}

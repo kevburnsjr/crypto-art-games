@@ -2,14 +2,15 @@ package entity
 
 import (
 	"encoding/json"
-	"time"
 )
 
 type Report struct {
-	Timecode uint16    `json:"timecode"`
-	UserID   uint16    `json:"userID"`
-	Date     time.Time `json:"date"`
-	Reason   string    `json:"string"`
+	TargetID uint16 `json:"targetID"`
+	BoardID  uint16 `json:"boardID"`
+	Timecode uint16 `json:"timecode"`
+	UserID   uint16 `json:"userID"`
+	Date     uint32 `json:"date"`
+	Reason   string `json:"string"`
 }
 
 type ReportDto struct {
@@ -19,6 +20,11 @@ type ReportDto struct {
 
 func (u *Report) ToJson() []byte {
 	b, _ := json.Marshal(u)
+	return b
+}
+
+func (u *Report) ToResDto() []byte {
+	b, _ := json.Marshal(ReportDto{*u, "report-success"})
 	return b
 }
 

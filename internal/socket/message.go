@@ -42,7 +42,12 @@ func BinaryMsgFromBytes(channel_id string, b []byte) wsmessage {
 }
 
 func NewJsonRes(data interface{}) *Msg {
-	json_bytes, _ := json.Marshal(data)
+	var json_bytes []byte
+	if d, ok := data.([]byte); ok {
+		json_bytes = d
+	} else {
+		json_bytes, _ = json.Marshal(data)
+	}
 	msg := Msg(wsmessage{websocket.TextMessage, "", json_bytes})
 	return &msg
 }

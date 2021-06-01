@@ -31,6 +31,7 @@ func (f *Frame) UserID() uint16    { return f.getUint16(2) }
 func (f *Frame) TileID() uint16    { return f.getUint8(4) }
 func (f *Frame) Timestamp() uint16 { return f.getUint16(6) }
 func (f *Frame) Timecheck() uint32 { return f.getUint32(8) }
+func (f *Frame) Deleted() bool     { return f.getUint8(5)&4 > 0 }
 
 func (f *Frame) SetTimecode(timecode uint16)   { f.setUint16(0, timecode) }
 func (f *Frame) SetUserID(userID uint16)       { f.setUint16(2, userID) }
@@ -38,6 +39,16 @@ func (f *Frame) SetTimestamp(timestamp uint16) { f.setUint16(6, timestamp) }
 func (f *Frame) SetTimecheck(timecheck uint32) {
 	f.Data = append(f.Data[0:12], f.Data[8:]...)
 	f.setUint32(8, timecheck)
+}
+
+func (f *Frame) SetDeleted(v bool) {
+	if v {
+		f.Data[5] = f.Data[5] | 32
+	} else {
+		if f.Deleted() {
+			f.Data[5] = f.Data[5] ^ 32
+		}
+	}
 }
 
 func (f *Frame) ToBytes() []byte { return f.Data }

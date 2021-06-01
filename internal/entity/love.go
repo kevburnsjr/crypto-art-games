@@ -6,6 +6,7 @@ import (
 )
 
 type Love struct {
+	BoardID  uint16    `json:"boardID"`
 	Timecode uint16    `json:"timecode"`
 	UserID   uint16    `json:"userID"`
 	Date     time.Time `json:"date"`

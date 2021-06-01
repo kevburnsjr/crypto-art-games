@@ -10,9 +10,10 @@ import (
 )
 
 type Report interface {
-	Insert(userID, timecode uint16, reason string, t time.Time) (err error)
+	Insert(report *entity.Report) (err error)
 	All() (reports []*entity.Report, err error)
 	Sweep(t time.Time) (s int, n int, err error)
+	Clear(targetID uint16) (err error)
 }
 
 // NewReport returns a Report repo instance
@@ -34,13 +35,15 @@ type report struct {
 }
 
 // Insert inserts a report
-func (r *report) Insert(userID, timecode uint16, reason string, t time.Time) (err error) {
-	idBytes := make([]byte, 4)
-	binary.BigEndian.PutUint16(idBytes[0:2], timecode)
-	binary.BigEndian.PutUint16(idBytes[2:4], userID)
+func (r *report) Insert(report *entity.Report) (err error) {
+	idBytes := make([]byte, 8)
+	binary.BigEndian.PutUint16(idBytes[0:2], report.TargetID)
+	binary.BigEndian.PutUint16(idBytes[2:4], report.BoardID)
+	binary.BigEndian.PutUint16(idBytes[4:6], report.Timecode)
+	binary.BigEndian.PutUint16(idBytes[6:8], report.UserID)
 	val := make([]byte, 4)
-	binary.BigEndian.PutUint32(val[0:4], uint32(t.Unix()))
-	_, err = r.db.Put(idBytes, "", append(val, []byte(reason)...))
+	binary.BigEndian.PutUint32(val[0:4], report.Date)
+	_, err = r.db.Put(idBytes, "", append(val, []byte(report.Reason)...))
 	return
 }
 
@@ -52,15 +55,35 @@ func (r *report) All() (reports []*entity.Report, err error) {
 		return
 	}
 	for i, val := range vals {
-		if len(keys[i]) != 4 {
+		if len(keys[i]) != 8 {
 			continue
 		}
 		reports = append(reports, &entity.Report{
-			Timecode: binary.BigEndian.Uint16(keys[i][0:2]),
-			UserID:   binary.BigEndian.Uint16(keys[i][2:4]),
-			Date:     time.Unix(int64(binary.BigEndian.Uint32(val[0:4])), 0),
+			TargetID: binary.BigEndian.Uint16(keys[i][0:2]),
+			BoardID:  binary.BigEndian.Uint16(keys[i][2:4]),
+			Timecode: binary.BigEndian.Uint16(keys[i][4:6]),
+			UserID:   binary.BigEndian.Uint16(keys[i][6:8]),
+			Date:     binary.BigEndian.Uint32(val[0:4]),
 			Reason:   string(val[4:]),
 		})
+	}
+	return
+}
+
+// Clear
+func (r *report) Clear(targetID uint16) (err error) {
+	idBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(idBytes[0:2], targetID)
+	iter, err := r.db.PrefixIterator(idBytes)
+	if err != nil {
+		return
+	}
+	defer iter.Release()
+	for iter.Next() {
+		err = r.db.Delete([]byte(iter.Key()), "")
+		if err != nil {
+			break
+		}
 	}
 	return
 }

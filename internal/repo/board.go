@@ -16,6 +16,8 @@ type Board interface {
 	Find(boardId, timecode uint16) (frame *entity.Frame, err error)
 	Insert(boardId uint16, frame *entity.Frame, t time.Time) (timecode uint16, err error)
 	Since(boardId, generation, timecode uint16) (frames []*entity.Frame, err error)
+	Update(boardId uint16, f *entity.Frame) (err error)
+	DeleteUserFramesAfter(boardId, targetID uint16, timestamp uint32) (n int, err error)
 }
 
 // NewBoard returns an Frame repo instance
@@ -98,6 +100,18 @@ func (r *board) Insert(boardId uint16, frame *entity.Frame, t time.Time) (timeco
 	return
 }
 
+// Update updates a frame
+func (r *board) Update(boardId uint16, f *entity.Frame) (err error) {
+	db, err := r.db(boardId)
+	if err != nil {
+		return
+	}
+	tcBytes := make([]byte, 2)
+	binary.BigEndian.PutUint16(tcBytes, f.Timecode())
+	_, err = db.Put(tcBytes, "", f.ToBytes())
+	return
+}
+
 // Checkpoint encoded timestamps
 func (r *board) timeCheck(boardId uint16, frame *entity.Frame, t time.Time) (err error) {
 	db, err := r.db(boardId)
@@ -117,8 +131,8 @@ func (r *board) timeCheck(boardId uint16, frame *entity.Frame, t time.Time) (err
 	var timestamp = t.Truncate(60*time.Second).Unix() - int64(timecheck)
 	if timecheck == 0 || timestamp > math.MaxUint16-1 {
 		timecheck = uint32(t.Truncate(60*time.Second).Unix()) - 60
-		chkBytes = make([]byte, 4)
-		binary.BigEndian.PutUint32(chkBytes, timecheck)
+		chkBytes = append(make([]byte, 4), chkBytes...)
+		binary.BigEndian.PutUint32(chkBytes[0:4], timecheck)
 		_, err = db.Put([]byte("_timecheck"), chkVers, chkBytes)
 		frame.SetTimestamp(0)
 		frame.SetTimecheck(timecheck)
@@ -149,6 +163,49 @@ func (r *board) Since(boardId, generation, timecode uint16) (frames []*entity.Fr
 			Data: b,
 		}
 		frames = append(frames, frame)
+	}
+	return
+}
+
+// DeleteUserFramesAfter removes a users' contributions to the board
+func (r *board) DeleteUserFramesAfter(boardId, targetID uint16, timestamp uint32) (n int, err error) {
+	db, err := r.db(boardId)
+	if err != nil {
+		return
+	}
+	_, chkBytes, err := db.Get([]byte("_timecheck"))
+	if err != nil {
+		if err == errors.RepoItemNotFound {
+			err = nil
+		}
+		return
+	}
+	iter, err := db.PrefixIterator(nil)
+	if err != nil {
+		return
+	}
+	defer iter.Release()
+	var timecheck = binary.BigEndian.Uint32(chkBytes)
+	var checks int
+	var f = &entity.Frame{}
+	for iter.Last(); iter.Valid(); iter.Prev() {
+		f.Data = iter.Value()[16:]
+		if timecheck+uint32(f.Timestamp()) < timestamp {
+			return
+		}
+		if f.UserID() == targetID {
+			f.SetDeleted(true)
+			if err = r.Update(boardId, f); err != nil {
+				return
+			}
+			n++
+		}
+		if f.Timestamp() == 0 {
+			checks++
+			if len(chkBytes) >= checks*4 {
+				timecheck = binary.BigEndian.Uint32(chkBytes[checks*4 : checks*4+4])
+			}
+		}
 	}
 	return
 }

@@ -11,6 +11,7 @@ Game.Nav = (function(g){
     this.showRecentAnimationFrame = null;
     this.recentFrames = document.getElementById("recent-frames");
     this.reportEl = document.getElementById("report");
+    this.modEl = document.getElementById("mod");
     this.flashEl = document.getElementById("flash");
     this.flashTimeout = null;
     this.heartTimeout = null;
@@ -77,6 +78,13 @@ Game.Nav = (function(g){
       e.preventDefault();
       if (e.target.nodeName == "CANVAS") {
         game.board().setFocus(parseInt(e.target.dataset.i), parseInt(e.target.dataset.j));
+        return;
+      }
+      if (e.target.classList.contains("heart")) {
+        e.target = e.target.parentNode;
+      }
+      if (e.target.nodeName == "A" && e.target.classList.contains("love")) {
+        game.getSocket().love(e.target.parentNode.parentNode.dataset.timecode);
       }
     });
     var self = this;
@@ -219,6 +227,75 @@ Game.Nav = (function(g){
       }
       this.recentFramesTimeago();
     });
+  };
+
+  nav.prototype.showMod = function() {
+    window.cancelAnimationFrame(this.showRecentAnimationFrame);
+    this.showRecentAnimationFrame = window.requestAnimationFrame(() => this.doShowMod());
+  };
+
+  nav.prototype.doShowMod = async function() {
+    var users = {};
+    var userIds = [];
+    var targets = {};
+    var targetID = 0;
+    var boardId = 0;
+    var parts = [];
+    var boardStore = {};
+    var frameBytes = {};
+    var f = {};
+    await Game.store().reports.iterate((v, k, i) => {
+      parts = k.split("-");
+      targetID = parseInt(parts[0]);
+      if (!(targetID in targets)) {
+        targets[targetID] = [];
+      }
+      // Append tile number
+      targets[targetID].push(v);
+    });
+    for (var k in targets) {
+      if (!targets.hasOwnProperty(k)) continue;
+      for (let r of targets[k]) {
+        boardStore = Game.Series.boardStore(r.boardID);
+        frameBytes = await boardStore.getItem(r.timecode.toString(16).padStart(4, 0));
+        f = Game.Frame.fromBytes(frameBytes);
+        r.tileNum = f.ti*16 + f.tj%16;
+      }
+    }
+    var userReports = [];
+    for (var k in targets) {
+      if (targets.hasOwnProperty(k)) {
+        userReports.push([k, targets[k]]);
+      }
+    }
+    var uids = {};
+    userReports.sort((a, b) => a[1].length > b[1].length ? 1 : (a[1].length < b[1].length ? -1 : 0)).slice(0, 10);
+    userReports.forEach((a, i) => {
+      uids[a[0]] = true;
+      for (let r of a[1]) {
+        uids[r.userID] = true;
+      }
+    });
+    for (var k in uids) {
+      userIds.push(parseInt(k));
+    }
+    for (let u of await g.User.findAll(userIds)) {
+      if (!u) continue;
+      users[u.id] = u;
+    }
+    var r;
+    var html = "<ul>";
+    var targetName = "";
+    for(let a of userReports) {
+      r = a[1];
+      html += `<li data-target-id="users[r[0]?.targetID]?.id"><h4>${users[r[0]?.targetID]?.display_name} (${r.length})</h4>`;
+      for (let r1 of r) {
+        html += `<a href="#${r1.boardID}:${r1.tileNum}:0:3:1">${r1.boardID}.${r1.tileNum}</a>`;
+      }
+      html += `</li>`;
+    }
+    html += "</ul>";
+    this.modEl.innerHTML = html;
   };
 
   nav.prototype.showSeries = function(series) {

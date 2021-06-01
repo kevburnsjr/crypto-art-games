@@ -188,7 +188,7 @@ func (c oauth) getUser(r *http.Request, w http.ResponseWriter) (*entity.User, er
 		if len(resp.Data.Users) > 0 {
 			user := entity.UserFromHelix(resp.Data.Users[0], c.cfg.Secret)
 			if user.Policy {
-				user, err = c.repoUser.Update(user)
+				user, err = c.repoUser.UpdateProfile(user)
 				if err != nil {
 					return nil, err
 				}

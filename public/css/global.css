@@ -83,6 +83,10 @@ aside#left #series h4 { clear: left; padding: 0 0.25em 0.5em; }
 aside#left #series a { float: left; padding: 0.25em; }
 aside#left #series img { width: 3.6em; height: 3.6em; float: left; }
 aside#left #series { float: left; }
+aside#left #mod-toggle { display: none; }
+body.mod aside#left #mod-toggle { display: inline-block; }
+aside#left #mod h4 { margin-bottom: 0.5em; }
+aside#left #mod a { padding: 0.1em 0.2em 0.15em; margin: 0 0 0.2em 0.2em; background: rgba(0,0,0,0.2); display: inline-block; line-height: 1.1em; font-size: 0.8em; color: rgba(255,255,255,0.5);}
 
 #report { display: none; position: absolute; background: rgba(64,64,64,0.9); z-index: 1002; right: 0; width: 18em; }
 #report a { padding: 0 1em; display: block; line-height: 2em; width: 4em; float: right; clear: right; }
@@ -93,8 +97,8 @@ aside#left #series { float: left; }
 #flash { position: absolute; top: 0; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.9); z-index: 1000; display: none; padding-top: 2em; }
 #flash.active { display: block; }
 #flash span { display: inline-block; padding: 0.5em 1.5em; line-height: 1.5em; font-size: 1.5em; border-radius: 1.25em; box-shadow: 0 5px 5px rgba(0,0,0,0.1); text-shadow: 0 0 2px rgb(0 0 0 / 70%); }
-#flash span.success { background: #080; }
-#flash span.error { background: #a00; }
+#flash span.success { background: rgba(0,128,0,0.9); }
+#flash span.error { background: rgba(192,0,0,0.9); }
 
 nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); display: none; }
 
@@ -192,35 +196,35 @@ form.std .cta.c { margin-bottom: 1.5em; }
 
 /* 320 */
 @media (max-width: 479px) {
-    body { font-size: 0.7em; }
+    #container { font-size: 0.7em; }
 }
 
 /* 480 */
 @media (min-width: 480px) and (max-width: 639px) {
-    body { font-size: 0.7em; }
+    #container { font-size: 0.7em; }
 }
 
 /* 640 */
 @media (min-width: 640px) and (max-width: 767px) {
-    body { font-size: 0.8em; }
+    #container { font-size: 0.8em; }
 }
 
 /* 768 */
 @media (min-width: 768px) and (max-width: 1025px) {
-    body { font-size: 0.9em; }
+    #container { font-size: 0.9em; }
 }
 
 /* 1024 */
 @media (min-width: 1025px) and (max-width: 1259px) {
-    body { font-size: 1.0em; }
+    #container { font-size: 1.0em; }
 }
 
 /* 1280 */
 @media (min-width: 1260px)  and (max-width: 1599px) {
-    body { font-size: 1.1em; }
+    #container { font-size: 1.1em; }
 }
 
 /* 1600 */
 @media (min-width: 1600px)/*  and (max-width: 1659px) */ {
-    body { font-size: 1.2em; }
+    #container { font-size: 1.2em; }
 }

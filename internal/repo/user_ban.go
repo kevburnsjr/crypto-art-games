@@ -10,8 +10,9 @@ import (
 )
 
 type UserBan interface {
-	Insert(userBan *entity.UserBan) (uint16, error)
+	Insert(userBan *entity.UserBan) (err error)
 	Since(index uint16) (userBans []*entity.UserBan, err error)
+	All() (all []*entity.UserBan, err error)
 }
 
 // NewUserBan returns a UserBan repo instance
@@ -33,7 +34,8 @@ type userBan struct {
 }
 
 // Insert inserts a userBan
-func (r *userBan) Insert(userBan *entity.UserBan) (id uint16, err error) {
+func (r *userBan) Insert(userBan *entity.UserBan) (err error) {
+	var id uint16
 	idVers, idBytes, err := r.db.Get([]byte("_id"))
 	if err == errors.RepoItemNotFound {
 		id = uint16(1)
@@ -70,6 +72,22 @@ func (r *userBan) Since(id uint16) (userBans []*entity.UserBan, err error) {
 			continue
 		}
 		userBans = append(userBans, entity.UserBanFromJson(b))
+	}
+	return
+}
+
+// All returns all records from the table
+func (r *userBan) All() (all []*entity.UserBan, err error) {
+	iter, err := r.db.PrefixIterator(nil)
+	if err != nil {
+		return
+	}
+	defer iter.Release()
+	for iter.Next() {
+		c := entity.UserBanFromJson(iter.Value()[16:])
+		if c != nil {
+			all = append(all, c)
+		}
 	}
 	return
 }

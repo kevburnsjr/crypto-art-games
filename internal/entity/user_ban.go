@@ -2,15 +2,17 @@ package entity
 
 import (
 	"encoding/json"
-	"time"
 )
 
 type UserBan struct {
-	ID      uint16    `json:"ID"`
-	UserID  uint16    `json:"userID"`
-	Timeout time.Time `json:"timeout"`
-	Band    bool      `json:"ban"`
-	UnBan   bool      `json:"unban"`
+	ID       uint16 `json:"ID"`
+	ModID    uint16 `json:"modID"`
+	TargetID uint16 `json:"TargetID"`
+	Since    uint32 `json:"since"`
+	Until    uint32 `json:"until"`
+	Ban      bool   `json:"ban"`
+	UnBan    bool   `json:"unban"`
+	Reason   string `json:"reason"`
 }
 
 type UserBanDto struct {

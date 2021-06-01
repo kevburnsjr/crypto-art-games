@@ -108,12 +108,33 @@ func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Location", `/debug?section=`+section+`&id=`+id)
 			w.WriteHeader(302)
 			return
+		case "user":
+			id = r.FormValue("id")
+			data = r.FormValue("data")
+			user := entity.UserFromJson([]byte(data))
+			if user == nil {
+				println("invalid series")
+				break
+			}
+			if id == "" {
+				break
+			} else {
+				c.repoUser.Update(user)
+			}
+			w.Header().Set("Location", `/debug?section=`+section+`&id=`+id)
+			w.WriteHeader(302)
+			return
 		}
 	}
 	if len(id) > 0 {
 		switch section {
 		case "series":
 			s, err := c.repoGame.FindSeries(id)
+			if err == nil {
+				data = string(s.ToJson())
+			}
+		case "user":
+			s, err := c.repoUser.FindByUserIDStr(id)
 			if err == nil {
 				data = string(s.ToJson())
 			}

@@ -286,6 +286,7 @@ Game.Board = (function(g){
       if (frame) {
         self.undo.push(frame.timecode);
       }
+      Game.nav().flash("success", "Changes saved");
       self.uiDirty = true;
     }) : Promise.resolve();
   };
@@ -330,10 +331,6 @@ Game.Board = (function(g){
 
   board.prototype.setTimecode = async function(tc) {
     return this.store.setItem("timecode", tc.toString(16).padStart(4, 0));
-  };
-
-  board.prototype.setUserIdx = async function(userIdx) {
-    return this.store.setItem("userIdx", userIdx.toString(16).padStart(4, 0));
   };
 
   board.prototype.saveFrame = async function(f) {
@@ -387,8 +384,6 @@ Game.Board = (function(g){
       self.tiles[f.ti][f.tj].frames.push(f);
     }).then(() => {
       self.setTimecode(timecode);
-    }).then(() => {
-      self.setUserIdx(userIdx);
     }).then(() => {
       g.nav().updateScrubber(timecode);
       g.nav().showRecent(this);

@@ -7,7 +7,7 @@
     <link href="/css/font.css" rel="stylesheet"></link>
     <link href="/css/global.css" rel="stylesheet"></link>
     <title>Crypto Art Games - Pixel Compactor</title>
-</head><body>
+</head><body><div id="container">
 <nav class="user">
     <div class="healthbar ltr" id="healthbar"></div>
 </nav>
@@ -21,6 +21,7 @@
     <nav>
         <a id="help-toggle" data-toggle="help"><em>H</em></a>
         <a id="series-toggle" data-toggle="series"><em>B</em></a>
+        <a id="mod-toggle" data-toggle="mod"><em>M</em></a>
     </nav>
     <div id="help">
         <em>Click</em> edit tile<br/>
@@ -42,8 +43,8 @@
         <em>H</em> toggle help<br/>
         <em>B</em> toggle board menu<br/>
     </div>
-    <div id="series">
-    </div>
+    <div id="series"></div>
+    <div id="mod"></div>
 </aside>
 <aside id="right">
     <nav>
@@ -139,4 +140,4 @@
 {{if .Test}}
 <script src="/js/test.js"></script>
 {{end}}
-</body></html>
+</div></body></html>

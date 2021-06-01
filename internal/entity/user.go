@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -54,6 +55,10 @@ func (u *User) GetBucket(boardID uint16) *UserBucket {
 		u.Buckets[boardID] = NewUserBucket(time.Now())
 	}
 	return u.Buckets[boardID]
+}
+
+func (u *User) IDHex() string {
+	return fmt.Sprintf("%04x", u.UserID)
 }
 
 func UserFromJson(b []byte) *User {

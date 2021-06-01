@@ -103,9 +103,12 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	channels := []string{"global"}
+	channels := []string{"global", "bans"}
 	if user != nil && user.Policy {
 		channels = append(channels, "user-"+strconv.Itoa(int(user.UserID)))
+		if user.Mod {
+			channels = append(channels, "reports")
+		}
 	}
 
 	conn := sock.CreateConnection(channels, ws)
@@ -113,7 +116,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Client thinks it's authed but user doesn't exist. Destroy session.
 	if user != nil && user.Policy && !found {
 		c.log.Errorf("User not found")
-		conn.Write(sock.JsonMessage("global", map[string]interface{}{
+		conn.Write(sock.JsonMessage("", map[string]interface{}{
 			"type": "logout",
 		}))
 		return
@@ -133,10 +136,49 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	banIdxInt, _ := strconv.Atoi(r.FormValue("banIdx"))
+	userIdxInt, _ := strconv.Atoi(r.FormValue("userIdx"))
+	var (
+		reportIdx = 0
+		banIdx    = uint16(banIdxInt)
+		userIdx   = uint16(userIdxInt)
+	)
+
+	// Sync new reports for mods
+	var reports []*entity.Report
+	if user != nil && user.Mod {
+		reports, err = c.repoReport.All()
+	}
+	for _, r := range reports {
+		conn.Write(sock.TextMsgFromBytes("", r.ToDto()))
+	}
+
+	// Sync new user bans
+	userBans, err := c.repoUserBan.Since(banIdx)
+	for _, b := range userBans {
+		conn.Write(sock.TextMsgFromBytes("", b.ToDto()))
+		banIdx = b.ID
+	}
+
+	// Sync new users
+	users, userIds, err := c.repoUser.Since(userIdx, 0)
+	if err != nil {
+		c.log.Errorf("%v", err)
+		http.Error(w, "Unable to retrieve new users", 500)
+		return
+	}
+	for i, user := range users {
+		conn.Write(sock.TextMsgFromBytes("", user.ToDto(userIds[i])))
+		userIdx = user.UserID
+	}
+
 	conn.Write(sock.JsonMessage("", map[string]interface{}{
 		"type":   "init",
 		"v":      fmt.Sprintf("%016x", v),
 		"user":   user,
+		"userIdx":  userIdx,
+		"banIdx":  banIdx,
+		"reportIdx":  reportIdx,
 		"series": series,
 	}))
 
@@ -160,6 +202,17 @@ func (c socket) auth(user *entity.User) (err error) {
 	}
 	if user.Banned {
 		err = fmt.Errorf("User banned")
+		return
+	}
+	return nil
+}
+
+func (c socket) authMod(user *entity.User) (err error) {
+	if err = c.auth(user); err != nil {
+		return
+	}
+	if !user.Mod {
+		err = fmt.Errorf("Unauthorized")
 		return
 	}
 	return nil
@@ -234,26 +287,6 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				// Insert frame redo
 				// Mark frame unhidden
 				// Broadcast frame update
-			case "report":
-				if err = c.auth(user); err != nil {
-					return
-				}
-				var timecode = uint16(m["timecode"].(float64))
-				var reason = m["reason"].(string)
-				if _, err = c.repoBoard.Find(boardId, timecode); err != nil {
-					return
-				}
-				if err = c.repoReport.Insert(user.UserID, timecode, reason, time.Now()); err != nil {
-					return
-				}
-				res = sock.NewJsonRes(map[string]interface{}{
-					"type":     "report",
-					"timecode": timecode,
-					"userID":   user.UserID,
-					"reason":   reason,
-				})
-				c.hub.Broadcast(res.Raw("reports"))
-				return
 			case "love":
 				if err = c.auth(user); err != nil {
 					return
@@ -264,7 +297,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err != nil {
 					return
 				}
-				if err = c.repoLove.Insert(user.UserID, timecode, time.Now()); err != nil {
+				if err = c.repoLove.Insert(boardId, timecode, user.UserID, time.Now()); err != nil {
 					return
 				}
 				res = sock.NewJsonRes(map[string]interface{}{
@@ -275,11 +308,96 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				c.hub.Broadcast(res.Raw("user-" + f.UserIDHex()))
 				c.hub.Broadcast(res.Raw(boardChannel))
 				return
-			case "report-clear":
+			case "report":
 				if err = c.auth(user); err != nil {
 					return
 				}
-				// Clear report
+				var timecode = uint16(m["timecode"].(float64))
+				var reason = m["reason"].(string)
+				var f *entity.Frame
+				if f, err = c.repoBoard.Find(boardId, timecode); err != nil {
+					return
+				}
+				var report = &entity.Report{
+					TargetID: f.UserID(),
+					BoardID:  boardId,
+					Timecode: timecode,
+					UserID:   user.UserID,
+					Date:     uint32(time.Now().Unix()),
+					Reason:   reason,
+				}
+				if err = c.repoReport.Insert(report); err != nil {
+					return
+				}
+				res = sock.NewJsonRes(report.ToResDto())
+				c.hub.Broadcast(sock.NewJsonRes(report.ToDto()).Raw("reports"))
+				return
+			case "report-clear":
+				if err = c.authMod(user); err != nil {
+					return
+				}
+				var targetID = uint16(m["targetID"].(float64))
+				if err = c.repoReport.Clear(targetID); err != nil {
+					return
+				}
+			case "user-ban":
+				if err = c.authMod(user); err != nil {
+					return
+				}
+				var (
+					targetID        = uint16(m["targetID"].(float64))
+					since           = uint32(m["since"].(float64))
+					reason          = m["reason"].(string)
+					timeout         = m["timeout"].(string)
+					ban             = m["ban"].(bool)
+					timeoutDuration time.Duration
+				)
+				if timeoutDuration, err = time.ParseDuration(timeout); err != nil && len(timeout) > 0 {
+					return
+				}
+				var target *entity.User
+				if target, err = c.repoUser.FindByUserID(targetID); err != nil {
+					return
+				}
+				var userBan = entity.UserBan{
+					ModID:    user.UserID,
+					TargetID: targetID,
+					Reason:   reason,
+					Since:    since,
+					Until:    uint32(time.Now().Add(timeoutDuration).Unix()),
+					Ban:      ban,
+				}
+				if err = c.repoUserBan.Insert(&userBan); err != nil {
+					return
+				}
+				if ban {
+					target.Banned = true
+				} else {
+					target.Banned = false
+					target.Timeout = time.Now().Add(timeoutDuration)
+				}
+				if err = c.repoUser.Update(target); err != nil {
+					return
+				}
+				var n int
+				var del int
+				var allSeries entity.SeriesList
+				if allSeries, err = c.repoGame.AllSeries(); err != nil {
+					return
+				}
+				for _, s := range allSeries {
+					for _, b := range s.Boards {
+						if n, err = c.repoBoard.DeleteUserFramesAfter(b.ID, targetID, since); err != nil {
+							return
+						}
+						del += n
+					}
+				}
+				if err = c.repoReport.Clear(targetID); err != nil {
+					return
+				}
+				res = sock.NewJsonRes(userBan.ToDto())
+				c.hub.Broadcast(res.Raw("bans"))
 			case "err-storage":
 				if err = c.auth(user); err != nil {
 					return
@@ -288,20 +406,9 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err != nil {
 					return
 				}
-			case "user-ban":
-				if err = c.auth(user); err != nil {
-					return
-				}
-				// Authorize user
-				// Ban user on twitch
-				// Insert ban
-				// Mark user timed out
-				// Mark relevant frames hidden
-				// Broadcast user ban
 			case "board-init":
 				var (
 					id         = uint16(m["boardId"].(float64))
-					userIdx    = uint16(m["userIdx"].(float64))
 					generation = uint16(m["generation"].(float64))
 					timecode   = uint16(m["timecode"].(float64))
 				)
@@ -315,16 +422,6 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				}
 				channels = append(channels, boardChannel)
 				c.hub.Update(conn, channels)
-				// Sync new users
-				users, userIds, err2 := c.repoUser.Since(userIdx, generation)
-				if err2 != nil {
-					err = err2
-					return
-				}
-				for i, user := range users {
-					conn.Write(sock.TextMsgFromBytes("global", user.ToDto(userIds[i])))
-					userIdx = user.UserID
-				}
 				// Sync new frames
 				frames, err2 := c.repoBoard.Since(boardId, generation, timecode)
 				if err2 != nil {
@@ -340,7 +437,6 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				conn.Write(sock.JsonMessage(boardChannel, map[string]interface{}{
 					"type":     "board-init-complete",
 					"timecode": timecode,
-					"userIdx":  userIdx,
 					"bucket":   bucket,
 				}))
 			}

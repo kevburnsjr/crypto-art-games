@@ -25,7 +25,7 @@ var Game = (function(g){
   var policy;
   var boardId = 0;
   var store = {};
-  const stores = ["global", "user", "ui"];
+  const stores = ["global", "user", "ui", "reports", "bans"];
 
   var createStores = async function() {
     stores.map((name) => store[name] = localforage.createInstance({name: "Game", storeName: name}));
@@ -53,18 +53,23 @@ var Game = (function(g){
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
     var userID = null;
+    var banIdx    = parseInt(await store.global.getItem("banIdx"), 16) || 0;
+    var userIdx   = parseInt(await store.global.getItem("userIdx"), 16) || 0;
+    var reportIdx = parseInt(await store.global.getItem("reportIdx"), 16) || 0;
     // initiate websocket
     socket = new Game.socket({
       initializing: false,
       awaiting: null,
+      boardChangeCallback: null,
       url: function() {
-        return `/socket`;
+        return `/socket?banIdx=${banIdx}&userIdx=${userIdx}&reportIdx=${reportIdx}`;
       },
-      changeBoard: async function(id) {
+      changeBoard: async function(id, callback) {
         if (socket.initializing || (board && board.id == id)) {
           return Promise.resolve();
         }
         socket.initializing = true;
+        socket.boardChangeCallback = callback ? callback : null;
         return Game.Series.findActiveBoard(id).then(async b => {
           board = b;
           boardId = board.id;
@@ -72,11 +77,9 @@ var Game = (function(g){
           socket.send(JSON.stringify({
             type:       'board-init',
             boardId:    boardId,
-            userIdx:    parseInt(await board.store.getItem("userIdx"),    16) || 0,
             generation: parseInt(await board.store.getItem("generation"), 16) || 0,
             timecode:   parseInt(await board.store.getItem("timecode"),   16) || 0
           }));
-          setHash();
         }).catch((e) => log("Failed to load board", id, e));
       },
       sendFrame: function(f) {
@@ -165,13 +168,31 @@ var Game = (function(g){
             reject();
             return
           }
-          socket.once(['report'], function(e) {
+          socket.once(['report-success'], function(e) {
             if (e.userID == userID){
               nav.flash("success", `${user.display_name} reported for ${reason}`, 1500);
               resolve();
             }
           });
-          socket.send(JSON.stringify({type:'report', timecode: parseInt(timecode), reason: reason}));
+          socket.send(JSON.stringify({type:'report', boardId: board.id, timecode: parseInt(timecode), reason: reason}));
+        });
+      },
+      love: async function(timecode) {
+        var f = board.frames[timecode];
+        const user = await Game.User.find(f.userid);
+        return new Promise((resolve, reject) => {
+          if (userID == null) {
+            nav.showLoginModal();
+            reject();
+            return
+          }
+          socket.once(['love'], function(e) {
+            if (e.userID == userID){
+              nav.flash("success", `Liked contribution from ${user.display_name}`, 1500);
+              resolve();
+            }
+          });
+          socket.send(JSON.stringify({type:'love', boardId: board.id, timecode: parseInt(timecode)}));
         });
       },
       errStorage: async function() {
@@ -196,8 +217,12 @@ var Game = (function(g){
     socket.on('board-init-complete', async (e) => {
       if (board != null) {
         nav.showHeart(e.bucket);
-        await board.enable(e.timecode, e.userIdx);
+        await board.enable(e.timecode);
         socket.initializing = false;
+      }
+      if (socket.boardChangeCallback != null) {
+        socket.boardChangeCallback(board);
+        socket.boardChangeCallback = null;
       }
     });
     socket.on('new-user', function(e) {
@@ -206,6 +231,10 @@ var Game = (function(g){
     });
     socket.on('logout', function(e) {
       window.location.href = "/logout";
+    });
+    socket.on('report', function(e) {
+      store.reports.setItem([e.targetID, e.boardID, e.timecode, e.userID].join("-"), e);
+      nav.showMod();
     });
     socket.on('init', async function(e) {
       return new Promise((resolve, reject) => {
@@ -222,11 +251,23 @@ var Game = (function(g){
           userID = e.user.userID;
           policy = e.user.policy;
         }
+        // processBans(banIdx, e.banIdx);
+        nav.showMod();
+        store.global.setItem("banIdx", e.banIdx.toString(16).padStart(4, 0));
+        store.global.setItem("userIdx", e.userIdx.toString(16).padStart(4, 0));
+        store.global.setItem("reportIdx", e.reportIdx.toString(16).padStart(4, 0));
+        banIdx = e.banIdx;
+        userIdx = e.userIdx;
+        reportIdx = e.reportIdx;
         nav.init(e.user);
         if (e.user && e.user.id != null) {
           if(!policy) {
             nav.showPolicyModal();
+            return;
           }
+        }
+        if (e.user.mod) {
+          document.body.classList.add("mod")
         }
         if (!e.series) {
           log("Series missing from init", e);
@@ -234,7 +275,7 @@ var Game = (function(g){
         }
         Game.Series.init(e.series);
         nav.showSeries(Game.Series.list());
-        socket.changeBoard(boardId);
+        socket.changeBoard(boardId, (board => board.setFocus(Math.floor(tile/16), tile%16)));
         resolve();
       });
     });
@@ -279,14 +320,24 @@ var Game = (function(g){
     h = window.innerHeight;
     if(window.location.hash) {
       const parts = window.location.hash.substr(1).split(':');
-      boardId = parseInt(parts[0]);
-      tile    = parseInt(parts[1]);
-      color   = parseInt(parts[2]);
-      zoom    = parseInt(parts[3]);
-      focused = parts[4] == "1";
+      if (parts.length > 0) boardId = parseInt(parts[0]);
+      if (parts.length > 1) tile    = parseInt(parts[1]);
+      if (parts.length > 2) color   = parseInt(parts[2]);
+      if (parts.length > 3) zoom    = Math.max(parseInt(parts[3] != undefined ? parts[3] : 0), 1);
+      if (parts.length > 4) focused = parts[4] == "1";
       if (board && board.id != boardId) {
-        socket.changeBoard(boardId);
+        socket.changeBoard(boardId, (board) => {
+          // console.log(Math.floor(tile/16), tile%16);
+          board.setFocus(Math.floor(tile/16), tile%16);
+        });
+      } else if (board) {
+        if (focused) {
+          board.setFocus(Math.floor(tile/16), tile%16);
+        } else {
+          board.cancelFocus();
+        }
       }
+      console.log(boardId, tile, color, zoom, focused);
     }
     window.cancelAnimationFrame(animationFrame);
     draw();
@@ -650,11 +701,11 @@ var Game = (function(g){
 
   var setHash = function() {
     window.location.assign(window.location.href.split("#")[0] + "#" + [
-      board.id,
-      board.getTileID(),
-      board.palette.color,
+      board ? board.id : boardId,
+      board ? board.getTileID() : tile,
+      board ? board.palette.color : color,
       zoom,
-      board.focused?1:0,
+      (board ? board.focused : focused)?1:0,
     ].join(':'));
   };
 
@@ -669,7 +720,6 @@ var Game = (function(g){
   var setColor = function() {
     document.getElementById("brush-state").style.display = "block";
     document.getElementById("brush-state").style.backgroundColor = board.palette.getColor();
-    setHash();
   };
 
   var log = function() {

@@ -103,8 +103,8 @@ func (w *leveldbDriver) GetRanged(start []byte, limit int, reverse bool) (keys [
 	return
 }
 
-func (w *leveldbDriver) PrefixIterator(prefix string) (Iterator, error) {
-	return leveldb_iterator{w.db.NewIterator(util.BytesPrefix([]byte(prefix)), nil)}, nil
+func (w *leveldbDriver) PrefixIterator(prefix []byte) (Iterator, error) {
+	return leveldb_iterator{w.db.NewIterator(util.BytesPrefix(prefix), nil)}, nil
 }
 
 func (w *leveldbDriver) Close() error {
@@ -117,6 +117,18 @@ type leveldb_iterator struct {
 
 func (i leveldb_iterator) Seek(key string) bool {
 	return i.iter.Seek([]byte(key))
+}
+func (i leveldb_iterator) Valid() bool {
+	return i.iter.Valid()
+}
+func (i leveldb_iterator) First() bool {
+	return i.iter.First()
+}
+func (i leveldb_iterator) Last() bool {
+	return i.iter.First()
+}
+func (i leveldb_iterator) Prev() bool {
+	return i.iter.Prev()
 }
 func (i leveldb_iterator) Next() bool {
 	return i.iter.Next()

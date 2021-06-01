@@ -58,10 +58,11 @@ func (r *game) Version() (v uint64, err error) {
 
 // ActiveSeries retrieves a list of all active series
 func (r *game) ActiveSeries() (all entity.SeriesList, err error) {
-	iter, err := r.db.PrefixIterator("series-")
+	iter, err := r.db.PrefixIterator([]byte("series-"))
 	if err != nil {
 		return
 	}
+	defer iter.Release()
 	for iter.Next() {
 		c := entity.SeriesFromJson(iter.Value()[16:])
 		if c == nil || !c.Active {
@@ -74,10 +75,11 @@ func (r *game) ActiveSeries() (all entity.SeriesList, err error) {
 
 // AllSeries retrieves a list of all seriess
 func (r *game) AllSeries() (all entity.SeriesList, err error) {
-	iter, err := r.db.PrefixIterator("series-")
+	iter, err := r.db.PrefixIterator([]byte("series-"))
 	if err != nil {
 		return
 	}
+	defer iter.Release()
 	for iter.Next() {
 		c := entity.SeriesFromJson(iter.Value()[16:])
 		if c == nil {
