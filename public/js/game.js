@@ -35,7 +35,7 @@ var Game = (function(g){
   var start = async function(bgCanvasElem, uiCanvasElem, paletteElem, leftNavElem, rightNavElem, botNavElem, scrubberElem, modalElem) {
     await createStores();
     bgElem = bgCanvasElem;
-    bgCtx = bgElem.getContext('2d', { alpha: false });
+    bgCtx = bgElem.getContext('2d', { alpha: true });
     uiElem = uiCanvasElem;
     uiCtx = uiElem.getContext('2d', { alpha: true });
     nav = new Game.Nav(Game, store.ui, leftNavElem, rightNavElem, botNavElem, scrubberElem, modalElem);
@@ -310,8 +310,7 @@ var Game = (function(g){
       uiDirty = true;
     }
     if (dirty || board.dirty) {
-      bgCtx.fillStyle = bgcolor;
-      bgCtx.fillRect(0, 0, w, h);
+      bgCtx.clearRect(0, 0, w, h);
     }
     if (uiDirty || board.uiDirty) {
       uiCtx.clearRect(0, 0, w, h);
@@ -478,7 +477,6 @@ var Game = (function(g){
       document.body.classList.remove("editing");
     }
     if (k == "0" || k == "numpad0") {
-      e.preventDefault();
       zoom = 3;
       board.cancelFocus();
       setZoom();

@@ -23,7 +23,7 @@ type index struct {
 func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stdHeaders(w)
 	if r.URL.Path == "/" {
-		w.Header().Set("Location", "/1")
+		w.Header().Set("Location", "/pixel-compactor")
 		w.WriteHeader(302)
 		return
 	}
