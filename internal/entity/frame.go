@@ -43,6 +43,7 @@ func (f *Frame) SetTimecheck(timecheck uint32) {
 
 func (f *Frame) SetDeleted(v bool) {
 	if v {
+		fmt.Printf("%v %08b %08b\n", f.Deleted(), f.Data[5], f.Data[5] | 32)
 		f.Data[5] = f.Data[5] | 32
 	} else {
 		if f.Deleted() {

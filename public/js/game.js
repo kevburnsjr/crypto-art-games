@@ -174,7 +174,17 @@ var Game = (function(g){
               resolve();
             }
           });
-          socket.send(JSON.stringify({type:'report', boardId: board.id, timecode: parseInt(timecode), reason: reason}));
+          socket.send(JSON.stringify({type:'report', boardId: board.id, date: f.date, timecode: parseInt(timecode), reason: reason}));
+        });
+      },
+      clearReports: async function(targetID) {
+        return new Promise((resolve, reject) => {
+          socket.send(JSON.stringify({type:'report-clear', targetID: parseInt(targetID)}));
+        });
+      },
+      userBan: async function(targetID, date, duration) {
+        return new Promise((resolve, reject) => {
+          socket.send(JSON.stringify({type:'user-ban', targetID: parseInt(targetID), since: parseInt(date), duration: duration}));
         });
       },
       love: async function(timecode) {
@@ -236,6 +246,41 @@ var Game = (function(g){
       store.reports.setItem([e.targetID, e.boardID, e.timecode, e.userID].join("-"), e);
       nav.showMod();
     });
+    socket.on('report-clear', async function(e) {
+      var toRemove = [];
+      await store.reports.iterate((v, k, i) => {
+        if (k.split("-")[0] == e.targetID) {
+          toRemove.push(k);
+        }
+      });
+      for (let k of toRemove) {
+        await store.reports.removeItem(k);
+      }
+      nav.showMod();
+    });
+    socket.on('user-ban', async function(e) {
+      const board = Game.board();
+      var bans;
+      var boardStore;
+      for (let s of Game.Series.list()) {
+        for (let b of s.boards) {
+          if (board && board.id == b.id) {
+            await board.applyUserBan(e);
+            nav.showRecent(board);
+            continue;
+          }
+          boardStore = Game.Series.boardStore(b.id);
+          bans = await boardStore.getItem("_bans");
+          if (bans == null) {
+            bans = [];
+          }
+          bans.push(e);
+          await boardStore.setItem("_bans", bans);
+        }
+      }
+
+      nav.showMod();
+    });
     socket.on('init', async function(e) {
       return new Promise((resolve, reject) => {
         checkVersion(e.v).catch((d) => {
@@ -266,7 +311,7 @@ var Game = (function(g){
             return;
           }
         }
-        if (e.user.mod) {
+        if (e.user && e.user.mod) {
           document.body.classList.add("mod")
         }
         if (!e.series) {
@@ -275,7 +320,11 @@ var Game = (function(g){
         }
         Game.Series.init(e.series);
         nav.showSeries(Game.Series.list());
-        socket.changeBoard(boardId, (board => board.setFocus(Math.floor(tile/16), tile%16)));
+        socket.changeBoard(boardId, board => {
+          if (focused) {
+            board.setFocus(Math.floor(tile/16), tile%16);
+          }
+        });
         resolve();
       });
     });
@@ -337,7 +386,6 @@ var Game = (function(g){
           board.cancelFocus();
         }
       }
-      console.log(boardId, tile, color, zoom, focused);
     }
     window.cancelAnimationFrame(animationFrame);
     draw();
@@ -380,7 +428,7 @@ var Game = (function(g){
   };
 
   var setTimecode = function(tc) {
-    board.timecode = tc;
+    board.timecode = Math.max(tc, 0);
   };
 
   // ----------------- Input Functions -------------------
@@ -723,7 +771,7 @@ var Game = (function(g){
   };
 
   var log = function() {
-    if ("console" in window) {wwd
+    if ("console" in window) {
       console.trace(...arguments);
     }
   };

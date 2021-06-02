@@ -47,14 +47,21 @@ Game.Frame = (function(g){
     this.mask = this.mask.slice(0, n);
   };
 
+  frame.prototype.resamplePrev = function(tile) {
+    for (var i in tile.buffer) {
+      for (var j in tile.buffer[i]) {
+        if (tile.buffer[i][j] != null) {
+          this.prev.push(tile.px[i][j]);
+        }
+      }
+    }
+  }
+
   // Dictionary encoding (color indeces)
   // Bit mask encoding   (alpha channel)
   // Run length encoding (mask and colors)
   // Offset encoding     (timestamp / timecheck)
   frame.prototype.toBytes = function() {
-    if (this.data) {
-      return this.data
-    }
     var o = 0;
     var b = new BitSet();
     var bs = n => b.set(o++, parseInt(n));
@@ -64,7 +71,7 @@ Game.Frame = (function(g){
     append(8, this.ti*16 + this.tj);
     append(4, 0 + (this.colorCount-1));
     append(1, 0 + (this.colors.length >= 32)); // headerflag_useMask
-    append(1, 0 + (this.deleted)); // headerflag_deleted
+    append(1, this.deleted ? 1 : 0); // headerflag_deleted
     append(1, 0); // headerflag_runLengthEncodedMask
     append(1, 0); // headerflag_runLengthEncodedColorTable
     append(16, this.timestamp);

@@ -86,7 +86,8 @@ aside#left #series { float: left; }
 aside#left #mod-toggle { display: none; }
 body.mod aside#left #mod-toggle { display: inline-block; }
 aside#left #mod h4 { margin-bottom: 0.5em; }
-aside#left #mod a { padding: 0.1em 0.2em 0.15em; margin: 0 0 0.2em 0.2em; background: rgba(0,0,0,0.2); display: inline-block; line-height: 1.1em; font-size: 0.8em; color: rgba(255,255,255,0.5);}
+aside#left #mod a { padding: 0.1em 0.2em 0.15em; margin: 0 0.5em 0.25em 0; background: rgba(0,0,0,0.2); display: inline-block; line-height: 1.1em; font-size: 0.9em; color: rgba(255,255,255,0.5);
+    border-radius: 0.25em; }
 
 #report { display: none; position: absolute; background: rgba(64,64,64,0.9); z-index: 1002; right: 0; width: 18em; }
 #report a { padding: 0 1em; display: block; line-height: 2em; width: 4em; float: right; clear: right; }
@@ -147,6 +148,8 @@ body.erasing canvas.full { cursor: url(/i/cursor-eraser.png) 5 5, cell; }
 #modal form label { cursor: pointer; font-size: 1em; text-align: left; }
 #modal.policy .policy { display: block; }
 #modal.policy .policy a { color: #000; text-decoration: underline; }
+#modal.timeout .timeout { display: block; }
+#modal.report-clear .report-clear { display: block; }
 
 form.std { padding: 1em; box-shadow: 0 0 1em rgba(0,0,0,0.1); }
 form.std .field { padding: 0.5em 0.5em; }
@@ -174,6 +177,8 @@ form.std.horizontal { padding: 0.6em; font-size: 0.9em; }
 form.std.horizontal .text { width: auto; padding: 0.2em 0.3em; }
 form.std label.chk { padding: 0.5em; font-size: 0.85em; }
 form.std label input.chk { float: left; margin-right: 0.8em; transform: scale(1.25); }
+
+#modal a.cancel { padding: 0 2em; line-height: 3em; color: rgba(0,0,0,0.7); }
 
 .cta { position: relative; margin-bottom: 5.5em; height: 3.5em; }
 .cta .btn,

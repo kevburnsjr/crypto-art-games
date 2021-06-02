@@ -27,14 +27,21 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(302)
 		return
 	}
+	var mod bool
+	user, _ := c.oauth.getUser(r, w)
+	if user != nil {
+		mod = user.Mod
+	}
 	b := bytes.NewBuffer(nil)
 	var indexTpl = template.Must(template.ParseFiles("./template/index.html"))
 	err := indexTpl.Execute(b, struct {
 		HOST string
 		Test bool
+		Mod  bool
 	}{
 		c.cfg.Api.Host,
 		c.cfg.Test,
+		mod,
 	})
 	if check(err, w, c.log) {
 		return

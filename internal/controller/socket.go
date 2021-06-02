@@ -340,6 +340,10 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.repoReport.Clear(targetID); err != nil {
 					return
 				}
+				c.hub.Broadcast(sock.JsonMessagePure("reports", map[string]interface{}{
+					"type":     "report-clear",
+					"targetID": targetID,
+				}))
 			case "user-ban":
 				if err = c.authMod(user); err != nil {
 					return
@@ -347,9 +351,9 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				var (
 					targetID        = uint16(m["targetID"].(float64))
 					since           = uint32(m["since"].(float64))
-					reason          = m["reason"].(string)
-					timeout         = m["timeout"].(string)
-					ban             = m["ban"].(bool)
+					timeout         = m["duration"].(string)
+					reason          = "" // m["reason"].(string)
+					ban             = false // m["ban"].(bool)
 					timeoutDuration time.Duration
 				)
 				if timeoutDuration, err = time.ParseDuration(timeout); err != nil && len(timeout) > 0 {
@@ -398,6 +402,10 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				}
 				res = sock.NewJsonRes(userBan.ToDto())
 				c.hub.Broadcast(res.Raw("bans"))
+				c.hub.Broadcast(sock.JsonMessagePure("reports", map[string]interface{}{
+					"type":     "report-clear",
+					"targetID": targetID,
+				}))
 			case "err-storage":
 				if err = c.auth(user); err != nil {
 					return

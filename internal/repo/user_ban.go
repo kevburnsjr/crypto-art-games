@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"bytes"
 	"encoding/binary"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
@@ -68,7 +69,7 @@ func (r *userBan) Since(id uint16) (userBans []*entity.UserBan, err error) {
 		return
 	}
 	for i, b := range vals {
-		if len(keys[i]) != 2 {
+		if len(keys[i]) != 2 || bytes.Compare(start, keys[i]) == 0 {
 			continue
 		}
 		userBans = append(userBans, entity.UserBanFromJson(b))

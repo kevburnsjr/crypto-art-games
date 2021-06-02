@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -243,7 +244,7 @@ func (r *user) Since(userIdx, generation uint16) (users []*entity.User, userIds 
 		return
 	}
 	for i, b := range vals {
-		if len(keys[i]) != 2 {
+		if len(keys[i]) != 2 || bytes.Compare(start, keys[i]) == 0 {
 			continue
 		}
 		userIds = append(userIds, binary.BigEndian.Uint16(keys[i]))

@@ -107,6 +107,10 @@ func (w *leveldbDriver) PrefixIterator(prefix []byte) (Iterator, error) {
 	return leveldb_iterator{w.db.NewIterator(util.BytesPrefix(prefix), nil)}, nil
 }
 
+func (w *leveldbDriver) Iterator() (Iterator, error) {
+	return leveldb_iterator{w.db.NewIterator(nil, nil)}, nil
+}
+
 func (w *leveldbDriver) Close() error {
 	return w.db.Close()
 }
@@ -115,8 +119,8 @@ type leveldb_iterator struct {
 	iter iterator.Iterator
 }
 
-func (i leveldb_iterator) Seek(key string) bool {
-	return i.iter.Seek([]byte(key))
+func (i leveldb_iterator) Seek(key []byte) bool {
+	return i.iter.Seek(key)
 }
 func (i leveldb_iterator) Valid() bool {
 	return i.iter.Valid()
@@ -133,8 +137,8 @@ func (i leveldb_iterator) Prev() bool {
 func (i leveldb_iterator) Next() bool {
 	return i.iter.Next()
 }
-func (i leveldb_iterator) Key() string {
-	return string(i.iter.Key())
+func (i leveldb_iterator) Key() []byte {
+	return i.iter.Key()
 }
 func (i leveldb_iterator) Value() []byte {
 	return i.iter.Value()

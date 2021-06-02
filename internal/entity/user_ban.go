@@ -5,9 +5,9 @@ import (
 )
 
 type UserBan struct {
-	ID       uint16 `json:"ID"`
+	ID       uint16 `json:"id"`
 	ModID    uint16 `json:"modID"`
-	TargetID uint16 `json:"TargetID"`
+	TargetID uint16 `json:"targetID"`
 	Since    uint32 `json:"since"`
 	Until    uint32 `json:"until"`
 	Ban      bool   `json:"ban"`

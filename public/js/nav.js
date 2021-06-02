@@ -13,6 +13,7 @@ Game.Nav = (function(g){
     this.reportEl = document.getElementById("report");
     this.modEl = document.getElementById("mod");
     this.flashEl = document.getElementById("flash");
+    this.recentTileTpl = document.getElementById("recent-frames-li").innerHTML;
     this.flashTimeout = null;
     this.heartTimeout = null;
     this.recentTiles = [];
@@ -94,6 +95,8 @@ Game.Nav = (function(g){
         self.reportEl.style.right = 0;
         self.reportEl.style.top = e.target.getBoundingClientRect().bottom;
         self.reportEl.dataset.timecode = e.target.parentNode.parentNode.dataset.timecode;
+        self.reportEl.dataset.userid = e.target.parentNode.parentNode.dataset.userid;
+        self.reportEl.dataset.date = e.target.parentNode.parentNode.dataset.date;
         document.querySelectorAll('.reporting').forEach((el) => el.classList.remove('reporting'));
         document.body.classList.add('reporting');
         e.target.parentNode.parentNode.classList.add('reporting');
@@ -107,10 +110,17 @@ Game.Nav = (function(g){
     setInterval(this.recentFramesTimeago, 5000);
     this.reportEl.addEventListener('mouseup', e => {
       if (document.body.classList.contains('reporting')) {
-        game.getSocket().report(
-          e.target.parentNode.dataset.timecode,
-          e.target.dataset.reason
-        );
+        const reason = e.target.dataset.reason;
+        if (reason == "timeout") {
+          self.showTimeoutModal(e.target.parentNode.dataset.userid, e.target.parentNode.dataset.date);
+        } else if (reason == "clear") {
+          self.showReportClearModal(e.target.parentNode.dataset.userid);
+        } else {
+          game.getSocket().report(
+            e.target.parentNode.dataset.timecode,
+            e.target.dataset.reason
+          );
+        }
       }
     });
     this.reportEl.addEventListener('mouseover', e => {
@@ -124,6 +134,26 @@ Game.Nav = (function(g){
     modal.querySelector("#modal-policy form").addEventListener('submit', e => {
       this.submitPolicyModal(e);
     });
+    if (document.body.classList.contains("mod")) {
+      modal.querySelector(".timeout form").addEventListener('submit', e => {
+        e.preventDefault();
+        self.submitTimeoutModal(e);
+        self.hideTimeoutModal();
+      });
+      modal.querySelector(".timeout a.cancel").addEventListener('click', e => {
+        e.preventDefault();
+        self.hideTimeoutModal();
+      });
+      modal.querySelector(".report-clear form").addEventListener('submit', e => {
+        e.preventDefault();
+        self.submitReportClearModal(e);
+        self.hideReportClearModal();
+      });
+      modal.querySelector(".report-clear a.cancel").addEventListener('click', e => {
+        e.preventDefault();
+        self.hideReportClearModal();
+      });
+    }
     this.seriesEl = document.getElementById("series");
     this.seriesEl.addEventListener('click', e => {
       e.preventDefault();
@@ -178,7 +208,7 @@ Game.Nav = (function(g){
     var frames = [];
     if (board.focused) {
       for (var i = board.tile.frames.length-1; i >= 0; i--) {
-        if (board.tile.frames[i].timecode > board.timecode) {
+        if (board.tile.frames[i].timecode > board.timecode || board.tile.frames[i].deleted) {
           continue;
         }
         frames.push(board.tile.frames[i]);
@@ -188,7 +218,13 @@ Game.Nav = (function(g){
       }
       this.recentFrames.querySelector('h4').textContent = "Recent Tile Edits";
     } else {
-      frames = board.frames.slice(Math.max(board.timecode - 10, 0), Math.max(board.timecode, 0)).reverse();
+      for (i = board.timecode-1; i >= 0; i--) {
+        if (board.frames[i].deleted) continue;
+        frames.push(board.frames[i]);
+        if (frames.length == 10) {
+          break;
+        }
+      }
       this.recentFrames.querySelector('h4').textContent = "Recent Board Edits";
     }
     frames.forEach((f, i) => {
@@ -216,6 +252,8 @@ Game.Nav = (function(g){
         }
         li[i].style.visibility = "visible";
         li[i].dataset.timecode = frames[i].timecode;
+        li[i].dataset.userid = frames[i].userid;
+        li[i].dataset.date = (+frames[i].date/1000).toFixed(0);
         a = li[i].querySelector('a.user');
         a.title = sanitizeHTML(users[i].display_name);
         a.querySelector('img').src = "/u/i/"+userIds[i];
@@ -235,6 +273,7 @@ Game.Nav = (function(g){
   };
 
   nav.prototype.doShowMod = async function() {
+    if (!document.body.classList.contains('mod')) return;
     var users = {};
     var userIds = [];
     var targets = {};
@@ -288,9 +327,10 @@ Game.Nav = (function(g){
     var targetName = "";
     for(let a of userReports) {
       r = a[1];
+      r.sort((a, b) => a.frameDate > b.frameDate ? 1 : (a.frameDate < b.frameDate ? -1 : 0));
       html += `<li data-target-id="users[r[0]?.targetID]?.id"><h4>${users[r[0]?.targetID]?.display_name} (${r.length})</h4>`;
       for (let r1 of r) {
-        html += `<a href="#${r1.boardID}:${r1.tileNum}:0:3:1">${r1.boardID}.${r1.tileNum}</a>`;
+        html += `<a href="#${r1.boardID}:${r1.tileNum}:0:3:1" title="${r1.reason} by users[r[0]?.userID]?.name">${r1.boardID} × ${r1.tileNum.toString().padStart(3,0)}</a>`;
       }
       html += `</li>`;
     }
@@ -327,12 +367,46 @@ Game.Nav = (function(g){
     this.modal.classList.remove("active", "policy");
   };
 
+  nav.prototype.showTimeoutModal = function(userid, date) {
+    this.modal.classList.add("active", "timeout");
+    var form = document.querySelector("#modal-timeout form");
+    form.dataset.userid = userid;
+    form.dataset.date = date;
+  };
+
+  nav.prototype.hideTimeoutModal = function() {
+    this.modal.classList.remove("active", "timeout");
+  };
+
+  nav.prototype.showReportClearModal = function(userid) {
+    this.modal.classList.add("active", "report-clear");
+    var form = document.querySelector("#modal-report-clear form");
+    form.dataset.userid = userid;
+  };
+
+  nav.prototype.hideReportClearModal = function() {
+    this.modal.classList.remove("active", "report-clear");
+  };
+
   nav.prototype.submitPolicyModal = function(e) {
     if (!document.getElementById("agree").checked) {
       e.preventDefault();
       return;
     }
   };
+
+  nav.prototype.submitTimeoutModal = function(e) {
+    const userID = e.target.dataset.userid;
+    const date = e.target.dataset.date;
+    const duration = e.submitter.value;
+    Game.getSocket().userBan(userID, date, duration);
+  };
+
+  nav.prototype.submitReportClearModal = function(e) {
+    const userID = e.target.dataset.userid;
+    Game.getSocket().clearReports(userID);
+  };
+
 
   nav.prototype.flash = function(type, msg, timeout) {
     this.flashEl.classList.add('active');

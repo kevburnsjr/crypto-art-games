@@ -41,8 +41,9 @@ func (r *report) Insert(report *entity.Report) (err error) {
 	binary.BigEndian.PutUint16(idBytes[2:4], report.BoardID)
 	binary.BigEndian.PutUint16(idBytes[4:6], report.Timecode)
 	binary.BigEndian.PutUint16(idBytes[6:8], report.UserID)
-	val := make([]byte, 4)
+	val := make([]byte, 8)
 	binary.BigEndian.PutUint32(val[0:4], report.Date)
+	binary.BigEndian.PutUint32(val[4:8], report.FrameDate)
 	_, err = r.db.Put(idBytes, "", append(val, []byte(report.Reason)...))
 	return
 }
@@ -59,12 +60,13 @@ func (r *report) All() (reports []*entity.Report, err error) {
 			continue
 		}
 		reports = append(reports, &entity.Report{
-			TargetID: binary.BigEndian.Uint16(keys[i][0:2]),
-			BoardID:  binary.BigEndian.Uint16(keys[i][2:4]),
-			Timecode: binary.BigEndian.Uint16(keys[i][4:6]),
-			UserID:   binary.BigEndian.Uint16(keys[i][6:8]),
-			Date:     binary.BigEndian.Uint32(val[0:4]),
-			Reason:   string(val[4:]),
+			TargetID:  binary.BigEndian.Uint16(keys[i][0:2]),
+			BoardID:   binary.BigEndian.Uint16(keys[i][2:4]),
+			Timecode:  binary.BigEndian.Uint16(keys[i][4:6]),
+			UserID:    binary.BigEndian.Uint16(keys[i][6:8]),
+			Date:      binary.BigEndian.Uint32(val[0:4]),
+			FrameDate: binary.BigEndian.Uint32(val[4:8]),
+			Reason:    string(val[8:]),
 		})
 	}
 	return

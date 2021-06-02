@@ -7,7 +7,7 @@
     <link href="/css/font.css" rel="stylesheet"></link>
     <link href="/css/global.css" rel="stylesheet"></link>
     <title>Crypto Art Games - Pixel Compactor</title>
-</head><body><div id="container">
+</head><body{{if .Mod}} class="mod"{{end}}><div id="container">
 <nav class="user">
     <div class="healthbar ltr" id="healthbar"></div>
 </nav>
@@ -21,7 +21,9 @@
     <nav>
         <a id="help-toggle" data-toggle="help"><em>H</em></a>
         <a id="series-toggle" data-toggle="series"><em>B</em></a>
+        {{if .Mod}}
         <a id="mod-toggle" data-toggle="mod"><em>M</em></a>
+        {{end}}
     </nav>
     <div id="help">
         <em>Click</em> edit tile<br/>
@@ -44,7 +46,9 @@
         <em>B</em> toggle board menu<br/>
     </div>
     <div id="series"></div>
+    {{if .Mod}}
     <div id="mod"></div>
+    {{end}}
 </aside>
 <aside id="right">
     <nav>
@@ -83,6 +87,33 @@
             </div>
         </form>
     </div>
+    {{if .Mod}}
+    <div id="modal-timeout" class="timeout">
+        <form class="std">
+            <h2>Time out user</h2>
+            <div class="field submit c">
+                <input class="submit" type="submit" value="10s">
+                <input class="submit" type="submit" value="15m">
+                <input class="submit" type="submit" value="1h">
+                <input class="submit" type="submit" value="24h">
+            </div>
+            <div class="field submit c">
+                <a class="cancel">cancel</a>
+            </div>
+        </form>
+    </div>
+    <div id="modal-report-clear" class="report-clear">
+        <form class="std">
+            <h2>Are you sure you want to clear this user's reports?</h2>
+            <div class="field suibmit cta c">
+                <input class="submit" type="submit" value="Clear Reports">
+            </div>
+            <div class="field suibmit c">
+                <a class="cancel">cancel</a>
+            </div>
+        </form>
+    </div>
+    {{end}}
 </div>
 <div id="report">
     <div class="reason"></div>
@@ -90,6 +121,10 @@
     <a data-reason="spam" title="Self promotion, copyright violation, non-artful content">Spammy</a>
     <a data-reason="nudes" title="Nudity, gore, vulgar language">Lude</a>
     <a data-reason="hate" title="Hate symbols, racial slurs">Hateful</a>
+    {{if .Mod}}
+    <a data-reason="timeout" title="Time out user">Timeout</a>
+    <a data-reason="clear" title="Clear user reports">Clear</a>
+    {{end}}
 </div>
 <template id="recent-frames-li">
 <li data-timecode="">

@@ -180,29 +180,34 @@ func (r *board) DeleteUserFramesAfter(boardId, targetID uint16, timestamp uint32
 		}
 		return
 	}
-	iter, err := db.PrefixIterator(nil)
+	iter, err := db.Iterator()
 	if err != nil {
 		return
 	}
 	defer iter.Release()
-	var timecheck = binary.BigEndian.Uint32(chkBytes)
+	var timecheck = binary.BigEndian.Uint32(chkBytes[0:4])
 	var checks int
 	var f = &entity.Frame{}
-	for iter.Last(); iter.Valid(); iter.Prev() {
+	//iter.Seek([]byte{0xff,0xff})
+	iter.Last()
+	for iter.Prev() {
+		if len(iter.Key()) != 2 {
+			continue;
+		}
 		f.Data = iter.Value()[16:]
-		if timecheck+uint32(f.Timestamp()) < timestamp {
+		if timecheck+uint32(time.Duration(f.Timestamp())*60*time.Second) < timestamp {
 			return
 		}
 		if f.UserID() == targetID {
 			f.SetDeleted(true)
-			if err = r.Update(boardId, f); err != nil {
+			if _, err = db.Put(iter.Key(), "", f.ToBytes()); err != nil {
 				return
 			}
 			n++
 		}
 		if f.Timestamp() == 0 {
 			checks++
-			if len(chkBytes) >= checks*4 {
+			if len(chkBytes) > checks*4 {
 				timecheck = binary.BigEndian.Uint32(chkBytes[checks*4 : checks*4+4])
 			}
 		}

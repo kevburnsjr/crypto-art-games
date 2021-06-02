@@ -47,7 +47,7 @@ Game.Board = (function(g){
     };
     img.src = data.bg;
     // temporary variable collection to minimize garbage collection in render loop
-    this.v = {};
+    this.v = {renderTimecode: 0};
   };
 
   board.prototype.setData = function(bgctx) {
@@ -61,7 +61,7 @@ Game.Board = (function(g){
   };
 
   board.prototype.render = function(ctx, uiCtx, cx, cy, curx, cury, zoom, dirty, uiDirty, mousedown, e) {
-    if (this.tiles.length == 0) {
+    if (!this.enabled) {
       return;
     }
     this.scale = this.tileSize*zoom;
@@ -90,18 +90,25 @@ Game.Board = (function(g){
         }
       }
     }
-    var drawn = this.drawnTimecode - this.timecode != 0;
-    if (this.enabled) {
-      for (this.v.i = 0; this.drawnTimecode < this.timecode && this.v.i < this.speed; this.v.i++) {
-        this.applyFrame(this.frames[this.drawnTimecode]);
-        this.drawnTimecode++;
-      }
-      for (this.v.i = 0; this.drawnTimecode > this.timecode && this.v.i < this.speed; this.v.i++) {
-        this.undoFrame(this.frames[this.drawnTimecode-1]);
-        this.drawnTimecode--;
-      }
+    this.v.diff = this.timecode - this.drawnTimecode;
+    this.v.dir = this.v.diff == 0 ? 0 : this.v.diff / Math.abs(this.v.diff);
+    if (this.v.dir == 1) {
+      this.v.renderTimecode = Math.max(Math.min(this.timecode, this.v.renderTimecode + (this.v.dir*this.speed)), 0);
+    } else {
+      this.v.renderTimecode = Math.max(Math.max(this.timecode, this.v.renderTimecode + (this.v.dir*this.speed)), 0);
     }
-    if (this.drawnTimecode - this.timecode === 0 && drawn) {
+    this.v.drawn = false;
+    for (this.v.i = 0; this.drawnTimecode < Math.floor(this.v.renderTimecode); this.v.i++) {
+      this.applyFrame(this.frames[this.drawnTimecode]);
+      this.drawnTimecode++;
+      this.v.drawn = true;
+    }
+    for (this.v.i = 0; this.drawnTimecode > Math.ceil(this.v.renderTimecode); this.v.i++) {
+      this.undoFrame(this.frames[this.drawnTimecode-1]);
+      this.drawnTimecode--;
+      this.v.drawn = true;
+    }
+    if (this.drawnTimecode - this.timecode === 0 && this.v.drawn) {
       this.paused = this.timecode != this.frames.length;
       g.nav().showRecent(this);
     }
@@ -358,8 +365,39 @@ Game.Board = (function(g){
   };
 
   board.prototype.applyFrame = function(f) {
-    if (this.enabled && f) {
+    if (this.enabled && f && !f.deleted) {
       this.tiles[f.ti][f.tj].applyFrame(f);
+    }
+  };
+
+  board.prototype.applyUserBan = async function(ban) {
+    console.log("applyUserBan", ban);
+    var frameDate;
+    var timecode;
+    var deleted = {};
+    for(var i = this.frames.length-1; i >= 0; i--) {
+      f = this.frames[i];
+      if (f.userid != ban.targetID) continue;
+      frameDate = (+f.date/1000).toFixed(0);
+      if (frameDate > ban.until) continue;
+      if (frameDate < ban.since) break;
+      timecode = f.timecode;
+      deleted[i] = true;
+      f.deleted = true;
+    }
+    if (timecode != null) {
+      var f;
+      for(var i = this.frames.length-1; i >= timecode; i--) {
+        if (!f.deleted || i in deleted) {
+          this.undoFrame(this.frames[i]);
+        }
+      }
+      for(var i = timecode; i < this.frames.length; i++) {
+        f = this.frames[i];
+        this.applyFrame(this.frames[i]);
+        this.frames[i].resamplePrev(this.tiles[f.ti][f.tj]);
+        await this.store.setItem(this.frames[i].timecode.toString(16).padStart(4, 0), this.frames[i].toBytes()).catch(console.log);
+      }
     }
   };
 
