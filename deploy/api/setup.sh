@@ -3,7 +3,7 @@ set -e
 
 sudo yum -y update
 sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-sudo yum install -y wget git htop jq nano
+sudo yum install -y wget git htop jq nano make
 
 # bash
 wget https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh
