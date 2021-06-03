@@ -5,6 +5,10 @@ sudo yum -y update
 sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 sudo yum install -y wget git htop jq nano make
 
+sudo sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
+sudo sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
+sudo setenforce 0
+
 # bash
 wget https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh
 mv git-prompt.sh .git-prompt.sh
