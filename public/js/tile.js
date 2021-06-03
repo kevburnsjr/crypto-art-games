@@ -164,13 +164,13 @@ Game.Tile = (function(g){
     return false;
   };
 
-  tile.prototype.applyFrame = function(f, refresh) {
+  tile.prototype.applyFrame = function(f) {
     if (!f) {
       return
     }
     var n = 0;
     var i = 0;
-    var push = f.prev.length == 0 || refresh;
+    var push = f.prev.length == 0;
     for (let b of f.mask) {
       if (b == 1) {
         if (push) {

@@ -212,14 +212,14 @@ Game.Nav = (function(g){
     this.showRecentAnimationFrame = window.requestAnimationFrame(() => this.doShowRecent(board));
   };
 
-  nav.prototype.doShowRecent = function(board) {
+  nav.prototype.doShowRecent = async function(board) {
     var userIds = [];
     var frames = [];
     var f;
     if (board.focused) {
       for (i = board.tile.frames.length-1; i >= 0; i--) {
         f = board.tile.frames[i];
-        if (i > board.offset) {
+        if (board.frameIdx[f.timecode] >= board.offset) {
           continue;
         }
         frames.push(f);
@@ -256,31 +256,30 @@ Game.Nav = (function(g){
         t.palette = board.palette;
       }
     }
-    // const userid =
-    g.User.findAll(userIds).then(users => {
-      var li = this.recentFrames.querySelectorAll("li");
-      var a, img, span, ta;
-      for (var i = 0; i < 10; i++) {
-        if (frames.length <= i) {
-          li[i].style.visibility = "hidden";
-          continue;
-        }
-        li[i].style.visibility = "visible";
-        li[i].dataset.timecode = frames[i].timecode;
-        li[i].dataset.userid = frames[i].userid;
-        li[i].dataset.date = (+frames[i].date/1000).toFixed(0);
-        a = li[i].querySelector('a.user');
-        a.title = sanitizeHTML(users[i].display_name);
-        a.querySelector('img').src = "/u/i/"+userIds[i];
-        a.querySelector('span').textContent = sanitizeHTML(users[i].display_name);
-        // a.querySelector('a.heart').style.display = frames[i].userid == ;
-        li[i].querySelector('.timeago').setAttribute('datetime', frames[i].date.toISOString());
-        this.recentTiles[i].renderFrameBuffer(frames[i]);
-        this.recentTiles[i].canvas.dataset.i = frames[i].ti;
-        this.recentTiles[i].canvas.dataset.j = frames[i].tj;
+    const userID = Game.userID();
+    const users = await g.User.findAll(userIds)
+    var li = this.recentFrames.querySelectorAll("li");
+    var a, img, span, ta;
+    for (var i = 0; i < 10; i++) {
+      if (frames.length <= i) {
+        li[i].style.visibility = "hidden";
+        continue;
       }
-      this.recentFramesTimeago();
-    });
+      li[i].style.visibility = "visible";
+      li[i].dataset.timecode = frames[i].timecode;
+      li[i].dataset.userid = frames[i].userid;
+      li[i].dataset.date = (+frames[i].date/1000).toFixed(0);
+      a = li[i].querySelector('a.user');
+      a.title = sanitizeHTML(users[i].display_name);
+      a.querySelector('img').src = "/u/i/"+userIds[i];
+      a.querySelector('span').textContent = sanitizeHTML(users[i].display_name);
+      li[i].querySelector('a.love').style.display = frames[i].userid == userID ? "none": "block";
+      li[i].querySelector('.timeago').setAttribute('datetime', frames[i].date.toISOString());
+      this.recentTiles[i].renderFrameBuffer(frames[i]);
+      this.recentTiles[i].canvas.dataset.i = frames[i].ti;
+      this.recentTiles[i].canvas.dataset.j = frames[i].tj;
+    }
+    this.recentFramesTimeago();
   };
 
   nav.prototype.showMod = function() {

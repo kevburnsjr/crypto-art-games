@@ -351,7 +351,6 @@ Game.Board = (function(g){
   board.prototype.saveFrame = async function(f) {
     if (this.enabled) {
       f.date = new Date((this.created + f.timestamp) * 1000);
-      console.log("saveFrame", this.created, f.timestamp, f.date);
       this.frameIdx[f.timecode] = this.frames.length;
       this.frames.push(f)
       this.tiles[f.ti][f.tj].frameIdx[f.timecode] = this.tiles[f.ti][f.tj].frames.length;
@@ -397,6 +396,7 @@ Game.Board = (function(g){
     var deleted = {};
     var i;
     var f;
+    var timecode = this.frames[this.offset];
     for(i = this.frames.length-1; i >= 0; i--) {
       f = this.frames[i];
       frameDate = (+f.date/1000).toFixed(0);
@@ -405,13 +405,18 @@ Game.Board = (function(g){
       if (frameDate > ban.until) continue;
       if (f.userid != ban.targetID) continue;
       await this.removeFrame(f);
+      if (i <= this.offset) {
+        this.offset--;
+      }
     }
-    for(; i < this.frames.length; i++) {
+    for(i++; i < this.frames.length; i++) {
       f = this.frames[i];
+      f.prev = [];
       this.frameIdx[f.timecode] = i;
       this.tiles[f.ti][f.tj].frameIdx[f.timecode] = this.tiles[f.ti][f.tj].frames.length;
-      f.resamplePrev(this.tiles[f.ti][f.tj]);
-      this.applyFrame(f);
+      if (i <= this.offset) {
+        this.tiles[f.ti][f.tj].applyFrame(f);
+      }
     }
     this.offset = Math.min(this.frames.length, this.offset);
   };

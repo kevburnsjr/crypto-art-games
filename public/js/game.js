@@ -25,6 +25,7 @@ var Game = (function(g){
   var policy;
   var boardId = 0;
   var store = {};
+  var userID = null;
   const stores = ["global", "user", "ui", "reports", "bans"];
 
   var createStores = async function() {
@@ -52,7 +53,6 @@ var Game = (function(g){
     window.addEventListener('resize', resize);
     window.addEventListener('contextmenu', e => e.preventDefault());
     window.addEventListener('paste', paste);
-    var userID = null;
     var banIdx    = parseInt(await store.global.getItem("banIdx"), 16) || 0;
     var userIdx   = parseInt(await store.global.getItem("userIdx"), 16) || 0;
     var reportIdx = parseInt(await store.global.getItem("reportIdx"), 16) || 0;
@@ -158,7 +158,6 @@ var Game = (function(g){
       },
       report: async function(timecode, reason) {
         var f = board.frames[board.frameIdx[timecode]];
-        console.log("report", f);
         const user = await Game.User.find(f.userid);
         return new Promise((resolve, reject) => {
           if (userID == null) {
@@ -267,13 +266,17 @@ var Game = (function(g){
             nav.showRecent(board);
             continue;
           }
-          boardStore = Game.Series.boardStore(b.id);
-          bans = await boardStore.getItem("_bans");
-          if (bans == null) {
-            bans = [];
-          }
-          bans.push(e);
-          await boardStore.setItem("_bans", bans);
+          Game.Series.boardStore(b.id).iterate(async function(v, k, i) {
+            if (k.length != 8) {
+              return;
+            }
+            const f = Game.Frame.fromBytes(v);
+            const date = new Date((s.created + f.timestamp) * 1000);
+            const frameDate = (+f.date/1000).toFixed(0);
+            if (f.userid == e.targetID && frameDate >= e.since && frameDate <= e.until) {
+              await this.store.removeItem(f.timecode.toString(16).padStart(8, 0));
+            }
+          });
         }
       }
 
@@ -791,6 +794,7 @@ var Game = (function(g){
     getSocket: getSocket,
     board: () => board,
     store: () => store,
+    userID: () => userID,
     setHash: setHash
   };
 
