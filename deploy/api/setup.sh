@@ -3,7 +3,7 @@ set -e
 
 sudo yum -y update
 sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-sudo yum install -y wget git htop jq
+sudo yum install -y wget git htop jq nano
 
 # bash
 wget https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh
@@ -26,6 +26,7 @@ sudo mkdir /usr/local/share/go/bin
 sudo chmod 777 /usr/local/share/go
 
 # Git
+git config pull.rebase true
 mkdir -p /var/git
 git init --bare /var/git/crypto-art-games.git
 
