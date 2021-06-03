@@ -106,7 +106,7 @@ func (r *board) Since(boardId uint16, timecode uint32) (frames []*entity.Frame, 
 			Data: b,
 		}
 		if frame.Deleted() {
-			continue;
+			continue
 		}
 		frames = append(frames, frame)
 	}

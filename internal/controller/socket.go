@@ -390,7 +390,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				}
 				for _, s := range allSeries {
 					for _, b := range s.Boards {
-						if n, err = c.repoBoard.DeleteUserFramesAfter(b.ID, targetID, since - s.Created); err != nil {
+						if n, err = c.repoBoard.DeleteUserFramesAfter(b.ID, targetID, since-s.Created); err != nil {
 							return
 						}
 						del += n
