@@ -336,6 +336,9 @@ Game.Nav = (function(g){
       }
       html += `</li>`;
     }
+    if (userReports.length == 0) {
+      html += `<li><p class="empty">No reports</p></li>`
+    }
     html += "</ul>";
     this.modEl.innerHTML = html;
   };
