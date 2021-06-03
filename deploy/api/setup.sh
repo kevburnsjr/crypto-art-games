@@ -41,6 +41,7 @@ make build-prod
 systemctl restart crypto-art-games
 popd
 EOF
+chmod +x /var/git/crypto-art-games.git/hooks/post-receive
 
 mkdir -p /var/www/crypto-art-games
 pushd /var/www/crypto-art-games
