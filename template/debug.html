@@ -8,6 +8,7 @@
     <a href="?section=series">Series</a>
     <a href="?section=board">Board</a>
     <a href="?section=report">Report</a>
+    <a href="?section=ban">Ban</a>
     <a href="?section=tileLock">TileLock</a>
 </nav>
 <h2>{{.Section}}</h2>
@@ -97,6 +98,17 @@ Val: 0x{{hex $v}}</pre>
         {{else}}
             <pre>Key: 0x{{hex $k}}
 Val: {{hex $v}}</pre>
+        {{end}}
+    {{end}}
+{{end}}
+{{$repoBoard := .RepoBoard}}
+{{if eq .Section "board"}}
+    {{range $s := .RepoGame.AllSeries}}
+        <h3>{{$s.IDHex}} - {{$s.Name}}</h2>
+        {{range $b := $s.Boards}}
+            {{range $f := $repoBoard.Since $b.ID 0}}
+                <pre>{{$f.IDHex}} - {{$f.DataHex}}</pre>
+            {{end}}
         {{end}}
     {{end}}
 {{end}}

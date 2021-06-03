@@ -164,6 +164,7 @@ func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		RepoUser     repo.User
 		RepoBoard    repo.Board
 		RepoReport   repo.Report
+		RepoUserBan  repo.UserBan
 		RepoTileLock repo.TileLock
 		Id           string
 		Data         string
@@ -175,6 +176,7 @@ func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.repoUser,
 		c.repoBoard,
 		c.repoReport,
+		c.repoUserBan,
 		c.repoTileLock,
 		id,
 		data,

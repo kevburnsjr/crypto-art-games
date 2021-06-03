@@ -76,7 +76,7 @@ var Game = (function(g){
         socket.send(JSON.stringify({
           type:       'board-init',
           boardId:    boardId,
-          timecode:   parseInt(board.getTimecode()) || 0
+          timecode:   await board.getTimecode()
         }));
       },
       sendFrame: function(f) {
@@ -158,6 +158,7 @@ var Game = (function(g){
       },
       report: async function(timecode, reason) {
         var f = board.frames[board.frameIdx[timecode]];
+        console.log("report", f);
         const user = await Game.User.find(f.userid);
         return new Promise((resolve, reject) => {
           if (userID == null) {
@@ -171,7 +172,7 @@ var Game = (function(g){
               resolve();
             }
           });
-          socket.send(JSON.stringify({type:'report', boardId: board.id, date: f.date, timecode: parseInt(timecode), reason: reason}));
+          socket.send(JSON.stringify({type:'report', boardId: board.id, timecode: parseInt(timecode), reason: reason}));
         });
       },
       clearReports: async function(targetID) {
@@ -308,9 +309,6 @@ var Game = (function(g){
             return;
           }
         }
-        if (e.user && e.user.mod) {
-          document.body.classList.add("mod")
-        }
         if (!e.series) {
           log("Series missing from init", e);
           return;
@@ -373,8 +371,11 @@ var Game = (function(g){
       if (parts.length > 4) focused = parts[4] == "1";
       if (board && board.id != boardId) {
         socket.changeBoard(boardId, (board) => {
-          // console.log(Math.floor(tile/16), tile%16);
-          board.setFocus(Math.floor(tile/16), tile%16);
+          if (focused) {
+            board.setFocus(Math.floor(tile/16), tile%16);
+          } else {
+            board.cancelFocus();
+          }
         });
       } else if (board) {
         if (focused) {
@@ -785,7 +786,8 @@ var Game = (function(g){
     nav: () => nav,
     getSocket: getSocket,
     board: () => board,
-    store: () => store
+    store: () => store,
+    setHash: setHash
   };
 
 })({});

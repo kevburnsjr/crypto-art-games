@@ -177,7 +177,8 @@ func (r *user) Consume(user *entity.User, boardId uint16) (err error) {
 	}
 	bucket, ok := user.Buckets[boardId]
 	if !ok {
-		user.Buckets[boardId] = entity.NewUserBucket(time.Now())
+		bucket = entity.NewUserBucket(time.Now())
+		user.Buckets[boardId] = bucket
 	}
 	if !bucket.Consume(1, time.Now()) {
 		return fmt.Errorf("Insufficient tile credits")

@@ -333,11 +333,11 @@ Game.Board = (function(g){
   };
 
   board.prototype.getTimecode = async function(tc) {
-    return this.store.getItem("timecode").then(t => t ? parseInt(t, 16) : 0);
+    return this.store.getItem("_timecode").then(t => t ? parseInt(t, 16) : 0);
   };
 
   board.prototype.setTimecode = async function(tc) {
-    return this.store.setItem("timecode", tc.toString(16).padStart(8, 0));
+    return this.store.setItem("_timecode", tc.toString(16).padStart(8, 0));
   };
 
   board.prototype.getOffset = function() {
@@ -350,22 +350,24 @@ Game.Board = (function(g){
 
   board.prototype.saveFrame = async function(f) {
     if (this.enabled) {
-      f.date = new Date((self.created + f.timestamp) * 1000);
+      f.date = new Date((this.created + f.timestamp) * 1000);
+      console.log("saveFrame", this.created, f.timestamp, f.date);
       this.frameIdx[f.timecode] = this.frames.length;
       this.frames.push(f)
       this.tiles[f.ti][f.tj].frameIdx[f.timecode] = this.tiles[f.ti][f.tj].frames.length;
       this.tiles[f.ti][f.tj].frames.push(f);
       g.nav().updateScrubber(this.frames.length);
       if (!this.paused) {
-        this.offset = this.frames.length-1;
+        this.offset = this.frames.length;
       }
-      this.timecode = f.timecode;
+      this.timecode = this.frames[this.frames.length - 1].timecode;
+      this.setTimecode(this.timecode);
     }
     return this.store.setItem(f.timecode.toString(16).padStart(8, 0), f.toBytes());
   };
 
   board.prototype.removeFrame = async function(f) {
-    await this.store.removeItem(f.timecode.toString(16).padStart(8, 0), f.toBytes());
+    await this.store.removeItem(f.timecode.toString(16).padStart(8, 0));
     if (!(f.timecode in this.frameIdx)) {
       return;
     }
@@ -377,7 +379,7 @@ Game.Board = (function(g){
       g.nav().updateScrubber(this.frames.length);
       this.offset = Math.min(this.frames.length, this.offset);
       if (!this.paused) {
-        this.offset = this.frames.length-1;
+        this.offset = this.frames.length;
       }
     }
     return;
@@ -398,7 +400,6 @@ Game.Board = (function(g){
     for(i = this.frames.length-1; i >= 0; i--) {
       f = this.frames[i];
       frameDate = (+f.date/1000).toFixed(0);
-      console.log(f, f.date, frameDate, ban.since, ban.until, f.userid, ban.targetID);
       if (frameDate < ban.since) break;
       this.tiles[f.ti][f.tj].undoFrame(f);
       if (frameDate > ban.until) continue;
@@ -407,10 +408,12 @@ Game.Board = (function(g){
     }
     for(; i < this.frames.length; i++) {
       f = this.frames[i];
+      this.frameIdx[f.timecode] = i;
+      this.tiles[f.ti][f.tj].frameIdx[f.timecode] = this.tiles[f.ti][f.tj].frames.length;
       f.resamplePrev(this.tiles[f.ti][f.tj]);
       this.applyFrame(f);
     }
-    this.offset = Math.min(this.frames.length-1, this.offset);
+    this.offset = Math.min(this.frames.length, this.offset);
   };
 
   board.prototype.undoFrame = function(f) {
@@ -435,18 +438,17 @@ Game.Board = (function(g){
     return this.scanFrames(function(timecode, frameData) {
       const f = Game.Frame.fromBytes(frameData);
       f.date = new Date((self.created + f.timestamp) * 1000);
-      self.offset = self.frames.length-1;
       self.frameIdx[f.timecode] = self.frames.length;
       self.frames.push(f);
       self.tiles[f.ti][f.tj].frameIdx[f.timecode] = self.tiles[f.ti][f.tj].frames.length;
       self.tiles[f.ti][f.tj].frames.push(f);
     }).then(() => {
-      self.setTimecode(timecode);
-    }).then(() => {
-      g.nav().updateScrubber(self.frames.length);
-      g.nav().showRecent(this);
-      g.setColor();
       self.timecode = timecode;
+      self.setTimecode(timecode);
+      self.offset = self.frames.length;
+      g.nav().updateScrubber(self.offset);
+      g.nav().showRecent(self);
+      g.setColor();
       self.enabled = true;
     });
   };

@@ -182,6 +182,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c socket) auth(user *entity.User) (err error) {
+	c.repoUser.Find(user)
 	if user == nil {
 		err = fmt.Errorf("User authentication required")
 		return
@@ -190,7 +191,7 @@ func (c socket) auth(user *entity.User) (err error) {
 		err = fmt.Errorf("Must accept terms of service before participating")
 		return
 	}
-	if user.Timeout.After(time.Now()) {
+	if time.Unix(int64(user.Timeout), 0).After(time.Now()) {
 		err = fmt.Errorf("User timed out")
 		return
 	}
@@ -238,6 +239,9 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 					return
 				}
 				var tileID = uint16(ftid)
+				if err = user.Active(time.Now()); err != nil {
+					return
+				}
 				if err = c.repoUser.Consume(user, boardId); err != nil {
 					return
 				}
@@ -373,8 +377,9 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 					target.Banned = true
 				} else {
 					target.Banned = false
-					target.Timeout = time.Now().Add(timeoutDuration)
+					target.Timeout = userBan.Until
 				}
+				fmt.Printf("%+v", target)
 				if err = c.repoUser.Update(target); err != nil {
 					return
 				}
@@ -386,7 +391,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				}
 				for _, s := range allSeries {
 					for _, b := range s.Boards {
-						if n, err = c.repoBoard.DeleteUserFramesAfter(b.ID, targetID, since); err != nil {
+						if n, err = c.repoBoard.DeleteUserFramesAfter(b.ID, targetID, since - s.Created); err != nil {
 							return
 						}
 						del += n
@@ -433,9 +438,10 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 					err = err2
 					return
 				}
+				timecode = 0
 				for _, frame := range frames {
 					conn.Write(sock.BinaryMsgFromBytes(boardChannel, frame.Data))
-					timecode = frame.Timestamp()
+					timecode = frame.Timestamp() * 256
 				}
 				bucket := user.GetBucket(boardId)
 				bucket.AdjustLevel(time.Now())
@@ -453,11 +459,11 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 			frame := &entity.Frame{
 				Data: msg,
 			}
-			frame.SetUserID(user.UserID)
 			if err = c.repoTileLock.Release(user.UserID, boardId, uint16(frame.TileID()), time.Now()); err != nil {
 				// User does not have lock
 				return
 			}
+			frame.SetUserID(user.UserID)
 			frame.SetTimestamp(uint32(time.Now().Unix()) - board.Created)
 			if err = c.repoBoard.Insert(boardId, frame); err != nil {
 				return

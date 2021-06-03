@@ -16,7 +16,7 @@ type User struct {
 	helix.User
 	UserID  uint32                 `json:"userID"`
 	Policy  bool                   `json:"policy"`
-	Timeout time.Time              `json:"timeout"`
+	Timeout uint32                 `json:"timeout"`
 	Banned  bool                   `json:"banned"`
 	Mod     bool                   `json:"mod"`
 	Buckets map[uint16]*UserBucket `json:"buckets"`
@@ -59,6 +59,14 @@ func (u *User) GetBucket(boardID uint16) *UserBucket {
 
 func (u *User) IDHex() string {
 	return fmt.Sprintf("%06x", u.UserID)
+}
+
+func (u *User) Active(t time.Time) error {
+	var to = time.Unix(int64(u.Timeout), 0)
+	if u.Timeout > 0 && t.Before(to) {
+		return fmt.Errorf("Timed out. (%v) remaining", to.Sub(t).Truncate(time.Second))
+	}
+	return nil
 }
 
 func UserFromJson(b []byte) *User {

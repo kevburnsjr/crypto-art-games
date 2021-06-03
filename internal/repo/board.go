@@ -105,13 +105,16 @@ func (r *board) Since(boardId uint16, timecode uint32) (frames []*entity.Frame, 
 		frame := &entity.Frame{
 			Data: b,
 		}
+		if frame.Deleted() {
+			continue;
+		}
 		frames = append(frames, frame)
 	}
 	return
 }
 
 // DeleteUserFramesAfter removes a users' contributions to the board
-func (r *board) DeleteUserFramesAfter(boardId uint16, targetID, timecode uint32) (n int, err error) {
+func (r *board) DeleteUserFramesAfter(boardId uint16, targetID, timestamp uint32) (n int, err error) {
 	db, err := r.db(boardId)
 	if err != nil {
 		return
@@ -123,12 +126,12 @@ func (r *board) DeleteUserFramesAfter(boardId uint16, targetID, timecode uint32)
 	defer iter.Release()
 	var f = &entity.Frame{}
 	var start = make([]byte, 4)
-	binary.BigEndian.PutUint32(start, timecode-timecode%256)
-	for iter.Seek(start); iter.Valid(); iter.Next() {
+	binary.BigEndian.PutUint32(start, timestamp)
+	for iter.Seek(start[1:]); iter.Valid(); iter.Next() {
+		f.Data = iter.Value()[16:]
 		if len(iter.Key()) != 4 {
 			continue
 		}
-		f.Data = iter.Value()[16:]
 		if f.UserID() == targetID {
 			f.SetDeleted(true)
 			if err = r.Update(boardId, f); err != nil {

@@ -162,7 +162,9 @@ Game.Nav = (function(g){
         t = t.parentNode;
       }
       if (t.nodeName == "A" && t.classList.contains('board')) {
-        game.getSocket().changeBoard(parseInt(t.dataset.id));
+        game.getSocket().changeBoard(parseInt(t.dataset.id), (board) => {
+          Game.setHash();
+        });
       }
     });
   };
@@ -296,8 +298,7 @@ Game.Nav = (function(g){
     for (var k in targets) {
       if (!targets.hasOwnProperty(k)) continue;
       for (let r of targets[k]) {
-        boardStore = Game.Series.boardStore(r.boardID);
-        frameBytes = await boardStore.getItem(r.timecode.toString(16).padStart(6, 0));
+        frameBytes = await Game.Series.boardStore(r.boardID).getItem(r.timecode.toString(16).padStart(8, 0));
         f = Game.Frame.fromBytes(frameBytes);
         r.tileNum = f.ti*16 + f.tj%16;
       }

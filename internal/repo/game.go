@@ -106,6 +106,7 @@ func (r *game) FindActiveBoard(boardId uint16) (board *entity.Board, err error) 
 		}
 		for _, b := range s.Boards {
 			if b.ID == boardId {
+				b.Created = s.Created
 				return &b, nil
 			}
 		}

@@ -34,6 +34,7 @@ Game.Series = (function(g){
         for (let b of s.boards) {
           if ((boardId == 0 && b.active > 0) || b.id == boardId) {
             const palette = new Game.Palette(s.palette);
+            b.created = s.created;
             const board = new Game.Board(Game, series.boardStore(b.id), b, palette, function() {
               res(board);
             });

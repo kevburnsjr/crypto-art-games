@@ -50,13 +50,12 @@ func (r *report) Insert(report *entity.Report) (err error) {
 
 // All fetches all reports
 func (r *report) All() (reports []*entity.Report, err error) {
-	var start = make([]byte, 2)
-	keys, vals, err := r.db.GetRanged(start, 0, false)
+	keys, vals, err := r.db.GetRanged(nil, 0, false)
 	if err != nil {
 		return
 	}
 	for i, val := range vals {
-		if len(keys[i]) != 8 {
+		if len(keys[i]) != 14 {
 			continue
 		}
 		reports = append(reports, &entity.Report{
