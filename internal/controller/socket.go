@@ -379,7 +379,6 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 					target.Banned = false
 					target.Timeout = userBan.Until
 				}
-				fmt.Printf("%+v", target)
 				if err = c.repoUser.Update(target); err != nil {
 					return
 				}
