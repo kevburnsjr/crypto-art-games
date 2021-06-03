@@ -178,6 +178,12 @@ Game.Nav = (function(g){
     this.toggles.series.click();
   };
 
+  nav.prototype.toggleMod = function(){
+    if ("mod" in this.toggles) {
+      this.toggles.mod.click();
+    }
+  };
+
   nav.prototype.updateScrubber = function(size) {
     this.scrubber.firstChild.style.width = this.scrubber.offsetWidth + size;
   };

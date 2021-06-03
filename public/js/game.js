@@ -651,6 +651,10 @@ var Game = (function(g){
       e.preventDefault();
       nav.toggleSeries();
     }
+    if (k == "m") {
+      e.preventDefault();
+      nav.toggleMod();
+    }
     if (k == "r") {
       e.preventDefault();
       nav.toggleRecentFrames();
