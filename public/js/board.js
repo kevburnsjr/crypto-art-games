@@ -393,33 +393,36 @@ Game.Board = (function(g){
     var i;
     var f;
     var timecode = this.frames[this.offset];
+    this.enabled = false;
     for(i = this.frames.length-1; i >= 0; i--) {
       f = this.frames[i];
       frameDate = (+f.date/1000).toFixed(0);
-      if (frameDate < ban.since) break;
       this.tiles[f.ti][f.tj].undoFrame(f);
       this.tiles[f.ti][f.tj].frames.pop();
+      if (frameDate < ban.since) break;
       if (frameDate > ban.until) continue;
       if (f.userid != ban.targetID) continue;
       await this.removeFrame(f);
-      if (i <= this.offset) {
+      if (i < this.offset) {
         this.offset--;
       }
-      if (i <= this.drawnOffset) {
+      if (i < this.drawnOffset) {
         this.drawnOffset--;
       }
     }
-    for(i++; i < this.frames.length; i++) {
+    for(i; i < this.frames.length; i++) {
       f = this.frames[i];
       f.prev = [];
       this.frameIdx[f.timecode] = i;
       this.tiles[f.ti][f.tj].frameIdx[f.timecode] = this.tiles[f.ti][f.tj].frames.length;
       this.tiles[f.ti][f.tj].frames.push(f);
-      if (i <= this.drawnOffset) {
-        this.tiles[f.ti][f.tj].applyFrame(f);
-      }
+      this.tiles[f.ti][f.tj].applyFrame(f);
     }
-    this.offset = Math.min(this.frames.length, this.offset);
+    for(i = this.frames.length - 1; i >= this.drawnOffset; i--) {
+      f = this.frames[i];
+      this.tiles[f.ti][f.tj].undoFrame(f);
+    }
+    this.enabled = true;
   };
 
   board.prototype.undoFrame = function(f) {
