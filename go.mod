@@ -25,6 +25,8 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
+	github.com/tdewolff/minify v2.3.6+incompatible // indirect
+	github.com/tdewolff/parse v2.3.4+incompatible // indirect
 	github.com/tidwall/gjson v1.7.5 // indirect
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
 	golang.org/x/net v0.0.0-20210423184538-5f58ad60dda6 // indirect

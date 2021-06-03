@@ -151,28 +151,7 @@
 <nav class="brush-state" id="brush-state"></nav>
 <canvas id="bgcanvas" class="full" width="0" height="0"></canvas>
 <canvas id="uicanvas" class="full" width="0" height="0"></canvas>
-<script src="/js/lib/helpers.js"></script>
-<script src="/js/lib/timeago.min.js"></script>
-<script src="/js/lib/jsuri-1.1.1.js"></script>
-<script src="/js/lib/base64.js"></script>
-<script src="/js/lib/bitset.min.js"></script>
-<script src="/js/lib/nearestColor.js"></script>
-<script src="/js/lib/localforage.min.js"></script>
-<script src="/js/lib/polyfills.js"></script>
-<script src="/js/global.js"></script>
-<script src="/js/game.js"></script>
-<script src="/js/lib/object.js"></script>
-<script src="/js/lib/event.js"></script>
-<script src="/js/lib/socket.js"></script>
-<script src="/js/lib/dom.js"></script>
-<script src="/js/series.js"></script>
-<script src="/js/user.js"></script>
-<script src="/js/nav.js"></script>
-<script src="/js/board.js"></script>
-<script src="/js/palette.js"></script>
-<script src="/js/tile.js"></script>
-<script src="/js/frame.js"></script>
-{{if .Test}}
-<script src="/js/test.js"></script>
+{{range $src := .JS}}
+<script src="{{$src}}"></script>
 {{end}}
 </div></body></html>

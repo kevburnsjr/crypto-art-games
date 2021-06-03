@@ -57,7 +57,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 	}
 
 	imgUrl := "https://static-cdn.jtvnw.net"
-	wsUrl := "wss://" + cfg.Api.Host
+	wsUrl := "wss://" + cfg.Http.Host
 
 	stdHeaders = func(w http.ResponseWriter) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -80,6 +80,7 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 	router.Handle("/", index{})
 	router.Handle("/pixel-compactor", index{oauth, cfg, logger, hub, rUser})
 	router.Handle("/u/i/{id:[0-9]+}", newUserImage(rUser))
+	router.Handle("/js/min.js", &staticMinJS{"public", cfg.Hash})
 	router.Handle("/login", newLogin(logger, oauth))
 	router.Handle("/logout", newLogout(logger, oauth))
 	router.Handle("/policy-accept", newPolicyAccept(logger, oauth, hub, rUser))

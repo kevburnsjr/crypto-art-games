@@ -14,6 +14,8 @@ import (
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 )
 
+var Hash string
+
 var config_path *string = flag.String("conf", "config.yml", "Location of config file")
 
 func main() {
@@ -24,6 +26,8 @@ func main() {
 	}
 	var cfg = config.Api{}
 	yaml.Unmarshal(yamlFile, &cfg)
+
+	cfg.Hash = Hash
 
 	var app = internal.NewApi(&cfg)
 

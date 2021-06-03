@@ -150,7 +150,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Sync new user bans
 	userBans, err := c.repoUserBan.Since(banIdx)
 	for _, b := range userBans {
-		conn.Write(sock.TextMsgFromBytes("", b.ToDto()))
+		conn.Write(sock.TextMsgFromBytes("bans", b.ToDto()))
 		banIdx = b.ID
 	}
 

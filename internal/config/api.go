@@ -1,12 +1,14 @@
 package config
 
 type Api struct {
-	Api    Http   `yaml:"api"`
+	Http   Http   `yaml:"api"`
 	Log    Log    `yaml:"log"`
 	Twitch Twitch `yaml:"twitch"`
 	Secret string `yaml:"secret"`
 	Repo   Repos  `yaml:"repo"`
 	Test   bool   `yaml:"test"`
+	Minify bool   `yaml:"minify"`
+	Hash   string `yaml:"hash"`
 }
 
 type Http struct {

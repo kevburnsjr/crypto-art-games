@@ -12,6 +12,30 @@ import (
 	sock "github.com/kevburnsjr/crypto-art-games/internal/socket"
 )
 
+var allJS = []string{
+	"/js/lib/helpers.js",
+	"/js/lib/timeago.min.js",
+	"/js/lib/jsuri-1.1.1.js",
+	"/js/lib/base64.js",
+	"/js/lib/bitset.min.js",
+	"/js/lib/nearestColor.js",
+	"/js/lib/localforage.min.js",
+	"/js/lib/polyfills.js",
+	"/js/global.js",
+	"/js/game.js",
+	"/js/lib/object.js",
+	"/js/lib/event.js",
+	"/js/lib/socket.js",
+	"/js/lib/dom.js",
+	"/js/series.js",
+	"/js/user.js",
+	"/js/nav.js",
+	"/js/board.js",
+	"/js/palette.js",
+	"/js/tile.js",
+	"/js/frame.js",
+}
+
 type index struct {
 	*oauth
 	cfg      *config.Api
@@ -32,15 +56,23 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if user != nil {
 		mod = user.Mod
 	}
+	var js = allJS
+	if c.cfg.Minify {
+		js = []string{"/js/min.js?v="+c.cfg.Hash}
+	}
+	if c.cfg.Test {
+		js = append(js, "/js/test.js")
+	}
+
 	b := bytes.NewBuffer(nil)
 	var indexTpl = template.Must(template.ParseFiles("./template/index.html"))
 	err := indexTpl.Execute(b, struct {
 		HOST string
-		Test bool
+		JS   []string
 		Mod  bool
 	}{
-		c.cfg.Api.Host,
-		c.cfg.Test,
+		c.cfg.Http.Host,
+		js,
 		mod,
 	})
 	if check(err, w, c.log) {

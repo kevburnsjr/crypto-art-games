@@ -25,7 +25,7 @@ func NewApi(cfg *config.Api) *Api {
 }
 
 func (app *Api) Start() {
-	cfg := app.config.Api
+	cfg := app.config.Http
 	handler := controller.NewRouter(app.config, app.logger)
 
 	app.server = &http.Server{
