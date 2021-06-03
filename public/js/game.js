@@ -186,7 +186,7 @@ var Game = (function(g){
         });
       },
       love: async function(timecode) {
-        var f = board.frames[timecode];
+        var f = board.frames[board.frameIdx[timecode]];
         const user = await Game.User.find(f.userid);
         return new Promise((resolve, reject) => {
           if (userID == null) {

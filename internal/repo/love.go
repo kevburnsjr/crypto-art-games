@@ -35,7 +35,7 @@ type love struct {
 
 // Insert inserts a love
 func (r *love) Insert(boardID uint16, timecode, userID uint32, t time.Time) (err error) {
-	idBytes := make([]byte, 6)
+	idBytes := make([]byte, 10)
 	binary.BigEndian.PutUint16(idBytes[0:2], boardID)
 	binary.BigEndian.PutUint32(idBytes[2:6], userID)
 	binary.BigEndian.PutUint32(idBytes[6:10], timecode)
@@ -47,13 +47,12 @@ func (r *love) Insert(boardID uint16, timecode, userID uint32, t time.Time) (err
 
 // All fetches all loves
 func (r *love) All() (loves []*entity.Love, err error) {
-	var start = make([]byte, 2)
-	keys, vals, err := r.db.GetRanged(start, 0, false)
+	keys, vals, err := r.db.GetRanged(nil, 0, false)
 	if err != nil {
 		return
 	}
 	for i, val := range vals {
-		if len(keys[i]) != 4 {
+		if len(keys[i]) != 10 {
 			continue
 		}
 		loves = append(loves, &entity.Love{
@@ -73,7 +72,7 @@ func (r *love) Sweep(t time.Time) (s int, n int, err error) {
 		return
 	}
 	for i, val := range vals {
-		if len(keys[i]) != 4 {
+		if len(keys[i]) != 10 {
 			continue
 		}
 		if time.Unix(int64(binary.BigEndian.Uint32(val[0:4])), 0).Before(t) {

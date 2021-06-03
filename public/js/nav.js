@@ -81,11 +81,12 @@ Game.Nav = (function(g){
         game.board().setFocus(parseInt(e.target.dataset.i), parseInt(e.target.dataset.j));
         return;
       }
-      if (e.target.classList.contains("heart")) {
-        e.target = e.target.parentNode;
+      var t = e.target;
+      if (t.classList.contains("heart")) {
+        t = t.parentNode;
       }
-      if (e.target.nodeName == "A" && e.target.classList.contains("love")) {
-        game.getSocket().love(e.target.parentNode.parentNode.dataset.timecode);
+      if (t.nodeName == "A" && t.classList.contains("love")) {
+        game.getSocket().love(t.parentNode.parentNode.dataset.timecode);
       }
     });
     var self = this;
@@ -244,7 +245,12 @@ Game.Nav = (function(g){
       this.recentFrames.querySelectorAll("li").forEach((el, i) => {
         el.prepend(this.recentTiles[i].canvas);
       })
+    } else {
+      for (let t of this.recentTiles) {
+        t.palette = board.palette;
+      }
     }
+    // const userid =
     g.User.findAll(userIds).then(users => {
       var li = this.recentFrames.querySelectorAll("li");
       var a, img, span, ta;
@@ -261,6 +267,7 @@ Game.Nav = (function(g){
         a.title = sanitizeHTML(users[i].display_name);
         a.querySelector('img').src = "/u/i/"+userIds[i];
         a.querySelector('span').textContent = sanitizeHTML(users[i].display_name);
+        // a.querySelector('a.heart').style.display = frames[i].userid == ;
         li[i].querySelector('.timeago').setAttribute('datetime', frames[i].date.toISOString());
         this.recentTiles[i].renderFrameBuffer(frames[i]);
         this.recentTiles[i].canvas.dataset.i = frames[i].ti;
