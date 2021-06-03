@@ -32,7 +32,7 @@ Game.Series = (function(g){
     return new Promise((res, rej) => {
       for (let s of list) {
         for (let b of s.boards) {
-          if ((boardId == 0 && b.act) || b.id == boardId) {
+          if ((boardId == 0 && b.active > 0) || b.id == boardId) {
             const palette = new Game.Palette(s.palette);
             const board = new Game.Board(Game, series.boardStore(b.id), b, palette, function() {
               res(board);

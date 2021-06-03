@@ -3,21 +3,18 @@ package repo
 import (
 	"encoding/binary"
 	"fmt"
-	"math"
-	"time"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
-	"github.com/kevburnsjr/crypto-art-games/internal/errors"
 	"github.com/kevburnsjr/crypto-art-games/internal/repo/driver"
 )
 
 type Board interface {
-	Find(boardId, timecode uint16) (frame *entity.Frame, err error)
-	Insert(boardId uint16, frame *entity.Frame, t time.Time) (timecode uint16, err error)
-	Since(boardId, generation, timecode uint16) (frames []*entity.Frame, err error)
+	Find(boardId uint16, timecode uint32) (frame *entity.Frame, err error)
+	Insert(boardId uint16, frame *entity.Frame) (err error)
+	Since(boardId uint16, timecode uint32) (frames []*entity.Frame, err error)
 	Update(boardId uint16, f *entity.Frame) (err error)
-	DeleteUserFramesAfter(boardId, targetID uint16, timestamp uint32) (n int, err error)
+	DeleteUserFramesAfter(boardId uint16, targetID, timecode uint32) (n int, err error)
 }
 
 // NewBoard returns an Frame repo instance
@@ -54,49 +51,28 @@ func (r *board) db(boardId uint16) (driver.DB, error) {
 }
 
 // Find returns a frame by timecode
-func (r *board) Find(boardId, timecode uint16) (frame *entity.Frame, err error) {
+func (r *board) Find(boardId uint16, timecode uint32) (frame *entity.Frame, err error) {
 	db, err := r.db(boardId)
 	if err != nil {
 		return
 	}
-	tcBytes := make([]byte, 2)
-	binary.BigEndian.PutUint16(tcBytes, timecode)
+	tcBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(tcBytes, timecode)
 	_, frameBytes, err := db.Get(tcBytes)
 	frame = entity.FrameFromBytes(frameBytes)
 	return
 }
 
 // Insert inserts a frame
-func (r *board) Insert(boardId uint16, frame *entity.Frame, t time.Time) (timecode uint16, err error) {
+func (r *board) Insert(boardId uint16, f *entity.Frame) (err error) {
 	db, err := r.db(boardId)
 	if err != nil {
 		return
 	}
-	tcVers, tcBytes, err := db.Get([]byte("_timecode"))
-	if err == errors.RepoItemNotFound {
-		timecode = uint16(0)
-	} else if err != nil {
-		return
-	} else {
-		timecode = binary.BigEndian.Uint16(tcBytes)
-		timecode++
-	}
-	frame.SetTimecode(timecode)
-
-	tcBytes = make([]byte, 2)
-	binary.BigEndian.PutUint16(tcBytes, timecode)
-
-	err = r.timeCheck(boardId, frame, t)
+	_, err = db.Put(f.ID(), "", f.ToBytes())
 	if err != nil {
 		return
 	}
-
-	_, err = db.Put(tcBytes, "", frame.ToBytes())
-	if err != nil {
-		return
-	}
-
-	_, err = db.Put([]byte("_timecode"), tcVers, tcBytes)
 	return
 }
 
@@ -106,57 +82,24 @@ func (r *board) Update(boardId uint16, f *entity.Frame) (err error) {
 	if err != nil {
 		return
 	}
-	tcBytes := make([]byte, 2)
-	binary.BigEndian.PutUint16(tcBytes, f.Timecode())
-	_, err = db.Put(tcBytes, "", f.ToBytes())
-	return
-}
-
-// Checkpoint encoded timestamps
-func (r *board) timeCheck(boardId uint16, frame *entity.Frame, t time.Time) (err error) {
-	db, err := r.db(boardId)
-	if err != nil {
-		return
-	}
-	var timecheck uint32
-	chkVers, chkBytes, err := db.Get([]byte("_timecheck"))
-	if err == errors.RepoItemNotFound {
-		timecheck = 0
-		err = nil
-	} else if err != nil {
-		return
-	} else {
-		timecheck = binary.BigEndian.Uint32(chkBytes)
-	}
-	var timestamp = t.Truncate(60*time.Second).Unix() - int64(timecheck)
-	if timecheck == 0 || timestamp > math.MaxUint16-1 {
-		timecheck = uint32(t.Truncate(60*time.Second).Unix()) - 60
-		chkBytes = append(make([]byte, 4), chkBytes...)
-		binary.BigEndian.PutUint32(chkBytes[0:4], timecheck)
-		_, err = db.Put([]byte("_timecheck"), chkVers, chkBytes)
-		frame.SetTimestamp(0)
-		frame.SetTimecheck(timecheck)
-	} else {
-		frame.SetTimestamp(uint16(timestamp / 60))
-	}
-
+	_, err = db.Put(f.ID(), "", f.ToBytes())
 	return
 }
 
 // Since inserts all frames since timecode
-func (r *board) Since(boardId, generation, timecode uint16) (frames []*entity.Frame, err error) {
+func (r *board) Since(boardId uint16, timecode uint32) (frames []*entity.Frame, err error) {
 	db, err := r.db(boardId)
 	if err != nil {
 		return
 	}
-	var start = make([]byte, 2)
-	binary.BigEndian.PutUint16(start, timecode)
+	var start = make([]byte, 4)
+	binary.BigEndian.PutUint32(start, timecode-timecode%256)
 	keys, vals, err := db.GetRanged(start, 0, false)
 	if err != nil {
 		return
 	}
 	for i, b := range vals {
-		if len(keys[i]) != 2 {
+		if len(keys[i]) != 4 {
 			continue
 		}
 		frame := &entity.Frame{
@@ -168,16 +111,9 @@ func (r *board) Since(boardId, generation, timecode uint16) (frames []*entity.Fr
 }
 
 // DeleteUserFramesAfter removes a users' contributions to the board
-func (r *board) DeleteUserFramesAfter(boardId, targetID uint16, timestamp uint32) (n int, err error) {
+func (r *board) DeleteUserFramesAfter(boardId uint16, targetID, timecode uint32) (n int, err error) {
 	db, err := r.db(boardId)
 	if err != nil {
-		return
-	}
-	_, chkBytes, err := db.Get([]byte("_timecheck"))
-	if err != nil {
-		if err == errors.RepoItemNotFound {
-			err = nil
-		}
 		return
 	}
 	iter, err := db.Iterator()
@@ -185,31 +121,20 @@ func (r *board) DeleteUserFramesAfter(boardId, targetID uint16, timestamp uint32
 		return
 	}
 	defer iter.Release()
-	var timecheck = binary.BigEndian.Uint32(chkBytes[0:4])
-	var checks int
 	var f = &entity.Frame{}
-	//iter.Seek([]byte{0xff,0xff})
-	iter.Last()
-	for iter.Prev() {
-		if len(iter.Key()) != 2 {
-			continue;
+	var start = make([]byte, 4)
+	binary.BigEndian.PutUint32(start, timecode-timecode%256)
+	for iter.Seek(start); iter.Valid(); iter.Next() {
+		if len(iter.Key()) != 4 {
+			continue
 		}
 		f.Data = iter.Value()[16:]
-		if timecheck+uint32(time.Duration(f.Timestamp())*60*time.Second) < timestamp {
-			return
-		}
 		if f.UserID() == targetID {
 			f.SetDeleted(true)
-			if _, err = db.Put(iter.Key(), "", f.ToBytes()); err != nil {
+			if err = r.Update(boardId, f); err != nil {
 				return
 			}
 			n++
-		}
-		if f.Timestamp() == 0 {
-			checks++
-			if len(chkBytes) > checks*4 {
-				timecheck = binary.BigEndian.Uint32(chkBytes[checks*4 : checks*4+4])
-			}
 		}
 	}
 	return

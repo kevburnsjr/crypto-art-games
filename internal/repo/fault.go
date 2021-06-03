@@ -10,7 +10,7 @@ import (
 )
 
 type Fault interface {
-	Insert(errType string, userID uint16, userAgent string, t time.Time) (err error)
+	Insert(errType string, userID uint32, userAgent string, t time.Time) (err error)
 	All() (faults []*entity.Fault, err error)
 	Sweep(t time.Time) (s int, n int, err error)
 }
@@ -34,10 +34,10 @@ type fault struct {
 }
 
 // Insert inserts a fault
-func (r *fault) Insert(errType string, userID uint16, userAgent string, t time.Time) (err error) {
-	idBytes := make([]byte, 6)
+func (r *fault) Insert(errType string, userID uint32, userAgent string, t time.Time) (err error) {
+	idBytes := make([]byte, 8)
 	binary.BigEndian.PutUint32(idBytes[0:4], uint32(t.Truncate(time.Minute).Unix()))
-	binary.BigEndian.PutUint16(idBytes[4:6], userID)
+	binary.BigEndian.PutUint32(idBytes[4:8], userID)
 	idBytes = append(idBytes, []byte(errType)...)
 	_, err = r.db.Put(idBytes, "", []byte(userAgent))
 	return
@@ -45,19 +45,18 @@ func (r *fault) Insert(errType string, userID uint16, userAgent string, t time.T
 
 // All fetches all faults
 func (r *fault) All() (faults []*entity.Fault, err error) {
-	var start = make([]byte, 2)
-	keys, vals, err := r.db.GetRanged(start, 0, false)
+	keys, vals, err := r.db.GetRanged(nil, 0, false)
 	if err != nil {
 		return
 	}
 	for i, val := range vals {
-		if len(keys[i]) != 4 {
+		if len(keys[i]) != 8 {
 			continue
 		}
 		faults = append(faults, &entity.Fault{
-			ErrType:   string(keys[i][6:]),
-			UserID:    binary.BigEndian.Uint16(keys[i][4:6]),
 			Date:      time.Unix(int64(binary.BigEndian.Uint32(val[0:4])), 0),
+			UserID:    binary.BigEndian.Uint32(keys[i][4:8]),
+			ErrType:   string(keys[i][6:]),
 			UserAgent: string(val),
 		})
 	}

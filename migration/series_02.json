@@ -26,11 +26,12 @@
         ]
     },
     "boards": [
-        { "id": 11, "bg": "/palette/galaxy-flame-01.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 12, "bg": "/palette/galaxy-flame-02.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 13, "bg": "/palette/galaxy-flame-03.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 14, "bg": "/palette/galaxy-flame-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
+        { "id": 11, "bg": "/palette/galaxy-flame-01.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 12, "bg": "/palette/galaxy-flame-02.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 13, "bg": "/palette/galaxy-flame-03.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 14, "bg": "/palette/galaxy-flame-04.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 }
     ],
-    "act": true,
-    "fin": false
+    "created": 1622691552,
+    "active": 1622691552,
+    "finished": 0
 }

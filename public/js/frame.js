@@ -1,11 +1,10 @@
 Game.Frame = (function(g){
   "use strict";
 
-  const headerflag_useMask = 44; // 60;
-  const headerflag_deleted = 45; // 61;
-  const headerflag_runLengthEncodedMask = 46; // 62;
-  const headerflag_runLengthEncodedColorTable = 47; // 63;
-
+  const headerflag_useMask = 60;
+  const headerflag_deleted = 61;
+  const headerflag_runLengthEncodedMask = 62;
+  const headerflag_runLengthEncodedColorTable = 63;
 
   var frame = function(tile){
     this.mask = new BitSet();
@@ -14,7 +13,6 @@ Game.Frame = (function(g){
     this.colorCount = 0;
     this.timecode = 0;
     this.timestamp = 0;
-    this.timecheck = 0;
     this.userid = 0;
     this.date = new Date(0);
     this.deleted = false;
@@ -60,24 +58,19 @@ Game.Frame = (function(g){
   // Dictionary encoding (color indeces)
   // Bit mask encoding   (alpha channel)
   // Run length encoding (mask and colors)
-  // Offset encoding     (timestamp / timecheck)
   frame.prototype.toBytes = function() {
     var o = 0;
     var b = new BitSet();
     var bs = n => b.set(o++, parseInt(n));
     var append = (bits, a) => [...a.toString(2).padStart(bits, 0)].forEach(bs);
-    append(16, this.timecode);
-    append(16, this.userid);
+    append(24, this.timestamp);
     append(8, this.ti*16 + this.tj);
+    append(24, this.userid);
     append(4, 0 + (this.colorCount-1));
     append(1, 0 + (this.colors.length >= 32)); // headerflag_useMask
     append(1, this.deleted ? 1 : 0); // headerflag_deleted
     append(1, 0); // headerflag_runLengthEncodedMask
     append(1, 0); // headerflag_runLengthEncodedColorTable
-    append(16, this.timestamp);
-    if (this.timestamp == 0 && this.timecheck > 0) {
-      append(32, this.timecheck);
-    }
 
     var bits = Math.ceil(Math.log2(this.colorCount));
 
@@ -196,7 +189,7 @@ Game.Frame = (function(g){
       return Promise.resolve(this.hash);
     }
     var self = this;
-    var offset = this.timecheck ? 12 : 8;
+    var offset = 8;
     return crypto.subtle.digest('SHA-256', this.toBytes().slice(offset)).then(h => {
       self.hash = hex2b64((new Uint8Array(h)).reduce((a, c) => a += c.toString(16).padStart(2, '0'), ''));
       return self.hash;
@@ -219,18 +212,15 @@ Game.Frame = (function(g){
     }
     const f = new Game.Frame();
     f.data = bytes;
-    f.timecode = readInt(16);
-    f.userid = readInt(16);
+    f.timestamp = readInt(24);
     const tileID = readInt(8);
     f.ti = Math.floor(tileID/16);
     f.tj = tileID % 16;
+    f.userid = readInt(24);
     f.colorCount = readInt(4)+1;
     f.deleted = !!b.get(headerflag_deleted);
     o += 4
-    f.timestamp = readInt(16);
-    if (f.timestamp == 0) {
-      f.timecheck = readInt(32);
-    }
+    f.timecode = f.timestamp * 256 + tileID;
     const bits = Math.ceil(Math.log2(f.colorCount));
     var numpx = 0;
     if (b.get(headerflag_runLengthEncodedMask)) {

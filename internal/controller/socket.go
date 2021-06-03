@@ -28,40 +28,34 @@ func newSocket(
 	rReport repo.Report,
 	rUserBan repo.UserBan,
 	rTileLock repo.TileLock,
-	rTileHistory repo.TileHistory,
-	rUserFrameHistory repo.UserFrameHistory,
 ) *socket {
 	return &socket{
-		log:                  logger,
-		oauth:                oauth,
-		hub:                  hub,
-		repoGame:             rGame,
-		repoUser:             rUser,
-		repoLove:             rLove,
-		repoBoard:            rBoard,
-		repoFault:            rFault,
-		repoReport:           rReport,
-		repoUserBan:          rUserBan,
-		repoTileLock:         rTileLock,
-		repoTileHistory:      rTileHistory,
-		repoUserFrameHistory: rUserFrameHistory,
+		log:          logger,
+		oauth:        oauth,
+		hub:          hub,
+		repoGame:     rGame,
+		repoUser:     rUser,
+		repoLove:     rLove,
+		repoBoard:    rBoard,
+		repoFault:    rFault,
+		repoReport:   rReport,
+		repoUserBan:  rUserBan,
+		repoTileLock: rTileLock,
 	}
 }
 
 type socket struct {
-	log                  *logrus.Logger
-	oauth                *oauth
-	hub                  sock.Hub
-	repoGame             repo.Game
-	repoUser             repo.User
-	repoLove             repo.Love
-	repoBoard            repo.Board
-	repoFault            repo.Fault
-	repoReport           repo.Report
-	repoUserBan          repo.UserBan
-	repoTileLock         repo.TileLock
-	repoTileHistory      repo.TileHistory
-	repoUserFrameHistory repo.UserFrameHistory
+	log          *logrus.Logger
+	oauth        *oauth
+	hub          sock.Hub
+	repoGame     repo.Game
+	repoUser     repo.User
+	repoLove     repo.Love
+	repoBoard    repo.Board
+	repoFault    repo.Fault
+	repoReport   repo.Report
+	repoUserBan  repo.UserBan
+	repoTileLock repo.TileLock
 }
 
 func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -140,8 +134,8 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	userIdxInt, _ := strconv.Atoi(r.FormValue("userIdx"))
 	var (
 		reportIdx = 0
-		banIdx    = uint16(banIdxInt)
-		userIdx   = uint16(userIdxInt)
+		banIdx    = uint32(banIdxInt)
+		userIdx   = uint32(userIdxInt)
 	)
 
 	// Sync new reports for mods
@@ -161,7 +155,7 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Sync new users
-	users, userIds, err := c.repoUser.Since(userIdx, 0)
+	users, userIds, err := c.repoUser.Since(userIdx)
 	if err != nil {
 		c.log.Errorf("%v", err)
 		http.Error(w, "Unable to retrieve new users", 500)
@@ -173,13 +167,13 @@ func (c socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	conn.Write(sock.JsonMessage("", map[string]interface{}{
-		"type":   "init",
-		"v":      fmt.Sprintf("%016x", v),
-		"user":   user,
-		"userIdx":  userIdx,
-		"banIdx":  banIdx,
-		"reportIdx":  reportIdx,
-		"series": series,
+		"type":      "init",
+		"v":         fmt.Sprintf("%016x", v),
+		"user":      user,
+		"userIdx":   userIdx,
+		"banIdx":    banIdx,
+		"reportIdx": reportIdx,
+		"series":    series,
 	}))
 
 	c.hub.Register(conn)
@@ -219,6 +213,7 @@ func (c socket) authMod(user *entity.User) (err error) {
 }
 
 func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.MessageHandler {
+	var board *entity.Board
 	var boardId uint16
 	var boardChannel string
 	return func(t int, msg []byte) (res *sock.Msg, err error) {
@@ -246,7 +241,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.repoUser.Consume(user, boardId); err != nil {
 					return
 				}
-				if err = c.repoTileLock.Acquire(user.UserID, tileID, time.Now()); err != nil {
+				if err = c.repoTileLock.Acquire(user.UserID, boardId, tileID, time.Now()); err != nil {
 					c.repoUser.Credit(user, boardId)
 					return
 				}
@@ -264,7 +259,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.repoUser.Credit(user, boardId); err != nil {
 					return
 				}
-				if err = c.repoTileLock.Release(user.UserID, tileID, time.Now()); err != nil {
+				if err = c.repoTileLock.Release(user.UserID, boardId, tileID, time.Now()); err != nil {
 					return
 				}
 				c.hub.Broadcast(sock.JsonMessagePure(boardChannel, map[string]interface{}{
@@ -291,7 +286,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.auth(user); err != nil {
 					return
 				}
-				var timecode = uint16(m["timecode"].(float64))
+				var timecode = uint32(m["timecode"].(float64))
 				var f *entity.Frame
 				f, err = c.repoBoard.Find(boardId, timecode)
 				if err != nil {
@@ -312,7 +307,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.auth(user); err != nil {
 					return
 				}
-				var timecode = uint16(m["timecode"].(float64))
+				var timecode = uint32(m["timecode"].(float64))
 				var reason = m["reason"].(string)
 				var f *entity.Frame
 				if f, err = c.repoBoard.Find(boardId, timecode); err != nil {
@@ -336,7 +331,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.authMod(user); err != nil {
 					return
 				}
-				var targetID = uint16(m["targetID"].(float64))
+				var targetID = uint32(m["targetID"].(float64))
 				if err = c.repoReport.Clear(targetID); err != nil {
 					return
 				}
@@ -349,10 +344,10 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 					return
 				}
 				var (
-					targetID        = uint16(m["targetID"].(float64))
+					targetID        = uint32(m["targetID"].(float64))
 					since           = uint32(m["since"].(float64))
 					timeout         = m["duration"].(string)
-					reason          = "" // m["reason"].(string)
+					reason          = ""    // m["reason"].(string)
 					ban             = false // m["ban"].(bool)
 					timeoutDuration time.Duration
 				)
@@ -400,8 +395,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.repoReport.Clear(targetID); err != nil {
 					return
 				}
-				res = sock.NewJsonRes(userBan.ToDto())
-				c.hub.Broadcast(res.Raw("bans"))
+				c.hub.Broadcast(sock.NewJsonRes(userBan.ToDto()).Raw("bans"))
 				c.hub.Broadcast(sock.JsonMessagePure("reports", map[string]interface{}{
 					"type":     "report-clear",
 					"targetID": targetID,
@@ -410,18 +404,21 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.auth(user); err != nil {
 					return
 				}
-				err = c.repoFault.Insert("storage", uint16(m["userID"].(float64)), m["userAgent"].(string), time.Now())
+				err = c.repoFault.Insert("storage", uint32(m["userID"].(float64)), m["userAgent"].(string), time.Now())
 				if err != nil {
 					return
 				}
 			case "board-init":
 				var (
-					id         = uint16(m["boardId"].(float64))
-					generation = uint16(m["generation"].(float64))
-					timecode   = uint16(m["timecode"].(float64))
+					id       = uint16(m["boardId"].(float64))
+					timecode = uint32(m["timecode"].(float64))
 				)
 				boardId = id
 				boardChannel = fmt.Sprintf("board-%04x", boardId)
+				board, err = c.repoGame.FindActiveBoard(boardId)
+				if err != nil {
+					return
+				}
 				channels := conn.Channels()
 				for i, c := range channels {
 					if strings.HasPrefix(c, "board-") {
@@ -431,14 +428,14 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				channels = append(channels, boardChannel)
 				c.hub.Update(conn, channels)
 				// Sync new frames
-				frames, err2 := c.repoBoard.Since(boardId, generation, timecode)
+				frames, err2 := c.repoBoard.Since(boardId, timecode)
 				if err2 != nil {
 					err = err2
 					return
 				}
 				for _, frame := range frames {
 					conn.Write(sock.BinaryMsgFromBytes(boardChannel, frame.Data))
-					timecode = frame.Timecode() + 1
+					timecode = frame.Timestamp()
 				}
 				bucket := user.GetBucket(boardId)
 				bucket.AdjustLevel(time.Now())
@@ -457,21 +454,12 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				Data: msg,
 			}
 			frame.SetUserID(user.UserID)
-			if err = c.repoTileLock.Release(user.UserID, frame.TileID(), time.Now()); err != nil {
+			if err = c.repoTileLock.Release(user.UserID, boardId, uint16(frame.TileID()), time.Now()); err != nil {
 				// User does not have lock
 				return
 			}
-
-			_, err = c.repoBoard.Insert(boardId, frame, time.Now())
-			if err != nil {
-				return
-			}
-			err = c.repoTileHistory.Insert(frame)
-			if err != nil {
-				return
-			}
-			err = c.repoUserFrameHistory.Insert(frame)
-			if err != nil {
+			frame.SetTimestamp(uint32(time.Now().Unix()) - board.Created)
+			if err = c.repoBoard.Insert(boardId, frame); err != nil {
 				return
 			}
 			c.hub.Broadcast(sock.JsonMessagePure(boardChannel, map[string]interface{}{

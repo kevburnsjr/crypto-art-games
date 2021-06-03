@@ -72,7 +72,7 @@ Game.Nav = (function(g){
         e.preventDefault();
         return;
       }
-      this.game.setTimecode(scrubber.scrollWidth - scrubber.offsetWidth - Math.round(scrubber.scrollLeft*window.devicePixelRatio));
+      game.board().setOffset(scrubber.scrollWidth - scrubber.offsetWidth - Math.round(scrubber.scrollLeft*window.devicePixelRatio));
     });
     this.recentFrames.addEventListener('wheel', this.handleWheel, { passive: true });
     this.recentFrames.addEventListener('click', e => {
@@ -175,8 +175,8 @@ Game.Nav = (function(g){
     this.toggles.series.click();
   };
 
-  nav.prototype.updateScrubber = function(timecode) {
-    this.scrubber.firstChild.style.width = this.scrubber.offsetWidth + timecode;
+  nav.prototype.updateScrubber = function(size) {
+    this.scrubber.firstChild.style.width = this.scrubber.offsetWidth + size;
   };
 
   nav.prototype.resetScrubber = function() {
@@ -206,20 +206,21 @@ Game.Nav = (function(g){
   nav.prototype.doShowRecent = function(board) {
     var userIds = [];
     var frames = [];
+    var f;
     if (board.focused) {
-      for (var i = board.tile.frames.length-1; i >= 0; i--) {
-        if (board.tile.frames[i].timecode > board.timecode || board.tile.frames[i].deleted) {
+      for (i = board.tile.frames.length-1; i >= 0; i--) {
+        f = board.tile.frames[i];
+        if (i > board.offset) {
           continue;
         }
-        frames.push(board.tile.frames[i]);
-        if (frames.length > 10) {
+        frames.push(f);
+        if (frames.length == 10) {
           break;
         }
-      }
+      };
       this.recentFrames.querySelector('h4').textContent = "Recent Tile Edits";
     } else {
-      for (i = board.timecode-1; i >= 0; i--) {
-        if (board.frames[i].deleted) continue;
+      for (i = board.offset-1; i >= 0; i--) {
         frames.push(board.frames[i]);
         if (frames.length == 10) {
           break;
@@ -296,7 +297,7 @@ Game.Nav = (function(g){
       if (!targets.hasOwnProperty(k)) continue;
       for (let r of targets[k]) {
         boardStore = Game.Series.boardStore(r.boardID);
-        frameBytes = await boardStore.getItem(r.timecode.toString(16).padStart(4, 0));
+        frameBytes = await boardStore.getItem(r.timecode.toString(16).padStart(6, 0));
         f = Game.Frame.fromBytes(frameBytes);
         r.tileNum = f.ti*16 + f.tj%16;
       }

@@ -70,17 +70,14 @@ var Game = (function(g){
         }
         socket.initializing = true;
         socket.boardChangeCallback = callback ? callback : null;
-        return Game.Series.findActiveBoard(id).then(async b => {
-          board = b;
-          boardId = board.id;
-          uiDirty = true;
-          socket.send(JSON.stringify({
-            type:       'board-init',
-            boardId:    boardId,
-            generation: parseInt(await board.store.getItem("generation"), 16) || 0,
-            timecode:   parseInt(await board.store.getItem("timecode"),   16) || 0
-          }));
-        }).catch((e) => log("Failed to load board", id, e));
+        board = await Game.Series.findActiveBoard(id);
+        boardId = board.id;
+        uiDirty = true;
+        socket.send(JSON.stringify({
+          type:       'board-init',
+          boardId:    boardId,
+          timecode:   parseInt(board.getTimecode()) || 0
+        }));
       },
       sendFrame: function(f) {
         return new Promise((resolve, reject) => {
@@ -160,7 +157,7 @@ var Game = (function(g){
         });
       },
       report: async function(timecode, reason) {
-        var f = board.frames[timecode];
+        var f = board.frames[board.frameIdx[timecode]];
         const user = await Game.User.find(f.userid);
         return new Promise((resolve, reject) => {
           if (userID == null) {
@@ -425,10 +422,6 @@ var Game = (function(g){
     dirty = false;
     uiDirty = false;
     animationFrame = window.requestAnimationFrame(draw);
-  };
-
-  var setTimecode = function(tc) {
-    board.timecode = Math.max(tc, 0);
   };
 
   // ----------------- Input Functions -------------------
@@ -790,7 +783,6 @@ var Game = (function(g){
     online: false,
     log: log,
     nav: () => nav,
-    setTimecode: setTimecode,
     getSocket: getSocket,
     board: () => board,
     store: () => store

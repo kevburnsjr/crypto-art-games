@@ -26,11 +26,12 @@
         ]
     },
     "boards": [
-        { "id": 41, "bg": "/palette/lemon-16-01.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 42, "bg": "/palette/lemon-16-02.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 43, "bg": "/palette/lemon-16-03.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 44, "bg": "/palette/lemon-16-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
+        { "id": 41, "bg": "/palette/lemon-16-01.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 42, "bg": "/palette/lemon-16-02.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 43, "bg": "/palette/lemon-16-03.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 44, "bg": "/palette/lemon-16-04.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 }
     ],
-    "act": true,
-    "fin": false
+    "created": 1622691552,
+    "active": 1622691552,
+    "finished": 0
 }

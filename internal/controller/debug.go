@@ -30,42 +30,36 @@ func newDebug(
 	rReport repo.Report,
 	rUserBan repo.UserBan,
 	rTileLock repo.TileLock,
-	rTileHistory repo.TileHistory,
-	rUserFrameHistory repo.UserFrameHistory,
 ) *debug {
 	return &debug{
-		cfg:                  cfg,
-		log:                  logger,
-		oauth:                oauth,
-		hub:                  hub,
-		repoGame:             rGame,
-		repoUser:             rUser,
-		repoLove:             rLove,
-		repoBoard:            rBoard,
-		repoFault:            rFault,
-		repoReport:           rReport,
-		repoUserBan:          rUserBan,
-		repoTileLock:         rTileLock,
-		repoTileHistory:      rTileHistory,
-		repoUserFrameHistory: rUserFrameHistory,
+		cfg:          cfg,
+		log:          logger,
+		oauth:        oauth,
+		hub:          hub,
+		repoGame:     rGame,
+		repoUser:     rUser,
+		repoLove:     rLove,
+		repoBoard:    rBoard,
+		repoFault:    rFault,
+		repoReport:   rReport,
+		repoUserBan:  rUserBan,
+		repoTileLock: rTileLock,
 	}
 }
 
 type debug struct {
-	cfg                  *config.Api
-	log                  *logrus.Logger
-	oauth                *oauth
-	hub                  sock.Hub
-	repoGame             repo.Game
-	repoUser             repo.User
-	repoLove             repo.Love
-	repoBoard            repo.Board
-	repoFault            repo.Fault
-	repoReport           repo.Report
-	repoUserBan          repo.UserBan
-	repoTileLock         repo.TileLock
-	repoTileHistory      repo.TileHistory
-	repoUserFrameHistory repo.UserFrameHistory
+	cfg          *config.Api
+	log          *logrus.Logger
+	oauth        *oauth
+	hub          sock.Hub
+	repoGame     repo.Game
+	repoUser     repo.User
+	repoLove     repo.Love
+	repoBoard    repo.Board
+	repoFault    repo.Fault
+	repoReport   repo.Report
+	repoUserBan  repo.UserBan
+	repoTileLock repo.TileLock
 }
 
 func (c *debug) ServeHTTP(w http.ResponseWriter, r *http.Request) {

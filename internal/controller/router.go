@@ -56,16 +56,6 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 		logger.Fatal(err)
 	}
 
-	rTileHistory, err := repo.NewTileHistory(cfg.Repo.TileHistory)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	rUserFrameHistory, err := repo.NewUserFrameHistory(cfg.Repo.UserFrameHistory)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
 	imgUrl := "https://static-cdn.jtvnw.net"
 	wsUrl := "wss://" + cfg.Api.Host
 
@@ -83,9 +73,9 @@ func NewRouter(cfg *config.Api, logger *logrus.Logger) *mux.Router {
 
 	oauth := newOAuth(cfg, logger, rUser)
 
-	socket := newSocket(logger, oauth, hub, rGame, rUser, rLove, rBoard, rFault, rReport, rUserBan, rTileLock, rTileHistory, rUserFrameHistory)
+	socket := newSocket(logger, oauth, hub, rGame, rUser, rLove, rBoard, rFault, rReport, rUserBan, rTileLock)
 
-	debug := newDebug(cfg, logger, oauth, hub, rGame, rUser, rLove, rBoard, rFault, rReport, rUserBan, rTileLock, rTileHistory, rUserFrameHistory)
+	debug := newDebug(cfg, logger, oauth, hub, rGame, rUser, rLove, rBoard, rFault, rReport, rUserBan, rTileLock)
 
 	router.Handle("/", index{})
 	router.Handle("/pixel-compactor", index{oauth, cfg, logger, hub, rUser})

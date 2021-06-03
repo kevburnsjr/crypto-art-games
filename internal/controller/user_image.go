@@ -25,7 +25,7 @@ func (c userImage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var location string
-	user, err := c.repoUser.FindByUserID(uint16(userID))
+	user, err := c.repoUser.FindByUserID(uint32(userID))
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))

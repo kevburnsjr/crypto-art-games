@@ -3,9 +3,9 @@ Game.Board = (function(g){
 
   var board = function(g, store, data, palette, callback) {
     this.id = data.id;
-    this.active = data.act;
-    this.finished = data.fin;
-    this.tileSize = data.ts;
+    this.active = data.active;
+    this.finished = data.finished;
+    this.tileSize = data.tsz;
     this.xTiles = data.w;
     this.yTiles = data.h;
     this.game = g;
@@ -22,14 +22,15 @@ Game.Board = (function(g){
     this.palette = palette;
     this.tiles = [];
     this.frames = [];
-    this.tileFrameIndex = [];
+    this.frameIdx = {};
     this.tile = null;
     this.edits = [];
     this.enabled = false;
     this.paused = false;
     this.timecode = 0;
-    this.drawnTimecode = 0;
-    this.timecheck = 0;
+    this.offset = 0;
+    this.drawnOffset = 0;
+    this.created = data.created;
     this.speed = 64;
     this.brush = 0;
     var icanvas = document.createElement('canvas');
@@ -90,26 +91,26 @@ Game.Board = (function(g){
         }
       }
     }
-    this.v.diff = this.timecode - this.drawnTimecode;
+    this.v.diff = this.offset - this.drawnOffset;
     this.v.dir = this.v.diff == 0 ? 0 : this.v.diff / Math.abs(this.v.diff);
     if (this.v.dir == 1) {
-      this.v.renderTimecode = Math.max(Math.min(this.timecode, this.v.renderTimecode + (this.v.dir*this.speed)), 0);
+      this.v.renderTimecode = Math.max(Math.min(this.offset, this.v.renderTimecode + (this.v.dir*this.speed)), 0);
     } else {
-      this.v.renderTimecode = Math.max(Math.max(this.timecode, this.v.renderTimecode + (this.v.dir*this.speed)), 0);
+      this.v.renderTimecode = Math.max(Math.max(this.offset, this.v.renderTimecode + (this.v.dir*this.speed)), 0);
     }
     this.v.drawn = false;
-    for (this.v.i = 0; this.drawnTimecode < Math.floor(this.v.renderTimecode); this.v.i++) {
-      this.applyFrame(this.frames[this.drawnTimecode]);
-      this.drawnTimecode++;
+    for (this.v.i = 0; this.drawnOffset < Math.floor(this.v.renderTimecode); this.v.i++) {
+      this.applyFrame(this.frames[this.drawnOffset]);
+      this.drawnOffset++;
       this.v.drawn = true;
     }
-    for (this.v.i = 0; this.drawnTimecode > Math.ceil(this.v.renderTimecode); this.v.i++) {
-      this.undoFrame(this.frames[this.drawnTimecode-1]);
-      this.drawnTimecode--;
+    for (this.v.i = 0; this.drawnOffset > Math.ceil(this.v.renderTimecode); this.v.i++) {
+      this.undoFrame(this.frames[this.drawnOffset-1]);
+      this.drawnOffset--;
       this.v.drawn = true;
     }
-    if (this.drawnTimecode - this.timecode === 0 && this.v.drawn) {
-      this.paused = this.timecode != this.frames.length;
+    if (this.drawnOffset - this.offset === 0 && this.v.drawn) {
+      this.paused = this.offset != this.frames.length;
       g.nav().showRecent(this);
     }
     if (this.tile.active && (this.dirty || this.tile.dirty || this.tile.inBounds(curx, cury, this.brushSize())) && !this.game.isKeyDown("alt", "tab", "e")) {
@@ -149,7 +150,7 @@ Game.Board = (function(g){
     }
     if (this.focused && this.enabled && this.i == i && this.j == j) {
       if (this.paused) {
-        this.timecode = this.frames.length;
+        this.offset = this.frames.length-1;
         this.paused = false;
       }
       if (this.tile.active && !this.game.isKeyDown("tab")) {
@@ -191,7 +192,7 @@ Game.Board = (function(g){
     const i = Math.floor((curx-x1) / this.scale);
     const j = Math.floor((cury-y1) / this.scale);
     if(this.tile.active && (i != this.i || j != this.j) && !this.game.isKeyDown("shift", "tab", "alt", "e")) {
-       this.commitActive();
+      this.commitActive();
     }
   };
 
@@ -274,14 +275,13 @@ Game.Board = (function(g){
         rej();
         return;
       }
-      const f = self.frames[timecode];
+      const f = self.frames[self.frameIdx[timecode]];
       if (f === undefined) {
         rej();
         return;
       }
       game.socket().undoFrame(self, f).then((e) => {
-        f.deleted = true;
-        g.nav().updateScrubber(f.timecode);
+        self.removeFrame(f);
       });
     });
   };
@@ -337,31 +337,50 @@ Game.Board = (function(g){
   };
 
   board.prototype.setTimecode = async function(tc) {
-    return this.store.setItem("timecode", tc.toString(16).padStart(4, 0));
+    return this.store.setItem("timecode", tc.toString(16).padStart(8, 0));
   };
+
+  board.prototype.getOffset = function() {
+    return this.offset;
+  };
+
+  board.prototype.setOffset = function(o) {
+    this.offset = o;
+  }
 
   board.prototype.saveFrame = async function(f) {
     if (this.enabled) {
-      if (f.timecheck > 0) {
-        this.timecheck = f.timecheck*1000;
-      }
-      f.date = new Date();
-      this.frames[f.timecode] = f;
+      f.date = new Date((self.created + f.timestamp) * 1000);
+      this.frameIdx[f.timecode] = this.frames.length;
+      this.frames.push(f)
+      this.tiles[f.ti][f.tj].frameIdx[f.timecode] = this.tiles[f.ti][f.tj].frames.length;
       this.tiles[f.ti][f.tj].frames.push(f);
-      g.nav().updateScrubber(f.timecode+1);
+      g.nav().updateScrubber(this.frames.length);
       if (!this.paused) {
-        this.timecode = f.timecode+1;
+        this.offset = this.frames.length-1;
       }
+      this.timecode = f.timecode;
     }
-    return this.store.setItem(f.timecode.toString(16).padStart(4, 0), f.toBytes());
+    return this.store.setItem(f.timecode.toString(16).padStart(8, 0), f.toBytes());
   };
 
-  board.prototype.scanFrames = async function(fn) {
-    return this.store.iterate(function(v, k, i) {
-      if (k.length == 4) {
-        fn(parseInt(k, 16), v)
+  board.prototype.removeFrame = async function(f) {
+    await this.store.removeItem(f.timecode.toString(16).padStart(8, 0), f.toBytes());
+    if (!(f.timecode in this.frameIdx)) {
+      return;
+    }
+    if (this.enabled) {
+      this.frames.splice(this.frameIdx[f.timecode],1);
+      delete(this.frameIdx[f.timecode]);
+      this.tiles[f.ti][f.tj].frames.splice(this.tiles[f.ti][f.tj].frameIdx[f.timecode],1);
+      delete(this.tiles[f.ti][f.tj].frameIdx[f.timecode]);
+      g.nav().updateScrubber(this.frames.length);
+      this.offset = Math.min(this.frames.length, this.offset);
+      if (!this.paused) {
+        this.offset = this.frames.length-1;
       }
-    });
+    }
+    return;
   };
 
   board.prototype.applyFrame = function(f) {
@@ -370,35 +389,28 @@ Game.Board = (function(g){
     }
   };
 
+  // TODO - Process user bans in batch
   board.prototype.applyUserBan = async function(ban) {
-    console.log("applyUserBan", ban);
     var frameDate;
-    var timecode;
     var deleted = {};
-    for(var i = this.frames.length-1; i >= 0; i--) {
+    var i;
+    var f;
+    for(i = this.frames.length-1; i >= 0; i--) {
       f = this.frames[i];
-      if (f.userid != ban.targetID) continue;
       frameDate = (+f.date/1000).toFixed(0);
-      if (frameDate > ban.until) continue;
+      console.log(f, f.date, frameDate, ban.since, ban.until, f.userid, ban.targetID);
       if (frameDate < ban.since) break;
-      timecode = f.timecode;
-      deleted[i] = true;
-      f.deleted = true;
+      this.tiles[f.ti][f.tj].undoFrame(f);
+      if (frameDate > ban.until) continue;
+      if (f.userid != ban.targetID) continue;
+      await this.removeFrame(f);
     }
-    if (timecode != null) {
-      var f;
-      for(var i = this.frames.length-1; i >= timecode; i--) {
-        if (!f.deleted || i in deleted) {
-          this.undoFrame(this.frames[i]);
-        }
-      }
-      for(var i = timecode; i < this.frames.length; i++) {
-        f = this.frames[i];
-        this.applyFrame(this.frames[i]);
-        this.frames[i].resamplePrev(this.tiles[f.ti][f.tj]);
-        await this.store.setItem(this.frames[i].timecode.toString(16).padStart(4, 0), this.frames[i].toBytes()).catch(console.log);
-      }
+    for(; i < this.frames.length; i++) {
+      f = this.frames[i];
+      f.resamplePrev(this.tiles[f.ti][f.tj]);
+      this.applyFrame(f);
     }
+    this.offset = Math.min(this.frames.length-1, this.offset);
   };
 
   board.prototype.undoFrame = function(f) {
@@ -407,23 +419,31 @@ Game.Board = (function(g){
     }
   };
 
-  board.prototype.enable = function(timecode, userIdx) {
+  board.prototype.scanFrames = async function(fn) {
+    return this.store.iterate(function(v, k, i) {
+      if (k.length == 8) {
+        fn(parseInt(k, 16), v)
+      }
+    });
+  };
+
+  board.prototype.enable = function(timecode) {
     var self = this;
     if (this.enabled) {
       return;
     }
     return this.scanFrames(function(timecode, frameData) {
       const f = Game.Frame.fromBytes(frameData);
-      if (f.timecheck > 0) {
-        self.timecheck = f.timecheck*1000;
-      }
-      f.date = new Date(self.timecheck + f.timestamp * 60 * 1000);
-      self.frames[timecode] = f;
+      f.date = new Date((self.created + f.timestamp) * 1000);
+      self.offset = self.frames.length-1;
+      self.frameIdx[f.timecode] = self.frames.length;
+      self.frames.push(f);
+      self.tiles[f.ti][f.tj].frameIdx[f.timecode] = self.tiles[f.ti][f.tj].frames.length;
       self.tiles[f.ti][f.tj].frames.push(f);
     }).then(() => {
       self.setTimecode(timecode);
     }).then(() => {
-      g.nav().updateScrubber(timecode);
+      g.nav().updateScrubber(self.frames.length);
       g.nav().showRecent(this);
       g.setColor();
       self.timecode = timecode;
@@ -434,4 +454,3 @@ Game.Board = (function(g){
   return board
 
 })(Game);
-

@@ -14,7 +14,7 @@ import (
 
 type User struct {
 	helix.User
-	UserID  uint16                 `json:"userID"`
+	UserID  uint32                 `json:"userID"`
 	Policy  bool                   `json:"policy"`
 	Timeout time.Time              `json:"timeout"`
 	Banned  bool                   `json:"banned"`
@@ -24,7 +24,7 @@ type User struct {
 
 type UserDto struct {
 	Type        string `json:"type"`
-	ID          uint16 `json:"id"`
+	ID          uint32 `json:"id"`
 	Login       string `json:"login"`
 	DisplayName string `json:"display_name"`
 }
@@ -34,7 +34,7 @@ func (u *User) ToJson() []byte {
 	return b
 }
 
-func (u *User) ToDto(userID uint16) []byte {
+func (u *User) ToDto(userID uint32) []byte {
 	b, _ := json.Marshal(UserDto{
 		"new-user",
 		userID,
@@ -58,7 +58,7 @@ func (u *User) GetBucket(boardID uint16) *UserBucket {
 }
 
 func (u *User) IDHex() string {
-	return fmt.Sprintf("%04x", u.UserID)
+	return fmt.Sprintf("%06x", u.UserID)
 }
 
 func UserFromJson(b []byte) *User {

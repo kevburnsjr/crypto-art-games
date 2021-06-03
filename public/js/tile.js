@@ -15,12 +15,10 @@ Game.Tile = (function(g){
     this.cursj = -1;
     this.scale = 1;
     this.frames = [];
+    this.frameIdx = {};
     this.px = [];
     this.maxScale = maxScale;
     this.canvas = document.createElement('canvas');
-    // if ("OffscreenCanvas" in window) {
-      // this.canvas = this.canvas.transferControlToOffscreen();
-    // }
     this.ctx = this.canvas.getContext("2d");
     this.buffer = [];
     this.palette = palette;
@@ -231,12 +229,12 @@ Game.Tile = (function(g){
           switch (brushSize) {
             case 1:
               this.set(i-1 + di, j-1 + dj, c);
-              this.set(i-1 + di, j + dj, c);
+              this.set(i-1 + di, j   + dj, c);
               this.set(i-1 + di, j+1 + dj, c);
-              this.set(i + di, j-1 + dj, c);
-              this.set(i + di, j+1 + dj, c);
+              this.set(i   + di, j-1 + dj, c);
+              this.set(i   + di, j+1 + dj, c);
               this.set(i+1 + di, j-1 + dj, c);
-              this.set(i+1 + di, j + dj, c);
+              this.set(i+1 + di, j   + dj, c);
               this.set(i+1 + di, j+1 + dj, c);
             case 0:
               this.set(i + di, j + dj, c);
@@ -324,12 +322,12 @@ Game.Tile = (function(g){
     switch (brushSize) {
       case 1:
         this.drawPixel(ctx, i-1, j-1, c);
-        this.drawPixel(ctx, i-1, j, c);
+        this.drawPixel(ctx, i-1, j,   c);
         this.drawPixel(ctx, i-1, j+1, c);
-        this.drawPixel(ctx, i, j-1, c);
-        this.drawPixel(ctx, i, j+1, c);
+        this.drawPixel(ctx, i,   j-1, c);
+        this.drawPixel(ctx, i,   j+1, c);
         this.drawPixel(ctx, i+1, j-1, c);
-        this.drawPixel(ctx, i+1, j, c);
+        this.drawPixel(ctx, i+1, j,   c);
         this.drawPixel(ctx, i+1, j+1, c);
       case 0:
         this.drawPixel(ctx, i, j, c);

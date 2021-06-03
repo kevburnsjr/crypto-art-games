@@ -5,10 +5,10 @@ import (
 )
 
 type Report struct {
-	TargetID  uint16 `json:"targetID"`
+	TargetID  uint32 `json:"targetID"`
 	BoardID   uint16 `json:"boardID"`
-	Timecode  uint16 `json:"timecode"`
-	UserID    uint16 `json:"userID"`
+	Timecode  uint32 `json:"timecode"`
+	UserID    uint32 `json:"userID"`
 	Date      uint32 `json:"date"`
 	FrameDate uint32 `json:"frameDate"`
 	Reason    string `json:"string"`

@@ -14,7 +14,6 @@ import (
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
-	"github.com/kevburnsjr/crypto-art-games/internal/errors"
 	"github.com/kevburnsjr/crypto-art-games/internal/repo"
 )
 
@@ -188,12 +187,18 @@ func (c oauth) getUser(r *http.Request, w http.ResponseWriter) (*entity.User, er
 		}
 		if len(resp.Data.Users) > 0 {
 			user := entity.UserFromHelix(resp.Data.Users[0], c.cfg.Secret)
-			user, err = c.repoUser.UpdateProfile(user)
-			if err == errors.RepoItemNotFound {
-				return user, nil
-			}
+			_, found, err := c.repoUser.Find(user)
 			if err != nil {
 				return nil, err
+			}
+			if !found {
+				return user, nil
+			}
+			if found && user.Policy {
+				user, err = c.repoUser.UpdateProfile(user)
+				if err != nil {
+					return nil, err
+				}
 			}
 			session.Values[twitchUserDataKey] = user.ToJson()
 			session.Save(r, w)

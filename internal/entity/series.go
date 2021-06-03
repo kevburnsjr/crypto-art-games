@@ -11,8 +11,9 @@ type Series struct {
 	Author   string  `json:"author"`
 	Palette  Palette `json:"palette"`
 	Boards   []Board `json:"boards"`
-	Active   bool    `json:"act"`
-	Finished bool    `json:"fin"`
+	Created  uint32  `json:"created"`
+	Active   uint32  `json:"active"`
+	Finished uint32  `json:"finished"`
 }
 
 type SeriesList []*Series

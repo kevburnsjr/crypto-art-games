@@ -9,9 +9,10 @@ type Board struct {
 	Background string `json:"bg"`
 	Width      uint8  `json:"w"`
 	Height     uint8  `json:"h"`
-	TileSize   uint8  `json:"ts"`
-	Active     bool   `json:"act"`
-	Finished   bool   `json:"fin"`
+	TileSize   uint8  `json:"tsz"`
+	Created    uint32 `json:"created"`
+	Active     uint32 `json:"active"`
+	Finished   uint32 `json:"finished"`
 }
 
 type BoardDto struct {

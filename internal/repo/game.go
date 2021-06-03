@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/kevburnsjr/crypto-art-games/internal/config"
 	"github.com/kevburnsjr/crypto-art-games/internal/entity"
@@ -19,6 +20,7 @@ type Game interface {
 	InsertSeries(series *entity.Series) (err error)
 	UpdateSeries(id string, series *entity.Series) (err error)
 	FindSeries(id string) (res *entity.Series, err error)
+	FindActiveBoard(boardId uint16) (board *entity.Board, err error)
 }
 
 // NewGame returns an Game repo instance
@@ -65,7 +67,7 @@ func (r *game) ActiveSeries() (all entity.SeriesList, err error) {
 	defer iter.Release()
 	for iter.Next() {
 		c := entity.SeriesFromJson(iter.Value()[16:])
-		if c == nil || !c.Active {
+		if c == nil || c.Active == 0 || c.Active > uint32(time.Now().Unix()) {
 			continue
 		}
 		all = append(all, c)
@@ -73,7 +75,7 @@ func (r *game) ActiveSeries() (all entity.SeriesList, err error) {
 	return
 }
 
-// AllSeries retrieves a list of all seriess
+// AllSeries retrieves a list of all series
 func (r *game) AllSeries() (all entity.SeriesList, err error) {
 	iter, err := r.db.PrefixIterator([]byte("series-"))
 	if err != nil {
@@ -86,6 +88,27 @@ func (r *game) AllSeries() (all entity.SeriesList, err error) {
 			continue
 		}
 		all = append(all, c)
+	}
+	return
+}
+
+// FindActiveBoard retrieves an active board by id
+func (r *game) FindActiveBoard(boardId uint16) (board *entity.Board, err error) {
+	iter, err := r.db.PrefixIterator([]byte("series-"))
+	if err != nil {
+		return
+	}
+	defer iter.Release()
+	for iter.Next() {
+		s := entity.SeriesFromJson(iter.Value()[16:])
+		if s == nil || s.Active == 0 || s.Active > uint32(time.Now().Unix()) {
+			continue
+		}
+		for _, b := range s.Boards {
+			if b.ID == boardId {
+				return &b, nil
+			}
+		}
 	}
 	return
 }

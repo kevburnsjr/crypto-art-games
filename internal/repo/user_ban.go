@@ -12,7 +12,7 @@ import (
 
 type UserBan interface {
 	Insert(userBan *entity.UserBan) (err error)
-	Since(index uint16) (userBans []*entity.UserBan, err error)
+	Since(index uint32) (userBans []*entity.UserBan, err error)
 	All() (all []*entity.UserBan, err error)
 }
 
@@ -36,18 +36,18 @@ type userBan struct {
 
 // Insert inserts a userBan
 func (r *userBan) Insert(userBan *entity.UserBan) (err error) {
-	var id uint16
+	var id uint32
 	idVers, idBytes, err := r.db.Get([]byte("_id"))
 	if err == errors.RepoItemNotFound {
-		id = uint16(1)
+		id = uint32(1)
 	} else if err != nil {
 		return
 	} else {
-		id = binary.BigEndian.Uint16(idBytes)
+		id = binary.BigEndian.Uint32(idBytes)
 		id++
 	}
-	idBytes = make([]byte, 2)
-	binary.BigEndian.PutUint16(idBytes, id)
+	idBytes = make([]byte, 4)
+	binary.BigEndian.PutUint32(idBytes, id)
 
 	userBan.ID = id
 
@@ -61,9 +61,9 @@ func (r *userBan) Insert(userBan *entity.UserBan) (err error) {
 }
 
 // Since inserts all userBans since timecode
-func (r *userBan) Since(id uint16) (userBans []*entity.UserBan, err error) {
-	var start = make([]byte, 2)
-	binary.BigEndian.PutUint16(start, id)
+func (r *userBan) Since(id uint32) (userBans []*entity.UserBan, err error) {
+	var start = make([]byte, 4)
+	binary.BigEndian.PutUint32(start, id)
 	keys, vals, err := r.db.GetRanged(start, 0, false)
 	if err != nil {
 		return

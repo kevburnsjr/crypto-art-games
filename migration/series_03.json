@@ -26,11 +26,12 @@
         ]
     },
     "boards": [
-        { "id": 21, "bg": "/palette/tauriel-16-01.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 22, "bg": "/palette/tauriel-16-02.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 23, "bg": "/palette/tauriel-16-03.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 24, "bg": "/palette/tauriel-16-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
+        { "id": 21, "bg": "/palette/tauriel-16-01.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 22, "bg": "/palette/tauriel-16-02.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 23, "bg": "/palette/tauriel-16-03.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 24, "bg": "/palette/tauriel-16-04.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 }
     ],
-    "act": true,
-    "fin": false
+    "created": 1622691552,
+    "active": 1622691552,
+    "finished": 0
 }

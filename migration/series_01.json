@@ -26,11 +26,12 @@
         ]
     },
     "boards": [
-        { "id": 1, "bg": "/palette/lost-century-01.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 2, "bg": "/palette/lost-century-02.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 3, "bg": "/palette/lost-century-03.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false },
-        { "id": 4, "bg": "/palette/lost-century-04.gif", "w": 16, "h": 16, "ts": 16, "act": true, "fin": false }
+        { "id": 1, "bg": "/palette/lost-century-01.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 3, "bg": "/palette/lost-century-03.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 2, "bg": "/palette/lost-century-02.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 },
+        { "id": 4, "bg": "/palette/lost-century-04.gif", "w": 16, "h": 16, "tsz": 16, "active": 1622691552, "finished": 0 }
     ],
-    "act": true,
-    "fin": false
+    "created": 1622691552,
+    "active": 1622691552,
+    "finished": 0
 }

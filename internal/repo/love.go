@@ -10,7 +10,7 @@ import (
 )
 
 type Love interface {
-	Insert(boardID, timecode, userID uint16, t time.Time) (err error)
+	Insert(boardID uint16, timecode, userID uint32, t time.Time) (err error)
 	All() (loves []*entity.Love, err error)
 	Sweep(t time.Time) (s int, n int, err error)
 }
@@ -34,11 +34,11 @@ type love struct {
 }
 
 // Insert inserts a love
-func (r *love) Insert(boardID, timecode, userID uint16, t time.Time) (err error) {
+func (r *love) Insert(boardID uint16, timecode, userID uint32, t time.Time) (err error) {
 	idBytes := make([]byte, 6)
 	binary.BigEndian.PutUint16(idBytes[0:2], boardID)
-	binary.BigEndian.PutUint16(idBytes[2:4], timecode)
-	binary.BigEndian.PutUint16(idBytes[4:6], userID)
+	binary.BigEndian.PutUint32(idBytes[2:6], userID)
+	binary.BigEndian.PutUint32(idBytes[6:10], timecode)
 	val := make([]byte, 4)
 	binary.BigEndian.PutUint32(val[0:4], uint32(t.Unix()))
 	_, err = r.db.Put(idBytes, "", val)
@@ -58,8 +58,8 @@ func (r *love) All() (loves []*entity.Love, err error) {
 		}
 		loves = append(loves, &entity.Love{
 			BoardID:  binary.BigEndian.Uint16(keys[i][0:2]),
-			Timecode: binary.BigEndian.Uint16(keys[i][2:4]),
-			UserID:   binary.BigEndian.Uint16(keys[i][4:6]),
+			Timecode: binary.BigEndian.Uint32(keys[i][2:6]),
+			UserID:   binary.BigEndian.Uint32(keys[i][6:10]),
 			Date:     time.Unix(int64(binary.BigEndian.Uint32(val[0:4])), 0),
 		})
 	}
