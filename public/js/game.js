@@ -266,15 +266,16 @@ var Game = (function(g){
             nav.showRecent(board);
             continue;
           }
-          Game.Series.boardStore(b.id).iterate(async function(v, k, i) {
+          boardStore = Game.Series.boardStore(b.id);
+          await boardStore.iterate(function(v, k, i) {
             if (k.length != 8) {
               return;
             }
             const f = Game.Frame.fromBytes(v);
             const date = new Date((s.created + f.timestamp) * 1000);
-            const frameDate = (+f.date/1000).toFixed(0);
+            const frameDate = parseInt((+date/1000).toFixed(0));
             if (f.userid == e.targetID && frameDate >= e.since && frameDate <= e.until) {
-              await this.store.removeItem(f.timecode.toString(16).padStart(8, 0));
+              boardStore.removeItem(f.timecode.toString(16).padStart(8, 0));
             }
           });
         }
