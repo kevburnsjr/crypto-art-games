@@ -11,6 +11,9 @@ clean:
 build-stage:
 	go build $(LDFLAGS) -o dist/$(PROJECTNAME) main.go
 
+build-prod:
+	go build $(LDFLAGS) -o dist/$(PROJECTNAME) main.go
+
 init-stage:
 	sudo cp ./deploy/systemd/$(PROJECTNAME).service /etc/systemd/system/$(PROJECTNAME).service
 	sudo systemctl enable $(PROJECTNAME)
