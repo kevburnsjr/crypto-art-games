@@ -190,7 +190,6 @@ Game.Nav = (function(g){
   nav.prototype.toggleDemoMode = function(){
     this.demoMode = !this.demoMode;
     localStorage.setItem('demo-mode', this.demoMode);
-    console.log(this.demoMode);
     window.clearInterval(this.demoInterval);
     const healthbar = document.getElementById("healthbar");
     if (this.demoMode) {
@@ -245,7 +244,6 @@ Game.Nav = (function(g){
     if (this.demoState.pause < 1) {
       this.demoState.boardNum++;
       if (this.demoState.boardNum > this.demoState.boards.length - 1) this.demoState.boardNum = 0;
-      console.log(this.demoState.boardNum, this.demoState.boards)
       Game.getSocket().changeBoard(this.demoState.boards[this.demoState.boardNum].id);
       this.demoState.pause = 10;
     }
