@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,12 +12,13 @@ import (
 
 type User struct {
 	helix.User
-	UserID  uint32                 `json:"userID"`
-	Policy  bool                   `json:"policy"`
-	Timeout uint32                 `json:"timeout"`
-	Banned  bool                   `json:"banned"`
-	Mod     bool                   `json:"mod"`
-	Buckets map[uint16]*UserBucket `json:"buckets"`
+	UserID     uint32                 `json:"userID"`
+	Policy     bool                   `json:"policy"`
+	Newsletter bool                   `json:"newsletter"`
+	Timeout    uint32                 `json:"timeout"`
+	Banned     bool                   `json:"banned"`
+	Mod        bool                   `json:"mod"`
+	Buckets    map[uint16]*UserBucket `json:"buckets"`
 }
 
 type UserDto struct {
@@ -84,8 +83,6 @@ func UserFromHelix(u helix.User, secret string) *User {
 		log.Println("Error normalizing email address:", u.Email)
 		normalized = u.Email
 	}
-	hash := sha256.Sum256([]byte(secret + normalized))
-	user := &User{User: u}
-	user.Email = base64.StdEncoding.EncodeToString(hash[:])
-	return user
+	u.Email = normalized
+	return &User{User:  u}
 }

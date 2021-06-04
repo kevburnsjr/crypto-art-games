@@ -521,7 +521,7 @@ Game.Nav = (function(g){
     if (user) {
       userEl.outerHTML = `
         <a id="user" href="/logout" data-userid="${user.ID}" data-policy="${user.policy}">
-            <img src="/u/i/${user.ID}"/>
+            <img src="${user.profile_image_url}"/>
             <span>${user.display_name}</span>
         </a>`
     } else {

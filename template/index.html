@@ -83,12 +83,16 @@
         <form class="std" method="POST" action="/policy-accept">
             <h2>One last step ...</h2>
             <div class="field">
+                <label for="newsletter" class="chk">
+                    <input type="checkbox" id="newsletter" name="newsletter" class="chk" checked="checked"/>
+                    Subscribe to weekly newsletter
+                </label>
                 <label for="agree" class="chk">
                     <input type="checkbox" id="agree" name="agree" class="chk"/>
                     I understand and agree to the Crypto Art Games<br/> <a href="/terms-of-service" target="_blank">Terms of Service</a> and <a href="/privacy-policy" target="_blank">Privacy Policy</a>
                 </label>
             </div>
-            <div class="field suibmit cta c">
+            <div class="field submit cta c">
                 <input class="submit" type="submit" value="Continue">
             </div>
         </form>
@@ -111,10 +115,10 @@
     <div id="modal-report-clear" class="report-clear">
         <form class="std">
             <h2>Are you sure you want to clear this user's reports?</h2>
-            <div class="field suibmit cta c">
+            <div class="field submit cta c">
                 <input class="submit" type="submit" value="Clear Reports">
             </div>
-            <div class="field suibmit c">
+            <div class="field submit c">
                 <a class="cancel">cancel</a>
             </div>
         </form>

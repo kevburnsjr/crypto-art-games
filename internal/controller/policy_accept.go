@@ -47,6 +47,7 @@ func (c policyAccept) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user.Policy = true
+	user.Newsletter = len(r.FormValue("newsletter")) > 0
 	userID, inserted, err := c.repoUser.FindOrInsert(user)
 	if inserted {
 		c.hub.Broadcast(sock.TextMsgFromBytes("global", user.ToDto(userID)))

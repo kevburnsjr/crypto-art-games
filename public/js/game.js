@@ -493,7 +493,7 @@ var Game = (function(g){
         board.palette.hide();
         brushState = false;
       }
-    } else if (board.palette.active) {
+    } else if (board && board.palette.active) {
       e.preventDefault();
       if (t.parentNode.parentNode.id != "palette") {
         board.palette.hide();
@@ -501,7 +501,9 @@ var Game = (function(g){
       }
       return;
     }
-    board.handleMouseDown(w/2, h/2, hoverX, hoverY);
+    if (board) {
+      board.handleMouseDown(w/2, h/2, hoverX, hoverY);
+    }
   };
 
   // mousemove
@@ -531,7 +533,9 @@ var Game = (function(g){
       board.palette.hide();
       brushState = false;
     }
-    board.clearPath();
+    if (board) {
+      board.clearPath();
+    }
     clickpoint = [];
   };
 

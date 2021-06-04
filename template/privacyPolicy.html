@@ -20,15 +20,9 @@ single sign on process.</p>
     </li>
     <li>
         <strong>Email Address</strong><br/><br/>
-        We retrieve email addresses from Twitch as part of the single sign in process. We do not store email address.
-        We store a peppered hash of the normalized address to prevent users from creating duplicate accounts.
-        <pre>
-
-email_hash = base64(sha256(pepper + normalize(email)))
-
-</pre>
-        We will never send you email because we don't store your email address.<br/>
-        We will never share your email address with third parties because we don't store your email address.<br/><br/>
+        We retrieve email addresses from Twitch as part of the single sign in process. We will never share your email
+        address with any third party. We only use email addresses to send emails to users who are subscribed to
+        the weekly newsletter.<br/><br/>
     </li>
 </ul>
 <h2>Security</h2>
@@ -43,7 +37,7 @@ used to safeguard the application and your data within it:</p>
     <li>Restrictive Cross Domain Policies</li>
     <li>OAuth 2.1 Single Sign On</li>
     <li>Secure HttpOnly Session cookies</li>
-    <li>Mandatory two factor authentication on all privileged accounts</li>
+    <li>Mandatory two factor authentication on all privileged administrative accounts</li>
 </ul>
 <p>If you think you've found a security problem, please contact us <a href="mailto:admin@cryptoart.games">admin@cryptoart.games</a></p>
 <p><br/></p>
