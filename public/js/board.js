@@ -62,9 +62,9 @@ Game.Board = (function(g){
   };
 
   board.prototype.render = function(ctx, uiCtx, cx, cy, curx, cury, zoom, dirty, uiDirty, mousedown, e) {
-    if (!this.enabled) {
-      return;
-    }
+    // if (!this.enabled) {
+      // return;
+    // }
     this.scale = this.tileSize*zoom;
     if (this.focused) {
       this.v.x1 = parseInt(cx - (this.i+1)*this.scale + this.scale/2);
