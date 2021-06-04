@@ -18,10 +18,15 @@ Game.User = (function(g){
   };
 
   user.findLatest = async function() {
-    const userIdx = await g.store().global.getItem("userIdx");
-    return g.store().user.getItem(userIdx).then(data => {
-      return data == null ? null : new user(JSON.parse(data));
+    return g.store().user.getItem(await g.store().global.getItem("userIdx")).then(data => {
+      return new user(JSON.parse(data));
     });
+  };
+
+  user.updateIdx = async function(user) {
+    if (user && user.id > parseInt(await g.store().global.getItem("userIdx"))) {
+      await g.store().global.setItem("userIdx", user.id.toString(16).padStart(4, 0));
+    };
   };
 
   user.findAll = async function(userIDs) {

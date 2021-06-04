@@ -240,6 +240,7 @@ var Game = (function(g){
     socket.on('new-user', function(e) {
       const user = new Game.User(e);
       user.save();
+      Game.User.updateIdx(user);
     });
     socket.on('logout', function(e) {
       window.location.href = "/logout";
