@@ -17,6 +17,9 @@ Game.Nav = (function(g){
     this.flashTimeout = null;
     this.heartTimeout = null;
     this.recentTiles = [];
+    this.demoMode = localStorage.getItem('demo-mode') == "true";
+    this.demoInterval = null;
+    this.demoState = {};
 
     const toggleGroup = async el => {
       const toggles = el.querySelectorAll("nav a");
@@ -182,6 +185,74 @@ Game.Nav = (function(g){
     if ("mod" in this.toggles) {
       this.toggles.mod.click();
     }
+  };
+
+  nav.prototype.toggleDemoMode = function(){
+    this.demoMode = !this.demoMode;
+    localStorage.setItem('demo-mode', this.demoMode);
+    console.log(this.demoMode);
+    window.clearInterval(this.demoInterval);
+    const healthbar = document.getElementById("healthbar");
+    if (this.demoMode) {
+      if (!this.seriesEl.classList.contains('active')) {
+        this.toggleSeries();
+      }
+      this.demoState = {
+        boards: [],
+        boardNum: 0,
+        pause: 0,
+      };
+      for (let s of Game.Series.list()) {
+        for (let b of s.boards) {
+          if (!b.active) continue;
+          this.demoState.boards.push(b);
+        }
+      }
+      this.demoState.boardNum = this.demoState.boards.length;
+      // Toggle leaderboard (not yet exist)
+      document.body.classList.add("demo");
+      this.demoInterval = setInterval(() => {
+        this.demoTick();
+      }, 1000);
+      this.demoTick();
+      healthbar.innerHTML = `<span class="new">Welcome!</span>`;
+      healthbar.style.display = "block";
+    } else {
+      healthbar.innerHTML = ``;
+      healthbar.style.display = "none";
+      this.initUser(Game.user());
+      document.body.classList.remove("demo");
+    }
+    return this.demoMode;
+  };
+
+  nav.prototype.demoTick = async function(){
+    var userEl = document.getElementById('user');
+    const user = await Game.User.findLatest();
+    if (userEl.dataset.id != user.id) {
+      userEl.outerHTML = `
+        <a id="user" href="/logout" data-userid="${user.id}" data-policy="true">
+            <img src="/u/i/${user.id}"/>
+            <span>${user.display_name}</span>
+        </a>`
+    }
+    if (!Game.board()) {
+      return;
+    }
+    if (Game.board().drawnOffset == Game.board().frames.length) {
+      this.demoState.pause--;
+    }
+    if (this.demoState.pause < 1) {
+      this.demoState.boardNum++;
+      if (this.demoState.boardNum > this.demoState.boards.length - 1) this.demoState.boardNum = 0;
+      console.log(this.demoState.boardNum, this.demoState.boards)
+      Game.getSocket().changeBoard(this.demoState.boards[this.demoState.boardNum].id);
+      this.demoState.pause = 10;
+    }
+
+    // Detect board end reached
+    // Detect pause timeout or not started
+      // Switch board
   };
 
   nav.prototype.updateScrubber = function(size) {
@@ -445,10 +516,37 @@ Game.Nav = (function(g){
     }
   };
 
+  nav.prototype.initUser = function(user) {
+    var userEl = document.getElementById('user');
+    if (user) {
+      userEl.outerHTML = `
+        <a id="user" href="/logout" data-userid="${user.ID}" data-policy="${user.policy}">
+            <img src="/u/i/${user.ID}"/>
+            <span>${user.display_name}</span>
+        </a>`
+    } else {
+      userEl.outerHTML = `
+        <a id="user" href="/login" class="login">
+            <span>Log in with Twitch</span>
+        </a>`
+    }
+  };
+
   nav.prototype.init = function(user) {
     if (this.initialized) {
       return;
     }
+    this.initUser(user);
+    this.initialized = true;
+  };
+
+  /*
+  nav.prototype.init = function(user, demo) {
+    if (this.initialized) {
+      return;
+    }
+    var userEl = document.getElementById('user');
+
     var el = document.createElement("div");
     if (user) {
       el.innerHTML = `
@@ -457,14 +555,16 @@ Game.Nav = (function(g){
             <span>${user.display_name}</span>
         </a>`
     } else {
+      userEl.href="/login"
       el.innerHTML = `
-        <a href="/login" class="login">
+        <a id="user" href="/login" class="login">
             <span>Log in with Twitch</span>
         </a>`
     }
     document.querySelector("nav.user").appendChild(el.firstElementChild);
     this.initialized = true;
   };
+  */
 
   nav.prototype.showHeart = function(bucket) {
     if (!(bucket instanceof Array) || bucket.length != 4) {

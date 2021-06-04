@@ -5,7 +5,6 @@ Game.User = (function(g){
     this.id = dto.id;
     this.login = dto.login;
     this.display_name = dto.display_name;
-    this.profile_image_url = dto.profile_image_url;
   };
 
   user.prototype.save = async function() {
@@ -14,6 +13,13 @@ Game.User = (function(g){
 
   user.find = async function(userID) {
     return g.store().user.getItem(userID.toString(16).padStart(4, 0)).then(data => {
+      return data == null ? null : new user(JSON.parse(data));
+    });
+  };
+
+  user.findLatest = async function() {
+    const userIdx = await g.store().global.getItem("userIdx");
+    return g.store().user.getItem(userIdx).then(data => {
       return data == null ? null : new user(JSON.parse(data));
     });
   };

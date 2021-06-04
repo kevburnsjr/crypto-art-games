@@ -6,6 +6,8 @@ var Game = (function(g){
   var defaultZoom = 3;
   var zoom = defaultZoom;
   var prevZoom = zoom;
+  var defaultSpeed = 64;
+  var speed = defaultSpeed;
   var tile = 0;
   var focused = false;
   var color = Math.floor(Math.random() * 16);
@@ -25,6 +27,7 @@ var Game = (function(g){
   var policy;
   var boardId = 0;
   var store = {};
+  var user;
   var userID = null;
   const stores = ["global", "user", "ui", "reports", "bans"];
 
@@ -226,6 +229,8 @@ var Game = (function(g){
         nav.showHeart(e.bucket);
         await board.enable(e.timecode);
         socket.initializing = false;
+        document.querySelectorAll(`.board[data-id]`).forEach((el) => el.classList.remove("active"));
+        document.querySelectorAll(`.board[data-id="${board.id}"]`).forEach((el) => el.classList.add("active"));
       }
       if (socket.boardChangeCallback != null) {
         socket.boardChangeCallback(board);
@@ -306,6 +311,7 @@ var Game = (function(g){
         banIdx = e.banIdx;
         userIdx = e.userIdx;
         reportIdx = e.reportIdx;
+        user = e.user;
         nav.init(e.user);
         if (e.user && e.user.id != null) {
           if(!policy) {
@@ -324,6 +330,12 @@ var Game = (function(g){
             board.setFocus(Math.floor(tile/16), tile%16);
           }
         });
+        if (nav.demoMode) {
+          speed = 0.1;
+          zoom = 2;
+          nav.demoMode = false;
+          nav.toggleDemoMode();
+        }
         resolve();
       });
     });
@@ -579,11 +591,14 @@ var Game = (function(g){
       setZoom();
       setHash();
     }
-    if (k == "[" || k == "-") {
-      board.setBrushSize(0);
-    }
-    if (k == "]" || k == "=") {
-      board.setBrushSize(1);
+    if (k == "\\" && e.ctrlKey) {
+      e.preventDefault();
+      if (nav.toggleDemoMode()) {
+        speed = 0.01;
+        zoom = 2;
+      } else {
+        speed = defaultSpeed;
+      }
     }
     if (k == "pageup") {
       e.preventDefault();
@@ -795,7 +810,9 @@ var Game = (function(g){
     getSocket: getSocket,
     board: () => board,
     store: () => store,
+    user: () => user,
     userID: () => userID,
+    speed: () => speed,
     setHash: setHash
   };
 

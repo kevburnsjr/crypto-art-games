@@ -77,10 +77,12 @@ aside#bot a.active em { background: rgba(80,80,80,0.95); }
 aside#bot div { z-index: 5; }
 aside#bot div iframe { z-index: 5; position: relative; margin: -5px -15px -15px -5px; }
 
-aside#left ul { padding: 0 0 0.5em; margin: 0; width: 17em; }
+aside#left ul { padding: 0 0 0.5em; margin: 0; width: 16.5em; }
 aside#left ul li { list-style: none; margin: 0 -1em; padding: 0.5em 1em; clear: left; width: 17em; position: relative; padding-right: 0; }
 aside#left #series h4 { clear: left; padding: 0 0.25em 0.5em; }
-aside#left #series a { float: left; padding: 0.25em; }
+aside#left #series a { float: left; padding: 0.25em; opacity: 0.6; }
+aside#left #series a.active { opacity: 1; }
+aside#left #series a.active img { box-shadow: 0 0px 15px rgba(0,0,0,0.8); }
 aside#left #series img { width: 3.6em; height: 3.6em; float: left; }
 aside#left #series { float: left; }
 aside#left #mod-toggle { display: none; }
@@ -105,14 +107,20 @@ aside#left #mod ul { padding-bottom: 0; }
 
 nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); display: none; }
 
+body.demo #brush-state { display: none !important; }
+body.demo #scrubber { display: none; }
+body.demo aside#right ul { height: 39em; }
+body.demo aside#right ul li { padding: 0.455em 1em; }
+
 nav.user {
     position: absolute; top: 0; right: 0;
     z-index: 100;
 }
-nav.user .healthbar { float: left; margin: 0 -1em 0 0; padding: 0.1em 3.0em 0 1em; background: rgba(0,0,0,0.1); border-radius: 1.5em; display: none; }
 nav.user a { background: #000; float: left; }
 nav.user a span { float: left; line-height: 3em; padding: 0em 1.5em; }
 nav.user a img { height: 3em; margin: 0 0 0 -1.5em; float: left; border-radius: 50%; padding: 0; }
+nav.user .healthbar { float: left; margin: 0 -1em 0 0; padding: 0.1em 3.0em 0 1em; background: rgba(0,0,0,0.1); border-radius: 1.5em; display: none; }
+nav.user .healthbar .new { line-height: 2.9em; color: rgba(255,255,255,0.7); display: inline-block; padding: 0 0.5em; }
 
 span.heart { width: 15px; height: 2.9em; overflow: hidden; float: left; opacity: 0.75; background-size: contain; background-position: center center; background-repeat: no-repeat; margin: 0 0.15em; }
 span.heart.f0-4 { background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAcAgMAAAALluc6AAAACVBMVEX/5eUAAAAAAABQhEc+AAAAA3RSTlNNAE2KWedgAAAARklEQVQI163NIRIAIQxD0WhOt6Ymp8PE9JTbYghoVN7MF0FkBlPfBgFNDMMEBlDjwAuwpy42YjU52CUc3XSCVQ5U0w2G4wdDXzVxFp0hzQAAAABJRU5ErkJggg==') }
