@@ -245,7 +245,7 @@ Game.Nav = (function(g){
       this.demoState.boardNum++;
       if (this.demoState.boardNum > this.demoState.boards.length - 1) this.demoState.boardNum = 0;
       Game.getSocket().changeBoard(this.demoState.boards[this.demoState.boardNum].id);
-      this.demoState.pause = 6;
+      this.demoState.pause = 10;
     }
 
     // Detect board end reached

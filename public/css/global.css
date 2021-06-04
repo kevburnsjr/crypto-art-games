@@ -93,6 +93,7 @@ aside#left #mod a { padding: 0.1em 0.2em 0.15em; margin: 0 0.5em 0.25em 0; backg
 aside#left #mod p.empty { margin: 0; text-align: center; color: rgba(255,255,255,0.4); font-style: oblique; line-height: 4em; }
 aside#left #mod ul { padding-bottom: 0; }
 
+
 #report { display: none; position: absolute; background: rgba(64,64,64,0.9); z-index: 1002; right: 0; width: 18em; }
 #report a { padding: 0 1em; display: block; line-height: 2em; width: 4em; float: right; clear: right; }
 #report a:hover { background: rgba(32,32,32,0.8); text-decoration: none; }
@@ -107,10 +108,16 @@ aside#left #mod ul { padding-bottom: 0; }
 
 nav.brush-state { position: absolute; bottom: 0; left: 0; width: 6em; height: 6em; z-index: 100; box-shadow: 0 0 10px rgba(0,0,0,0.2); display: none; }
 
+#about { position: absolute; bottom: 0; left; 0; z-index: 100; display: none; padding: 1em; }
+#about p { margin: 0.25em 0; color: rgba(255,255,255, 0.5); }
+#about p a { color: rgba(255,255,255, 0.9); }
+
 body.demo #brush-state { display: none !important; }
 body.demo #scrubber { display: none; }
+body.demo #about { display: block; }
 body.demo aside#right ul { height: 39em; }
 body.demo aside#right ul li { padding: 0.455em 1em; }
+
 
 nav.user {
     position: absolute; top: 0; right: 0;
