@@ -18,6 +18,12 @@ func (c privacyPolicy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if check(err, w, c.log) {
 		return
 	}
+	if getLang(r).String() == "es" {
+		t, err = template.ParseFiles("./template/privacyPolicy.es.html")
+		if check(err, w, c.log) {
+			return
+		}
+	}
 	b := bytes.NewBuffer(nil)
 	err = t.Execute(b, struct{}{})
 	if check(err, w, c.log) {

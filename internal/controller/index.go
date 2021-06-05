@@ -88,10 +88,8 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if c.cfg.Test {
 		js = append(js, "/js/test.js")
 	}
-	langTags, _, _ := language.ParseAcceptLanguage(r.Header.Get("Accept-Language"))
-	langTag, _, _ := langMatcher.Match(langTags...)
-	langBase, _ := langTag.Base()
-	locaMap := localizationMaps[langBase]
+
+	locaMap := localizationMaps[getLang(r)]
 
 	b := bytes.NewBuffer(nil)
 	var indexTpl = template.Must(template.ParseFiles("./template/index.html"))
@@ -112,6 +110,13 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(200)
 	w.Write(b.Bytes())
+}
+
+func getLang(r *http.Request) language.Base {
+	langTags, _, _ := language.ParseAcceptLanguage(r.Header.Get("Accept-Language"))
+	langTag, _, _ := langMatcher.Match(langTags...)
+	base, _ := langTag.Base()
+	return base
 }
 
 func check(err error, w http.ResponseWriter, log *logrus.Logger) bool {
