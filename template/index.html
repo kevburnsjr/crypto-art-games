@@ -135,7 +135,7 @@
     <a data-reason="nudes" title="{{.Loca.String "Nudity, gore, vulgar language"}}">{{.Loca.String "Lude"}}</a>
     <a data-reason="hate" title="{{.Loca.String "Hate symbols, racial slurs"}}">{{.Loca.String "Hateful"}}</a>
     {{if .Mod}}
-    <a data-reason="timeout" title="{{.Loca.String "Time out user"}}">Timeout</a>
+    <a data-reason="timeout" title="{{.Loca.String "Time out user"}}">{{.Loca.String "Timeout"}}</a>
     <a data-reason="clear" title="{{.Loca.String "Clear user reports"}}">{{.Loca.String "Clear"}}</a>
     {{end}}
 </div>
@@ -154,8 +154,8 @@
 <template id="recent-frames-li">
     <li data-timecode="">
         <nav class="mod">
-            <a class="love" title="Love"><span class="heart f4-4"/></a>
-            <a class="report" title="Report"></a>
+            <a class="love" title="{{.Loca.String "Love"}}"><span class="heart f4-4"/></a>
+            <a class="report" title="{{.Loca.String "Report"}}"></a>
         </nav>
         <a class="user" title="">
             <img src=""/>
