@@ -214,7 +214,7 @@ Game.Nav = (function(g){
         this.demoTick();
       }, 1000);
       this.demoTick();
-      healthbar.innerHTML = `<span class="new">Welcome!</span>`;
+      healthbar.innerHTML = document.getElementById("tpl-welcome").innerHTML;
       healthbar.style.display = "block";
     } else {
       healthbar.innerHTML = ``;
@@ -285,6 +285,8 @@ Game.Nav = (function(g){
     var userIds = [];
     var frames = [];
     var f;
+    this.recentFrames.classList.remove("board");
+    this.recentFrames.classList.remove("tile");
     if (board.focused) {
       for (i = board.tile.frames.length-1; i >= 0; i--) {
         f = board.tile.frames[i];
@@ -296,7 +298,7 @@ Game.Nav = (function(g){
           break;
         }
       };
-      this.recentFrames.querySelector('h4').textContent = "Recent Tile Edits";
+      this.recentFrames.classList.add("tile");
     } else {
       for (i = board.offset-1; i >= 0; i--) {
         frames.push(board.frames[i]);
@@ -304,7 +306,7 @@ Game.Nav = (function(g){
           break;
         }
       }
-      this.recentFrames.querySelector('h4').textContent = "Recent Board Edits";
+      this.recentFrames.classList.add("board");
     }
     frames.forEach((f, i) => {
       userIds.push(f.userid);
@@ -413,7 +415,7 @@ Game.Nav = (function(g){
       r.sort((a, b) => a.frameDate > b.frameDate ? 1 : (a.frameDate < b.frameDate ? -1 : 0));
       html += `<li data-target-id="users[r[0]?.targetID]?.id"><h4>${users[r[0]?.targetID]?.display_name} (${r.length})</h4>`;
       for (let r1 of r) {
-        html += `<a href="#${r1.boardID}:${r1.tileNum}:0:3:1" title="${r1.reason} by users[r[0]?.userID]?.name">${r1.boardID} × ${r1.tileNum.toString().padStart(3,0)}</a>`;
+        html += `<a href="#${r1.boardID}:${r1.tileNum}:0:3:1" title="${r1.reason} by ${users[r[0]?.userID]?.name}">${r1.boardID} × ${r1.tileNum.toString().padStart(3,0)}</a>`;
       }
       html += `</li>`;
     }
@@ -523,10 +525,7 @@ Game.Nav = (function(g){
             <span>${user.display_name}</span>
         </a>`
     } else {
-      userEl.outerHTML = `
-        <a id="user" href="/login" class="login">
-            <span>Log in with Twitch</span>
-        </a>`
+      userEl.outerHTML = document.getElementById('tpl-login').innerHTML;
     }
   };
 

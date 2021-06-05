@@ -70,6 +70,10 @@ aside#right ul li nav.mod a:hover { opacity: 0.8; }
 .reporting aside#right ul li.reporting nav.mod { display: block; }
 .reporting aside#right ul li.reporting nav.mod a.report { opacity: 0.7; }
 
+#recent-frames h4 { display: none; }
+#recent-frames.tile h4.tile { display: block; }
+#recent-frames.board h4.board { display: block; }
+
 aside#bot { bottom: 0; right: 0; }
 aside#bot nav { float: right; z-index: 1005; }
 aside#bot a.active { margin-bottom: -2.7em; margin-right: -0.5em; z-index: 1005; position: relative; background: none; }
@@ -92,7 +96,6 @@ aside#left #mod a { padding: 0.1em 0.2em 0.15em; margin: 0 0.5em 0.25em 0; backg
     border-radius: 0.25em; }
 aside#left #mod p.empty { margin: 0; text-align: center; color: rgba(255,255,255,0.4); font-style: oblique; line-height: 4em; }
 aside#left #mod ul { padding-bottom: 0; }
-
 
 #report { display: none; position: absolute; background: rgba(64,64,64,0.9); z-index: 1002; right: 0; width: 18em; }
 #report a { padding: 0 1em; display: block; line-height: 2em; width: 4em; float: right; clear: right; }

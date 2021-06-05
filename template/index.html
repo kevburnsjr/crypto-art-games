@@ -2,16 +2,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-    <meta name="description" content="A collaborative art game with very deep value."/>
     <meta property="og:image" content="/apple-touch-icon.png">
     <meta property="og:url" content="/pixel-compactor">
-    <meta property="og:description" content="A collaborative art game with very deep value.">
+    <meta property="og:description" content="{{.Loca.String "A collaborative art game with very deep value."}}">
+    <meta name="description" content="{{.Loca.String "A collaborative art game with very deep value."}}"/>
     <meta property="og:title" content="Crypto Art Games">
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link href="/css/font.css" rel="stylesheet"></link>
     <link href="/css/global.css" rel="stylesheet"></link>
-    <title>Crypto Art Games - Pixel Compactor</title>
+    <title>{{.Loca.String "Crypto Art Games"}} - {{.Loca.String "Pixel Compactor"}}</title>
 </head><body{{if .Mod}} class="mod"{{end}}><div id="container">
 <nav class="user">
     <div class="healthbar ltr" id="healthbar"></div>
@@ -19,7 +19,7 @@
 </nav>
 <nav class="world" id="world-nav">
     <a href="/" id="logo" draggable="false">
-        <span>Pixel Compactor</span>
+        <span>{{.Loca.String "Pixel Compactor"}}</span>
         <img src="/i/logo.png" draggable="false"/>
     </a>
 </nav>
@@ -32,24 +32,24 @@
         {{end}}
     </nav>
     <div id="help">
-        <em>Click</em> edit tile<br/>
-        <em>Space</em> save changes<br/>
-        <em>Esc</em> cancel<br/>
-        <em>Scroll</em> zoom<br/>
-        <em>Tab</em> palette<br/>
+        <em>{{.Loca.String "Click"}}</em> {{.Loca.String "edit tile"}}<br/>
+        <em>{{.Loca.String "Space"}}</em> {{.Loca.String "save changes"}}<br/>
+        <em>{{.Loca.String "Esc"}}</em> {{.Loca.String "cancel"}}<br/>
+        <em>{{.Loca.String "Scroll"}}</em> {{.Loca.String "zoom"}}<br/>
+        <em>{{.Loca.String "Tab"}}</em> {{.Loca.String "palette"}}<br/>
         <hr/>
-        <h3>Editing</h3>
-        <em>Shift</em> large brush<br/>
-        <em>E</em> erase<br/>
-        <em>Alt</em> eyedropper<br/>
+        <h3>{{.Loca.String "Editing"}}</h3>
+        <em>{{.Loca.String "Shift"}}</em> {{.Loca.String "large brush"}}<br/>
+        <em>E</em> {{.Loca.String "erase"}}<br/>
+        <em>{{.Loca.String "Alt"}}</em> {{.Loca.String "color picker"}}<br/>
         <hr/>
-        <h3>Movement</h3>
+        <h3>{{.Loca.String "Movement"}}</h3>
         <em>W</em> <em>A</em> <em>S</em> <em>D</em><br/>
         <em>&uarr;</em> <em>&larr;</em> <em>&darr;</em> <em>&rarr;</em><br/>
-        <em>Shift</em> + <em>Scroll</em>  scrub<br/>
+        <em>{{.Loca.String "Shift"}}</em> + <em>{{.Loca.String "Scroll"}}</em>  {{.Loca.String "scrub"}}<br/>
         <hr/>
-        <em>H</em> toggle help<br/>
-        <em>B</em> toggle board menu<br/>
+        <em>H</em> {{.Loca.String "toggle help"}}<br/>
+        <em>B</em> {{.Loca.String "toggle board menu"}}<br/>
     </div>
     <div id="series"></div>
     {{if .Mod}}
@@ -61,9 +61,10 @@
         <a id="recent-frames-toggle" data-toggle="recent-frames"><em>R</em></a>
     </nav>
     <div id="recent-frames">
-        <h4>Recent Board Edits</h4>
+        <h4 class="board">{{.Loca.String "Recent Board Edits"}}</h4>
+        <h4 class="tile">{{.Loca.String "Recent Tile Edits"}}</h4>
         <hr/>
-        <ul><li class="loading">Loading...</li></ul>
+        <ul><li class="loading">{{.Loca.String "Loading"}}...</li></ul>
     </div>
 </aside>
 <aside id="bot">
@@ -73,19 +74,21 @@
 <div id="modal">
     <div id="modal-login" class="login">
         <form class="std" method="GET" action="/login">
-            <h2>Log in with Twitch to participate</h2>
+            <h2>{{.Loca.String "Log in with Twitch to participate"}}</h2>
             <div class="field suibmit cta c">
-                <input class="submit" type="submit" value="Log in with Twitch">
+                <input class="submit" type="submit" value="{{.Loca.String "Log in with Twitch"}}">
             </div>
         </form>
     </div>
     <div id="modal-policy" class="policy">
         <form class="std" method="POST" action="/policy-accept">
-            <h2>One last step ...</h2>
+            <h2>{{.Loca.String "One last step"}} ...</h2>
             <div class="field">
                 <label for="agree" class="chk">
                     <input type="checkbox" id="agree" name="agree" class="chk"/>
-                    I understand and agree to the Crypto Art Games<br/> <a href="/terms-of-service" target="_blank">Terms of Service</a> and <a href="/privacy-policy" target="_blank">Privacy Policy</a>
+                    {{.Loca.String "I understand and agree to the"}} {{.Loca.String "Crypto Art Games"}}<br/>
+                    <a href="/terms-of-service" target="_blank">{{.Loca.String "Terms of Service"}}</a>
+                    {{.Loca.String "and"}} <a href="/privacy-policy" target="_blank">{{.Loca.String "Privacy Policy"}}</a>
                 </label>
             </div>
             <div class="field submit cta c">
@@ -96,7 +99,7 @@
     {{if .Mod}}
     <div id="modal-timeout" class="timeout">
         <form class="std">
-            <h2>Time out user</h2>
+            <h2>{{.Loca.String "Time out user"}}</h2>
             <div class="field submit c">
                 <input class="submit" type="submit" value="10s">
                 <input class="submit" type="submit" value="15m">
@@ -104,63 +107,71 @@
                 <input class="submit" type="submit" value="24h">
             </div>
             <div class="field submit c">
-                <a class="cancel">cancel</a>
+                <a class="cancel">{{.Loca.String "cancel"}}</a>
             </div>
         </form>
     </div>
     <div id="modal-report-clear" class="report-clear">
         <form class="std">
-            <h2>Are you sure you want to clear this user's reports?</h2>
+            <h2>{{.Loca.String "re you sure you want to clear this user's reports?"}}</h2>
             <div class="field submit cta c">
                 <input class="submit" type="submit" value="Clear Reports">
             </div>
             <div class="field submit c">
-                <a class="cancel">cancel</a>
+                <a class="cancel">{{.Loca.String "cancel"}}</a>
             </div>
         </form>
     </div>
     {{end}}
 </div>
 <div id="about">
-    <p>This is a collaborative art game.</p>
-    <p>Join in @ https://<a>cryptoart.games</a></p>
+    <p>{{.Loca.String "This is a collaborative art game."}}</p>
+    <p>{{.Loca.String "Join in"}} @ https://<a>cryptoart.games</a></p>
 </div>
 <div id="report">
     <div class="reason"></div>
-    <a data-reason="noise" title="Scribbling, blackout, disruptive, repetitive">Noisy</a>
-    <a data-reason="spam" title="Self promotion, copyright violation, non-artful content">Spammy</a>
-    <a data-reason="nudes" title="Nudity, gore, vulgar language">Lude</a>
-    <a data-reason="hate" title="Hate symbols, racial slurs">Hateful</a>
+    <a data-reason="noise" title="{{.Loca.String "Scribbling, blackout, disruptive, repetitive"}}">{{.Loca.String "Noisy"}}</a>
+    <a data-reason="spam" title="{{.Loca.String "Self promotion, copyright violation, non-artful content"}}">{{.Loca.String "Spammy"}}</a>
+    <a data-reason="nudes" title="{{.Loca.String "Nudity, gore, vulgar language"}}">{{.Loca.String "Lude"}}</a>
+    <a data-reason="hate" title="{{.Loca.String "Hate symbols, racial slurs"}}">{{.Loca.String "Hateful"}}</a>
     {{if .Mod}}
-    <a data-reason="timeout" title="Time out user">Timeout</a>
-    <a data-reason="clear" title="Clear user reports">Clear</a>
+    <a data-reason="timeout" title="{{.Loca.String "Time out user"}}">Timeout</a>
+    <a data-reason="clear" title="{{.Loca.String "Clear user reports"}}">{{.Loca.String "Clear"}}</a>
     {{end}}
 </div>
-<template id="recent-frames-li">
-<li data-timecode="">
-    <nav class="mod">
-        <a class="love" title="Love"><span class="heart f4-4"/></a>
-        <a class="report" title="Report"></a>
-    </nav>
-    <a class="user" title="">
-        <img src=""/>
-        <span/>
-    </a>
-    <span class="timeago" datetime=""/>
-</li>
-</template>
 <div id="scrubber"><div></div></div>
 <div id="flash"></div>
 <div id="palette">
     <div class="info">
         <a class="palette" target="_blank"></a>
-        palette by <a class="author" target="_blank"></a>
+        {{.Loca.String "palette by"}} <a class="author" target="_blank"></a>
     </div>
     <canvas width="0" height="0"></canvas>
 </div>
 <nav class="brush-state" id="brush-state"></nav>
 <canvas id="bgcanvas" class="full" width="0" height="0"></canvas>
 <canvas id="uicanvas" class="full" width="0" height="0"></canvas>
+<template id="recent-frames-li">
+    <li data-timecode="">
+        <nav class="mod">
+            <a class="love" title="Love"><span class="heart f4-4"/></a>
+            <a class="report" title="Report"></a>
+        </nav>
+        <a class="user" title="">
+            <img src=""/>
+            <span/>
+        </a>
+        <span class="timeago" datetime=""/>
+    </li>
+</template>
+<template id="tpl-login">
+    <a id="user" href="/login" class="login">
+        <span>{{.Loca.String "Log in with Twitch"}}</span>
+    </a>
+</template>
+<template id="tpl-welcome">
+    <span class="new">{{.Loca.String "Welcome!"}}</span>
+</template>
 {{range $src := .JS}}
 <script src="{{$src}}"></script>
 {{end}}

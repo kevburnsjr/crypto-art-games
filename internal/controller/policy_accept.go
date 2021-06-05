@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -47,7 +48,7 @@ func (c policyAccept) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user.Policy = true
-	user.Newsletter = len(r.FormValue("newsletter")) > 0
+	user.Created = uint32(time.Now().Unix())
 	userID, inserted, err := c.repoUser.FindOrInsert(user)
 	if inserted {
 		c.hub.Broadcast(sock.TextMsgFromBytes("global", user.ToDto(userID)))

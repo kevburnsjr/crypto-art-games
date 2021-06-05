@@ -13,11 +13,11 @@ type User struct {
 	helix.User
 	UserID     uint32                 `json:"userID"`
 	Policy     bool                   `json:"policy"`
-	Newsletter bool                   `json:"newsletter"`
 	Timeout    uint32                 `json:"timeout"`
 	Banned     bool                   `json:"banned"`
 	Mod        bool                   `json:"mod"`
 	Buckets    map[uint16]*UserBucket `json:"buckets"`
+	Created    uint32                 `json:"created"`
 }
 
 type UserDto struct {
