@@ -3,10 +3,9 @@ package entity
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
-	"github.com/asaskevich/govalidator"
+	// "github.com/asaskevich/govalidator"
 	"github.com/nicklaw5/helix"
 )
 
@@ -78,11 +77,13 @@ func UserFromJson(b []byte) *User {
 }
 
 func UserFromHelix(u helix.User, secret string) *User {
-	normalized, err := govalidator.NormalizeEmail(u.Email)
-	if err != nil {
-		log.Println("Error normalizing email address:", u.Email)
-		normalized = u.Email
-	}
-	u.Email = normalized
-	return &User{User:  u}
+	/*
+		normalized, err := govalidator.NormalizeEmail(u.Email)
+		if err != nil {
+			log.Println("Error normalizing email address:", u.Email)
+			normalized = u.Email
+		}
+		u.Email = normalized
+	*/
+	return &User{User: u}
 }

@@ -50,9 +50,9 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger, rUser repo.User) *oauth {
 		oauth2Config: &oauth2.Config{
 			ClientID:     cfg.Twitch.ClientID,
 			ClientSecret: cfg.Twitch.ClientSecret,
-			Scopes:       []string{oidc.ScopeOpenID, "user:read:email"},
-			Endpoint:     provider.Endpoint(),
-			RedirectURL:  cfg.Twitch.OAuthRedirect,
+			// Scopes:       []string{oidc.ScopeOpenID},
+			Endpoint:    provider.Endpoint(),
+			RedirectURL: cfg.Twitch.OAuthRedirect,
 		},
 		repoUser: rUser,
 	}
@@ -103,40 +103,10 @@ func (c oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Printf("%+v\n", token)
+
 	// add the oauth token to session
 	session.Values[oauthTokenKey] = token
-
-	rawIDToken, ok := token.Extra("id_token").(string)
-	if !ok {
-		session.Save(r, w)
-		c.log.Warnf("can't extract id token from access token")
-		http.Error(w, "Couldn't verify your confirmation, please try again.", 400)
-		return
-	}
-
-	idToken, err := c.oidcVerifier.Verify(context.Background(), rawIDToken)
-	if err != nil {
-		session.Save(r, w)
-		http.Error(w, "Couldn't verify your confirmation, please try again.", 400)
-		return
-	}
-
-	var claims struct {
-		Iss   string `json:"iss"`
-		Sub   string `json:"sub"`
-		Aud   string `json:"aud"`
-		Exp   int32  `json:"exp"`
-		Iat   int32  `json:"iat"`
-		Nonce string `json:"nonce"`
-		Email string `json:"email"`
-	}
-
-	if err := idToken.Claims(&claims); err != nil {
-		session.Save(r, w)
-		http.Error(w, "Couldn't verify your confirmation, please try again.", 400)
-		return
-	}
-
 	session.Save(r, w)
 	http.Redirect(w, r, "/", 302)
 	return

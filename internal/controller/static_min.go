@@ -11,7 +11,7 @@ import (
 
 type staticMinJS struct {
 	prefix string
-	hash string
+	hash   string
 }
 
 func (c staticMinJS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +32,7 @@ func (c staticMinJS) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		src, err := ioutil.ReadFile(c.prefix + path)
 		if err != nil {
 			log.Println(err)
-			continue;
+			continue
 		}
 		min, _ := m.Bytes(mediatype, src)
 		w.Write(min)

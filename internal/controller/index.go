@@ -58,7 +58,7 @@ func (c index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	var js = allJS
 	if c.cfg.Minify {
-		js = []string{"/js/min.js?v="+c.cfg.Hash}
+		js = []string{"/js/min.js?v=" + c.cfg.Hash}
 	}
 	if c.cfg.Test {
 		js = append(js, "/js/test.js")

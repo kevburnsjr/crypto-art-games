@@ -40,6 +40,6 @@ func (c login) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Couldn't save session", 500)
 		return
 	}
-	claims := oauth2.SetAuthURLParam("claims", `{"id_token":{"email":null}}`)
+	claims := oauth2.SetAuthURLParam("claims", `{}`)
 	http.Redirect(w, r, c.oauth.oauth2Config.AuthCodeURL(state, claims), 302)
 }
