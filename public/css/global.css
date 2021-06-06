@@ -148,7 +148,7 @@ canvas.full {
     image-rendering: crisp-edges;
 }
 body.editing canvas.full { cursor: crosshair; }
-canvas#bgcanvas { background: #666; display: none; }
+canvas#bgcanvas { background: #333; display: none; }
 canvas#uicanvas { z-index: 2; }
 
 body.color-picking canvas.full, #palette canvas { cursor: url(/i/cursor-eyedropper-light.png) 0 10, cell; }
