@@ -83,12 +83,14 @@ aside#bot div iframe { z-index: 5; position: relative; margin: -5px -15px -15px 
 
 aside#left ul { padding: 0 0 0.5em; margin: 0; width: 16em; }
 aside#left ul li { list-style: none; margin: 0 -1em; padding: 0.5em 0.8em; clear: left; width: 17em; position: relative; padding-right: 0; }
-aside#left #series h4 { clear: left; padding: 0 0.25em 0.5em; }
-aside#left #series a { float: left; padding: 0.25em; opacity: 0.6; }
-aside#left #series a.active { opacity: 1; }
-aside#left #series a.active img { box-shadow: 0 0px 15px rgba(0,0,0,0.8); }
-aside#left #series img { width: 3.6em; height: 3.6em; float: left; }
-aside#left #series { float: left; }
+aside#left #series { float: left; position: relative; }
+aside#left #series > a { margin: 0 0; padding: 0 0.4em; opacity: 0.4; position: absolute; left: 0; bottom: -2em; font-size: 0.9em; text-decoration: none; }
+aside#left #series > a:hover { opacity: 1; }
+aside#left #series ul h4 { clear: left; padding: 0 0.25em 0.5em; }
+aside#left #series ul a { float: left; padding: 0.25em; opacity: 0.6; }
+aside#left #series ul a.active { opacity: 1; }
+aside#left #series ul a.active img { box-shadow: 0 0px 15px rgba(0,0,0,0.8); }
+aside#left #series ul img { width: 3.6em; height: 3.6em; float: left; }
 aside#left #mod-toggle { display: none; }
 body.mod aside#left #mod-toggle { display: inline-block; }
 aside#left #mod h4 { margin-bottom: 0.5em; }

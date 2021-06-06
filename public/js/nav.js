@@ -160,12 +160,12 @@ Game.Nav = (function(g){
     }
     this.seriesEl = document.getElementById("series");
     this.seriesEl.addEventListener('click', e => {
-      e.preventDefault();
       var t = e.target;
       if (t.nodeName == "IMG") {
         t = t.parentNode;
       }
       if (t.nodeName == "A" && t.classList.contains('board')) {
+        e.preventDefault();
         game.getSocket().changeBoard(parseInt(t.dataset.id), (board) => {
           Game.setHash();
         });
@@ -427,7 +427,7 @@ Game.Nav = (function(g){
   };
 
   nav.prototype.showSeries = function(series) {
-    var html = "<ul>";
+    var html = "";
     for (let s of series) {
       html += `<li><h4>${s.name}</h4>`;
       for (let b of s.boards) {
@@ -435,8 +435,7 @@ Game.Nav = (function(g){
       }
       html += `</li>`;
     }
-    html += "</ul>";
-    this.seriesEl.innerHTML = html;
+    this.seriesEl.querySelector("ul").innerHTML = html;
   };
 
   nav.prototype.showLoginModal = function() {
