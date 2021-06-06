@@ -50,7 +50,6 @@ func newOAuth(cfg *config.Api, logger *logrus.Logger, rUser repo.User) *oauth {
 		oauth2Config: &oauth2.Config{
 			ClientID:     cfg.Twitch.ClientID,
 			ClientSecret: cfg.Twitch.ClientSecret,
-			// Scopes:       []string{oidc.ScopeOpenID},
 			Endpoint:    provider.Endpoint(),
 			RedirectURL: cfg.Twitch.OAuthRedirect,
 		},
@@ -102,8 +101,6 @@ func (c oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.log.Error(err.Error())
 		return
 	}
-
-	fmt.Printf("%+v\n", token)
 
 	// add the oauth token to session
 	session.Values[oauthTokenKey] = token
