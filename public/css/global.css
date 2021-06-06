@@ -81,8 +81,8 @@ aside#bot a.active em { background: rgba(80,80,80,0.95); }
 aside#bot div { z-index: 5; }
 aside#bot div iframe { z-index: 5; position: relative; margin: -5px -15px -15px -5px; }
 
-aside#left ul { padding: 0 0 0.5em; margin: 0; width: 16.5em; }
-aside#left ul li { list-style: none; margin: 0 -1em; padding: 0.5em 1em; clear: left; width: 17em; position: relative; padding-right: 0; }
+aside#left ul { padding: 0 0 0.5em; margin: 0; width: 16em; }
+aside#left ul li { list-style: none; margin: 0 -1em; padding: 0.5em 0.8em; clear: left; width: 17em; position: relative; padding-right: 0; }
 aside#left #series h4 { clear: left; padding: 0 0.25em 0.5em; }
 aside#left #series a { float: left; padding: 0.25em; opacity: 0.6; }
 aside#left #series a.active { opacity: 1; }
