@@ -104,10 +104,11 @@
         <form class="std">
             <h2>{{.Loca.String "Time out user"}}</h2>
             <div class="field submit c">
-                <input class="submit" type="submit" value="10s">
-                <input class="submit" type="submit" value="15m">
-                <input class="submit" type="submit" value="1h">
-                <input class="submit" type="submit" value="24h">
+                <input class="submit" type="submit" name="timeout" value="10s">
+                <input class="submit" type="submit" name="timeout" value="15m">
+                <input class="submit" type="submit" name="timeout" value="1h">
+                <input class="submit" type="submit" name="timeout" value="24h"><br/><br/>
+                <input class="submit" type="submit" name="delete" value="{{.Loca.String "Delete reported"}}">
             </div>
             <div class="field submit c">
                 <a class="cancel">{{.Loca.String "cancel"}}</a>
@@ -116,7 +117,7 @@
     </div>
     <div id="modal-report-clear" class="report-clear">
         <form class="std">
-            <h2>{{.Loca.String "re you sure you want to clear this user's reports?"}}</h2>
+            <h2>{{.Loca.String "Are you sure you want to clear this user's reports?"}}</h2>
             <div class="field submit cta c">
                 <input class="submit" type="submit" value="Clear Reports">
             </div>

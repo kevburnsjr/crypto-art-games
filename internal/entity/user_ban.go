@@ -5,14 +5,15 @@ import (
 )
 
 type UserBan struct {
-	ID       uint32 `json:"id"`
-	ModID    uint32 `json:"modID"`
-	TargetID uint32 `json:"targetID"`
-	Since    uint32 `json:"since"`
-	Until    uint32 `json:"until"`
-	Ban      bool   `json:"ban"`
-	UnBan    bool   `json:"unban"`
-	Reason   string `json:"reason"`
+	ID       uint32   `json:"id"`
+	ModID    uint32   `json:"modID"`
+	TargetID uint32   `json:"targetID"`
+	Since    uint32   `json:"since"`
+	Until    uint32   `json:"until"`
+	Ban      bool     `json:"ban"`
+	UnBan    bool     `json:"unban"`
+	Reason   string   `json:"reason"`
+	FrameIDs *map[uint16][]uint32 `json:"frameIds,omitempty"`
 }
 
 type UserBanDto struct {

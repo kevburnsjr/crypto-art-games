@@ -368,12 +368,12 @@ Game.Board = (function(g){
   board.prototype.removeFrame = async function(f) {
     await this.store.removeItem(f.timecode.toString(16).padStart(8, 0));
     if (!(f.timecode in this.frameIdx)) {
+      console.log("not", f.timecode, this.frameIdx);
       return;
     }
     if (this.enabled) {
       this.frames.splice(this.frameIdx[f.timecode],1);
       delete(this.frameIdx[f.timecode]);
-      // this.tiles[f.ti][f.tj].frames.splice(this.tiles[f.ti][f.tj].frameIdx[f.timecode],1);
       delete(this.tiles[f.ti][f.tj].frameIdx[f.timecode]);
       g.nav().updateScrubber(this.frames.length);
     }
@@ -388,20 +388,30 @@ Game.Board = (function(g){
 
   // TODO - Process user bans in batch
   board.prototype.applyUserBan = async function(ban) {
+    const useFrameIds = ban.frameIds instanceof Object;
+    if (useFrameIds && ban.frameIds[this.id] == undefined) {
+      return;
+    }
     var frameDate;
-    var deleted = {};
     var i;
     var f;
     var timecode = this.frames[this.offset];
-    this.enabled = false;
+    var toDelete = {};
+    if (useFrameIds) {
+      for (let timecode of ban.frameIds[this.id]) {
+        toDelete[timecode] = true;
+      }
+    }
     for(i = this.frames.length-1; i >= 0; i--) {
       f = this.frames[i];
       frameDate = (+f.date/1000).toFixed(0);
       this.tiles[f.ti][f.tj].undoFrame(f);
       this.tiles[f.ti][f.tj].frames.pop();
-      if (frameDate < ban.since) break;
-      if (frameDate > ban.until) continue;
-      if (f.userid != ban.targetID) continue;
+      if (useFrameIds && frameDate-this.created < ban.since) break;
+      if (useFrameIds && !(f.timecode in toDelete)) continue;
+      if (!useFrameIds && frameDate < ban.since) break;
+      if (!useFrameIds && frameDate > ban.until || f.id) continue;
+      if (!useFrameIds && f.userid != ban.targetID) continue;
       await this.removeFrame(f);
       if (i < this.offset) {
         this.offset--;
@@ -410,6 +420,8 @@ Game.Board = (function(g){
         this.drawnOffset--;
       }
     }
+    this.enabled = false;
+    i = Math.max(i, 0)
     for(i; i < this.frames.length; i++) {
       f = this.frames[i];
       f.prev = [];

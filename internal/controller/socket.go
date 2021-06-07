@@ -336,7 +336,7 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 					return
 				}
 				var targetID = uint32(m["targetID"].(float64))
-				if err = c.repoReport.Clear(targetID); err != nil {
+				if _, err = c.repoReport.Clear(targetID); err != nil {
 					return
 				}
 				c.hub.Broadcast(sock.JsonMessagePure("reports", map[string]interface{}{
@@ -355,9 +355,6 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 					ban             = false // m["ban"].(bool)
 					timeoutDuration time.Duration
 				)
-				if timeoutDuration, err = time.ParseDuration(timeout); err != nil && len(timeout) > 0 {
-					return
-				}
 				var target *entity.User
 				if target, err = c.repoUser.FindByUserID(targetID); err != nil {
 					return
@@ -367,8 +364,15 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 					TargetID: targetID,
 					Reason:   reason,
 					Since:    since,
-					Until:    uint32(time.Now().Add(timeoutDuration).Unix()),
 					Ban:      ban,
+				}
+				if timeout == "-1" {
+					userBan.Until = 0
+				} else {
+					if timeoutDuration, err = time.ParseDuration(timeout); err != nil && len(timeout) > 0 {
+						return
+					}
+					userBan.Until = uint32(time.Now().Add(timeoutDuration).Unix())
 				}
 				if err = c.repoUserBan.Insert(&userBan); err != nil {
 					return
@@ -382,22 +386,37 @@ func (c socket) MsgHandler(user *entity.User, conn sock.Connection) sock.Message
 				if err = c.repoUser.Update(target); err != nil {
 					return
 				}
-				var n int
-				var del int
 				var allSeries entity.SeriesList
 				if allSeries, err = c.repoGame.AllSeries(); err != nil {
 					return
 				}
-				for _, s := range allSeries {
-					for _, b := range s.Boards {
-						if n, err = c.repoBoard.DeleteUserFramesAfter(b.ID, targetID, since-s.Created); err != nil {
-							return
+				if userBan.Until > 0 {
+					for _, s := range allSeries {
+						for _, b := range s.Boards {
+							if _, err = c.repoBoard.DeleteUserFramesAfter(b.ID, targetID, since-s.Created); err != nil {
+								return
+							}
 						}
-						del += n
 					}
 				}
-				if err = c.repoReport.Clear(targetID); err != nil {
+				var deleted = map[uint16][]uint32{}
+				deleted, err = c.repoReport.Clear(targetID)
+				if err != nil {
 					return
+				}
+				if userBan.Until == 0 {
+					for boardID, timecodes := range deleted {
+						for _, tc := range timecodes {
+							println(userBan.Since, userBan.Since > uint32(t/256), tc)
+							if userBan.Since == 0 || userBan.Since > uint32(tc/256) {
+								userBan.Since = uint32(tc/256)
+							}
+							if err = c.repoBoard.Delete(boardID, tc); err != nil {
+								return
+							}
+						}
+					}
+					userBan.FrameIDs = &deleted
 				}
 				c.hub.Broadcast(sock.NewJsonRes(userBan.ToDto()).Raw("bans"))
 				c.hub.Broadcast(sock.JsonMessagePure("reports", map[string]interface{}{

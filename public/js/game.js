@@ -263,6 +263,7 @@ var Game = (function(g){
     });
     socket.on('user-ban', async function(e) {
       const board = Game.board();
+      const useFrameIds = e.frameIds instanceof Object;
       var bans;
       var boardStore;
       for (let s of Game.Series.list()) {
@@ -277,11 +278,15 @@ var Game = (function(g){
             if (k.length != 8) {
               return;
             }
-            const f = Game.Frame.fromBytes(v);
-            const date = new Date((s.created + f.timestamp) * 1000);
-            const frameDate = parseInt((+date/1000).toFixed(0));
-            if (f.userid == e.targetID && frameDate >= e.since && frameDate <= e.until) {
-              boardStore.removeItem(f.timecode.toString(16).padStart(8, 0));
+            if (useFrameIds && e.frameIds[b.id] != undefined && parseInt(k, 16) in e.frameIds[b.id]) {
+              boardStore.removeItem(k);
+            } else {
+              const f = Game.Frame.fromBytes(v);
+              const date = new Date((s.created + f.timestamp) * 1000);
+              const frameDate = parseInt((+date/1000).toFixed(0));
+              if (f.userid == e.targetID && frameDate >= e.since && frameDate <= e.until) {
+                boardStore.removeItem(k);
+              }
             }
           });
         }

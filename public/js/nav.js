@@ -485,7 +485,10 @@ Game.Nav = (function(g){
   nav.prototype.submitTimeoutModal = function(e) {
     const userID = e.target.dataset.userid;
     const date = e.target.dataset.date;
-    const duration = e.submitter.value;
+    var duration = e.submitter.value;
+    if (e.submitter.name == 'delete') {
+      duration = "-1";
+    }
     Game.getSocket().userBan(userID, date, duration);
   };
 

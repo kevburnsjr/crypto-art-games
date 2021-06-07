@@ -26,10 +26,13 @@ func (f *Frame) Validate() error {
 	return nil
 }
 
+func (f *Frame) ID32() uint32 {
+	return f.Timestamp()*256 + uint32(f.TileID())
+}
+
 func (f *Frame) ID() []byte {
 	var idBytes = make([]byte, 4)
-	binary.BigEndian.PutUint32(idBytes[0:4], f.Timestamp()*256)
-	idBytes[3] = byte(f.TileID())
+	binary.BigEndian.PutUint32(idBytes, f.ID32())
 	return idBytes
 }
 

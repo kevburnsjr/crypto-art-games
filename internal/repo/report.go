@@ -13,7 +13,7 @@ type Report interface {
 	Insert(report *entity.Report) (err error)
 	All() (reports []*entity.Report, err error)
 	Sweep(t time.Time) (s int, n int, err error)
-	Clear(targetID uint32) (err error)
+	Clear(targetID uint32) (deleted map[uint16][]uint32, err error)
 }
 
 // NewReport returns a Report repo instance
@@ -72,7 +72,8 @@ func (r *report) All() (reports []*entity.Report, err error) {
 }
 
 // Clear
-func (r *report) Clear(targetID uint32) (err error) {
+func (r *report) Clear(targetID uint32) (deleted map[uint16][]uint32, err error) {
+	deleted = map[uint16][]uint32{}
 	idBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(idBytes[0:4], targetID)
 	iter, err := r.db.PrefixIterator(idBytes)
@@ -81,6 +82,9 @@ func (r *report) Clear(targetID uint32) (err error) {
 	}
 	defer iter.Release()
 	for iter.Next() {
+		boardId := binary.BigEndian.Uint16(iter.Key()[4:6])
+		timecode := binary.BigEndian.Uint32(iter.Key()[6:10])
+		deleted[boardId] = append(deleted[boardId], timecode)
 		err = r.db.Delete([]byte(iter.Key()), "")
 		if err != nil {
 			break

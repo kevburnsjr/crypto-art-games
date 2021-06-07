@@ -14,7 +14,8 @@ type Board interface {
 	Insert(boardId uint16, frame *entity.Frame) (err error)
 	Since(boardId uint16, timecode uint32) (frames []*entity.Frame, err error)
 	Update(boardId uint16, f *entity.Frame) (err error)
-	DeleteUserFramesAfter(boardId uint16, targetID, timecode uint32) (n int, err error)
+	DeleteUserFramesAfter(boardId uint16, targetID, timestamp uint32) (deleted []uint32, err error)
+	Delete(boardId uint16, timecode uint32) (err error)
 }
 
 // NewBoard returns an Frame repo instance
@@ -113,8 +114,18 @@ func (r *board) Since(boardId uint16, timecode uint32) (frames []*entity.Frame, 
 	return
 }
 
+// Delete marks a frame as deleted
+func (r *board) Delete(boardId uint16, timecode uint32) (err error) {
+	f, err := r.Find(boardId, timecode)
+	if err != nil {
+		return
+	}
+	f.SetDeleted(true)
+	return r.Update(boardId, f)
+}
+
 // DeleteUserFramesAfter removes a users' contributions to the board
-func (r *board) DeleteUserFramesAfter(boardId uint16, targetID, timestamp uint32) (n int, err error) {
+func (r *board) DeleteUserFramesAfter(boardId uint16, targetID, timestamp uint32) (deleted []uint32, err error) {
 	db, err := r.db(boardId)
 	if err != nil {
 		return
@@ -137,7 +148,7 @@ func (r *board) DeleteUserFramesAfter(boardId uint16, targetID, timestamp uint32
 			if err = r.Update(boardId, f); err != nil {
 				return
 			}
-			n++
+			deleted = append(deleted, f.ID32())
 		}
 	}
 	return
